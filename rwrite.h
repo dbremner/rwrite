@@ -5,15 +5,18 @@
  * <Description of this file and its contents>
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Tue Sep 13 15:28:46 1994 tri
+ * Last modified: Tue Sep 13 20:18:27 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.1 $
+ * $Revision: 1.2 $
  * $State: Exp $
- * $Date: 1994/09/13 12:32:13 $
+ * $Date: 1994/09/14 14:59:48 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.1  1994/09/13 12:32:13  tri
+ * Revision 1.2  1994/09/14 14:59:48  tri
+ * Added a few codes.
+ *
+ * Revision 1.1  1994/09/13  12:32:13  tri
  * Initial revision
  *
  * ----------------------------------------------------------------------
@@ -59,6 +62,7 @@
 #define RWRITE_VER		501
 #define RWRITE_PROT		502
 #define RWRITE_HELP		510
+#define RWRITE_INFO		511 /* Stuff for client to ignore. */
 
 #define RWRITE_ERR_FATAL	666
 #define RWRITE_ERR_EPERM	667

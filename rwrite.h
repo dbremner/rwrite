@@ -6,15 +6,18 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Mon Dec 12 23:17:19 1994 tri
+ * Last modified: Tue Dec 13 00:10:49 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.30 $
+ * $Revision: 1.31 $
  * $State: Exp $
- * $Date: 1994/12/12 21:17:55 $
+ * $Date: 1994/12/12 22:11:48 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.30  1994/12/12 21:17:55  tri
+ * Revision 1.31  1994/12/12 22:11:48  tri
+ * Version numbers.
+ *
+ * Revision 1.30  1994/12/12  21:17:55  tri
  * Closed files more pedantically.
  * Fix by toka & tri.
  *
@@ -144,8 +147,8 @@
 #define __RWRITE_H__ 1
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.1b19"	/* Server version   */
-#define RWRITE_VERSION_NUMBER	"1.1b19"	/* Client version   */
+#define RWRITED_VERSION_NUMBER	"1.1b20"	/* Server version   */
+#define RWRITE_VERSION_NUMBER	"1.1b20"	/* Client version   */
 /*
  * User definitions are in the following files.
  */

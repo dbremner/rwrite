@@ -5,16 +5,16 @@
 # Make rules for rwrite.
 # ----------------------------------------------------------------------
 # Created      : Sun Dec 11 20:12:18 1994 tri
-# Last modified: Tue Dec 13 22:12:43 1994 tri
+# Last modified: Tue Dec 13 19:38:33 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 # $State: Exp $
-# $Date: 1994/12/13 20:28:57 $
+# $Date: 1994/12/14 00:46:16 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: Makefile.in,v $
-# Revision 1.17  1994/12/13 20:28:57  tri
-# Preparation for autoconfig and tcp-port change.
+# Revision 1.18  1994/12/14 00:46:16  tri
+# Makefile is now Makefile.in for configure.
 #
 # Revision 1.16  1994/12/13  16:25:06  tri
 # Nothing.
@@ -85,73 +85,51 @@
 
 SHELL		= /bin/sh
 
-BINDIR		= /usr/local/bin
-MANDIR		= /usr/local/man
-BIN_OWNER	= bin
-BIN_GROUP	= bin
-BIN_MODE	= 555
-MAN_OWNER	= bin
-MAN_GROUP	= bin
-MAN_MODE	= 444
+srcdir		= @srcdir@
+VPATH		= @srcdir@
 
-# The group which owns ttys. Usually "tty" or "terminal".
-# If you are running a trilobite which doesn't have a group for
-# ttys, your best bet is to create a new group for rwrite and
-# use that as RWRITED_GROUP.
-RWRITED_GROUP	= tty
-RWRITED_MODE	= 2555
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+BINDIR		= $(exec_prefix)/bin
+MANDIR		= $(exec_prefix)/man
+
+INSTALL 	= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+INSTALLSCRIPT	= $(INSTALL)
+INSTALLMAN	= $(INSTALL)
+
+RWRITED_GROUP	= @RWRITED_GROUP@
+RWRITED_MODE	= @RWRITED_MODE@
 RWRITED_BINDIR	= $(BINDIR)
 
-CC		= gcc
-INSTALL 	= install -s -c
-INSTALLSCRIPT	= install -c
-INSTALLMAN	= install -c
-#INSTALL	= install
-#INSTALLSCRIPT	= install
-#INSTALLMAN	= install
+CC		= @CC@
+DEFS		= @DEFS@ -DTTY_GROUP_NAME=\"$(RWRITED_GROUP)\"
+LIBS		= @LIBS@
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
 
-#LDADD		= -linet -lPW
-MYCFLAGS	= -O
+BIN_OWNER	= @BIN_OWNER@
+BIN_GROUP	= @BIN_GROUP@
+BIN_MODE	= 555
 
-# If DO_NOT_TELL_USERS is defined, server gives 
-# "user not in" notification instead of "no such
-# user".
-#CONF0		= -DDO_NOT_TELL_USERS=1
-   
-# We try to flush stdin after the failed message.
-# But if you don't want this to be done, define
-# DONT_FLUSH_INPUT_IN_FAILURE.  In some systems
-# flushing may cause busyloop after nonsuccesful
-# message.  If shit happens, try this one out.
-#CONF1		= -DDONT_FLUSH_INPUT_IN_FAILURE=1
-
-# Everyone should have following but...
-#CONF2		= -DNO_GETEUID=1
-#CONF3		= -DNO_GETEGID=1
-#CONF4		= -DNEITHER_FCHOWN_NOR_FCHMOD=damn
-
-# Some ancient systems miss these.
-#CONF5		= -DNO_UNISTD_H=1
-#CONF6		= -DNO_STDLIB_H=1
-
-# Someone may want to do debugging.
-#DEBUGFLAGS	= -Wall -DDEBUG -g 
-
-# Next define should never be needed, but in some braindamaged
-# system that have SystemV style definitions in headers but still
-# BSD like utmp format then you may get a compilation barf
-# "struct utmp has no member ut_type".  Next one should help.
-#CONF7		= -DNO_UT_TYPE_IN_STRUCT_UTMP=1
+MAN_OWNER	= @MAN_OWNER@
+MAN_GROUP	= @MAN_GROUP@
+MAN_MODE	= 444
 
 PROGS	= rwrited rwrite mkrwritebox
-MAN1	= rwrite.1 mkrwritebox.1 away.1
-MAN8	= rwrited.8
+MAN1	= $(srcdir)/rwrite.1 $(srcdir)/mkrwritebox.1 $(srcdir)/away.1
+MAN8	= $(srcdir)/rwrited.8
 
-SRCS	= match.c mkrwritebox.c rwriterc.c rwrite.c rwrited.c away
+SRCS	= $(srcdir)/match.c $(srcdir)/mkrwritebox.c $(srcdir)/rwriterc.c \
+	  $(srcdir)/rwrite.c $(srcdir)/rwrited.c $(srcdir)/away
 
-CFLAGS	= $(CONF0) $(CONF1) $(CONF2) $(CONF3) $(CONF4) $(CONF5) $(CONF6) \
-          $(CONF7) $(CONF8) $(CONF9) -DTTY_GROUP_NAME=\"$(RWRITED_GROUP)\" \
-	  $(MYCFLAGS) $(DEBUGFLAGS)
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+.c.o:
+	$(CC) -c $(CPPFLAGS) $(DEFS) $(CFLAGS) $<
+
 
 all:	$(PROGS)
 
@@ -159,32 +137,23 @@ depend:
 	mkdep $(CFLAGS) $(SRCS)
 
 rwrite: rwrite.o rwriterc.o match.o
-	$(CC) $(CFLAGS) -o rwrite rwrite.o rwriterc.o match.o $(LDADD)
+	$(CC) $(LDFLAGS) $(CFLAGS) -o rwrite rwrite.o rwriterc.o match.o \
+	$(LIBS)
 
 rwrited: rwrited.o match.o rwriterc.o
-	$(CC) $(CFLAGS) -o rwrited rwrited.o match.o rwriterc.o $(LDADD)
+	$(CC) $(LDFLAGS) $(CFLAGS) -o rwrited rwrited.o match.o rwriterc.o \
+	$(LIBS)
 
 mkrwritebox:	mkrwritebox.o
-	$(CC) $(CFLAGS) -o mkrwritebox mkrwritebox.o
+	$(CC) $(LDFLAGS) $(CFLAGS) -o mkrwritebox mkrwritebox.o $(LIBS)
 
-.c.o:
-	$(CC) $(CFLAGS) -c $<
+rwrited.o:	$(srcdir)/rwrite.h
+rwrite.o:	$(srcdir)/rwrite.h
+match.o:	$(srcdir)/match.h
+rwriterc.o:	$(srcdir)/rwrite.h $(srcdir)/match.h
 
-rwrited.o:	rwrite.h
-rwrite.o:	rwrite.h
-match.o:	match.h
-rwriterc.o:	rwrite.h match.h
-
-# Use this if your machine has a bsd style install.
-install: commoninstall $(MAN1)
-	( for i in $(MAN1); do \
-	    $(INSTALLMAN) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
-	      $$i $(MANDIR)/man1; \
-	done )
-	@echo "Edit /etc/services and /etc/inetd.conf and"
-	@echo "create /etc/rwrite.conf. See *.add and sample*."
-
-commoninstall: $(PROGS) $(MAN8)
+# Install
+install: $(PROGS) $(MAN8) $(MAN1)
 	$(INSTALL) -o $(BIN_OWNER) -g $(RWRITED_GROUP) -m $(RWRITED_MODE) \
 	  rwrited $(RWRITED_BINDIR)
 	$(INSTALL) -o $(BIN_OWNER) -g $(RWRITED_GROUP) -m $(RWRITED_MODE) \
@@ -195,24 +164,10 @@ commoninstall: $(PROGS) $(MAN8)
 	  away $(BINDIR)
 	$(INSTALLMAN) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
 	  $(MAN8) $(MANDIR)/man8
-
-# Interactive's install is really different. Sheesh...
-sysvinstall: $(PROGS) $(MAN1) $(MAN8)
-	$(INSTALL) -f $(RWRITED_BINDIR) \
-	  -u $(BIN_OWNER) -g $(RWRITED_GROUP) -m $(RWRITED_MODE) rwrited 
-	$(INSTALL) -f $(BINDIR) \
-	  -u $(BIN_OWNER) -g $(RWRITED_GROUP) -m $(RWRITED_MODE) mkrwritebox
-	$(INSTALL) -f  $(BINDIR) \
-	  -u $(BIN_OWNER) -g $(BIN_GROUP) -m $(BIN_MODE) rwrite
-	$(INSTALLSCRIPT) -f $(BINDIR) \
-	  -u $(BIN_OWNER) -g $(BIN_GROUP) -m $(BIN_MODE) away
-	$(INSTALLMAN) -f $(MANDIR)/man8 \
-	  -u $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) $(MAN8)
 	( for i in $(MAN1); do \
-	    $(INSTALLMAN) -f $(MANDIR)/man1 \
-	      -u $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
-	      $$i ; \
-	done ) 
+	    $(INSTALLMAN) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
+	      $$i $(MANDIR)/man1; \
+	done )
 	@echo "Edit /etc/services and /etc/inetd.conf and"
 	@echo "create /etc/rwrite.conf. See *.add and sample*."
 
@@ -220,5 +175,5 @@ clean:
 	rm -f core rwrited.o rwrite.o rwriterc.o mkrwritebox.o match.o
 
 clobber: clean
-	rm -f $(PROGS) *~
+	rm -f $(PROGS) *~ config.cache
 

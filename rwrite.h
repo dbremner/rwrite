@@ -8,13 +8,17 @@
  * Created      : Tue Sep 13 15:27:58 1994 tri
  * Last modified: Sun Dec 11 23:06:55 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.25 $
+ * $Revision: 1.26 $
  * $State: Exp $
- * $Date: 1994/12/11 21:25:30 $
+ * $Date: 1994/12/12 11:08:14 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.25  1994/12/11 21:25:30  tri
+ * Revision 1.26  1994/12/12 11:08:14  tri
+ * Moved the name of the file containing last
+ * message into rwrite.h
+ *
+ * Revision 1.25  1994/12/11  21:25:30  tri
  * Cleaned up some warnings.  No functional changes.
  *
  * Revision 1.24  1994/12/11  18:45:50  tri
@@ -127,14 +131,15 @@
 #define __RWRITE_H__ 1
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.1b15"	/* Server version   */
-#define RWRITE_VERSION_NUMBER	"1.1b15"	/* Client version   */
+#define RWRITED_VERSION_NUMBER	"1.1b16"	/* Server version   */
+#define RWRITE_VERSION_NUMBER	"1.1b16"	/* Client version   */
 /*
  * User definitions are in the following files.
  */
 #define RWRITE_CONFIG_FILE	".rwriterc"
 #define RWRITE_GLOBAL_CONFIG	"/etc/rwrite.conf"
 #define RWRITE_AUTOREPLY_FILE	".rwrite-autoreply"
+#define RWRITE_LAST_SENT_MSG    ".rwrite-last"
 
 #define PATH_SEPARATOR          ((int)'!')  /* Separator char in delivery path */
 #define ADDRESS_TTY_SEPARATOR	((int)':')

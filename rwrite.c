@@ -7,13 +7,17 @@
  * Created      : Tue Sep 13 15:28:07 1994 tri
  * Last modified: Mon Dec 12 04:22:29 1994 cirion
  * ----------------------------------------------------------------------
- * $Revision: 1.23 $
+ * $Revision: 1.24 $
  * $State: Exp $
- * $Date: 1994/12/12 11:03:42 $
+ * $Date: 1994/12/12 11:08:14 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.23  1994/12/12 11:03:42  tri
+ * Revision 1.24  1994/12/12 11:08:14  tri
+ * Moved the name of the file containing last
+ * message into rwrite.h
+ *
+ * Revision 1.23  1994/12/12  11:03:42  tri
  * Added compatibility fixes from toka.
  *
  * Revision 1.22  1994/12/11  21:25:30  tri
@@ -113,7 +117,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.23 1994/12/12 11:03:42 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.24 1994/12/12 11:08:14 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -176,7 +180,7 @@ FILE *open_history_write()
     if(!(home = getenv("HOME"))) {
 	return NULL;
     }
-    sprintf(path, "%s/.lastrwrite#", home);
+    sprintf(path, "%s/%s#", RWRITE_LAST_SENT_MSG, home);
     f = fopen(path, "w");
     if(f)
 #ifndef NEITHER_FCHOWN_NOR_FCHMOD
@@ -197,8 +201,8 @@ int close_history_write(FILE *f)
     if(!(home = getenv("HOME"))) {
 	return NULL;
     }
-    sprintf(path1, "%s/.lastrwrite#", home);
-    sprintf(path2, "%s/.lastrwrite", home);
+    sprintf(path1, "%s/#", RWRITE_LAST_SENT_MSG, home);
+    sprintf(path2, "%s/", RWRITE_LAST_SENT_MSG, home);
     r = rename(path1, path2);
     chmod(path2, 0600);
     return(r ? 0 : 1);
@@ -212,7 +216,7 @@ FILE *open_history_read()
     if(!(home = getenv("HOME"))) {
 	return NULL;
     }
-    sprintf(path, "%s/.lastrwrite", home);
+    sprintf(path, "%s/%s", RWRITE_LAST_SENT_MSG, home);
     return(fopen(path, "r"));
 }
 

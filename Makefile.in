@@ -5,15 +5,18 @@
 # Make rules for rwrite.
 # ----------------------------------------------------------------------
 # Created      : Sun Dec 11 20:12:18 1994 tri
-# Last modified: Sun Dec 11 20:38:45 1994 tri
+# Last modified: Sun Dec 11 20:44:23 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $State: Exp $
-# $Date: 1994/12/11 18:40:28 $
+# $Date: 1994/12/11 18:45:50 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: Makefile.in,v $
-# Revision 1.3  1994/12/11 18:40:28  tri
+# Revision 1.4  1994/12/11 18:45:50  tri
+# Minor fix.
+#
+# Revision 1.3  1994/12/11  18:40:28  tri
 # Now makerules work like the lavatory in the train
 # and portability is as good as I can make it.
 #
@@ -47,7 +50,7 @@
 
 SHELL		= /bin/sh
 
-PACKET_VERSION	= 1.1b13
+PACKET_VERSION	= 1.1b14
 
 BINDIR		= /usr/local/bin
 MANDIR		= /usr/local/man

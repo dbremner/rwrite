@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Tue Dec 13 13:35:03 1994 tri
+ * Last modified: Tue Dec 13 18:16:49 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.29 $
+ * $Revision: 1.30 $
  * $State: Exp $
- * $Date: 1994/12/13 11:35:21 $
+ * $Date: 1994/12/13 16:20:22 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.29  1994/12/13 11:35:21  tri
+ * Revision 1.30  1994/12/13 16:20:22  tri
+ * Direct rwp-dialogs should now work even with
+ * over-intelligent telnet(1)s.
+ *
+ * Revision 1.29  1994/12/13  11:35:21  tri
  * Changed `n' in macro RWRITE_MSG to `code' to help
  * braindamaged c-preprosessors.
  *
@@ -135,7 +139,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.29 1994/12/13 11:35:21 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.30 1994/12/13 16:20:22 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -379,11 +383,9 @@ void rwrite_quit()
  * Copyright 1994, Camillo S{rs <Camillo.Sars@hut.fi>.
  */
 
-static char*
-gm_getline (FILE* pf, int* p_limit, int* p_EOF);
+static char *gm_getline (FILE *pf, int *p_limit, int *p_EOF);
 
-char**
-GetMsg (FILE* pf, int line_limit, int char_limit)
+char **GetMsg (FILE *pf, int line_limit, int char_limit)
 {
     int pos = 0;
     int eof = 0;
@@ -406,14 +408,17 @@ GetMsg (FILE* pf, int line_limit, int char_limit)
     while (!eof && char_limit) {
 	if(pos == line_limit)
 	    break;
-	p_buffer[pos] = gm_getline (pf, &char_limit, &eof);
+	p_buffer[pos] = gm_getline(pf, &char_limit, &eof);
 	if(p_buffer[pos] == NULL)
 	    break;
 #ifdef DEBUG
 	printf("%03d <<<%s\n", RWRITE_DEBUG, p_buffer[pos]);
 #endif
-	if((*p_buffer[pos] == '.') &&
-	   (*(p_buffer[pos]+1) == '\0')) {
+	if(((*p_buffer[pos] == '.') &&
+	    (*(p_buffer[pos]+1) == '\0')) ||
+	   ((*p_buffer[pos] == '.') &&
+	    (*(p_buffer[pos]+1) == '\015') ||
+	    (*(p_buffer[pos]+2) == '\0'))) {
 	    eof = -1;
 	    p_buffer[pos] = NULL;
 	    break;
@@ -431,9 +436,15 @@ GetMsg (FILE* pf, int line_limit, int char_limit)
 		break;
 	    if(c == '.') {
 		c = fgetc(pf);
-		if (c == EOF || c == '\n') break;
+		if(c == EOF || c == '\012') {
+		    break;
+		} else if(c == '\015') {
+		    c = fgetc(pf);
+		    if(c == EOF || c == '\012')
+			break;
+		}
 	    }
-	    while ((c = fgetc(pf)) != EOF && c != '\n')
+	    while((c = fgetc(pf)) != EOF && c != '\012')
 		/*NOTHING*/;
 	}
     }
@@ -446,25 +457,27 @@ GetMsg (FILE* pf, int line_limit, int char_limit)
 
 #define GL_BUFFER_SIZE 256
 
-static char*
-gm_getline (FILE* pf, int* p_limit, int* p_EOF)
+static char *gm_getline (FILE *pf, int *p_limit, int *p_EOF)
 {
     int c;
     int pos = 0;
     int size = GL_BUFFER_SIZE;
-    char* p_tmp;
+    char *p_tmp;
 
-    char* p_buffer = (char*) malloc (GL_BUFFER_SIZE * sizeof(char));
-    if (p_buffer == NULL) return NULL;
+    char *p_buffer = (char*)malloc (GL_BUFFER_SIZE * sizeof(char));
 
-    while ((c = fgetc (pf)) != '\n') {
-	if (c == EOF) {
+    if(!p_buffer)
+	return NULL;
+
+    while((c = fgetc(pf)) != '\012') {
+	if(c == EOF) {
 	    *p_EOF = EOF;
 	    break;
 	}
-	p_buffer[pos++] = (char) c;
-	if (pos == *p_limit) {
-	    while ((c = fgetc(pf)) != EOF && c != '\n') ;
+	p_buffer[pos++] = (char)c;
+	if(pos == *p_limit) {
+	    while((c = fgetc(pf)) != EOF && c != '\012') 
+		/*NOTHING*/;
 	    break;
 	}
 	if (pos == size) {

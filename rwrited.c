@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Sun Jun 11 18:23:36 1995 tri
+ * Last modified: Fri Sep 29 21:28:08 1995 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.41 $
+ * $Revision: 1.42 $
  * $State: Exp $
- * $Date: 1995/06/11 15:27:33 $
+ * $Date: 1995/09/29 19:29:31 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.41  1995/06/11 15:27:33  tri
+ * Revision 1.42  1995/09/29 19:29:31  tri
+ * Commented one hostile free() away.
+ * There's still bug in search_utmp.
+ *
+ * Revision 1.41  1995/06/11  15:27:33  tri
  * Does not block in tty open if
  * utmp is broken and user has
  * logged out.
@@ -178,7 +182,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.41 1995/06/11 15:27:33 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.42 1995/09/29 19:29:31 tri Exp $";
 #endif /* not lint */
 
 #define RWRITED_VERSION_NUMBER	"1.1"	/* Server version   */
@@ -740,7 +744,7 @@ int search_utmp(char *user,
 		for(i = 0; i < ttylistlen; i++) {
 		    if(all_ttys[i])
 			free(all_ttys[i]);
-		    free(all_ttys);
+		    /* free(all_ttys); XXX XXX XXX XXX */
 		}
 	    }
 	    return DELIVER_OK;
@@ -860,7 +864,7 @@ int search_utmp(char *user,
 		for(i = 0; i < ttylistlen; i++) {
 		    if(all_ttys[i])
 			free(all_ttys[i]);
-		    free(all_ttys);
+		    /* free(all_ttys); XXX XXX XXX XXX */
 		}
 	    }
 	    return DELIVER_OK;
@@ -1397,7 +1401,6 @@ int main(int argc, char **argv)
 		fwd_count = n;
 	    } else if((!(strcmp(cmd, "vrfy"))) || (!(strcmp(cmd, "VRFY")))) {
 		int d_status;
-
 		if(!(to_user[0])) {
 		    if(!udp)
 			RWRITE_MSG(RWRITE_ERR_NO_ADDRESS, 

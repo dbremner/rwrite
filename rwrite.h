@@ -6,15 +6,19 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Tue Sep 20 11:23:34 1994 tri
+ * Last modified: Tue Sep 20 22:08:30 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.6 $
+ * $Revision: 1.7 $
  * $State: Exp $
- * $Date: 1994/09/20 08:24:13 $
+ * $Date: 1994/09/20 19:08:57 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.6  1994/09/20 08:24:13  tri
+ * Revision 1.7  1994/09/20 19:08:57  tri
+ * Added a configuration option for rwrited ran
+ * without tty setgid.
+ *
+ * Revision 1.6  1994/09/20  08:24:13  tri
  * Support for .rwrite-allow and .rwrite-deny files.
  *
  * Revision 1.5  1994/09/19  22:40:37  tri
@@ -56,6 +60,18 @@
 #ifndef __RWRITE_H__
 #define __RWRITE_H__ 1
 
+/*
+ * If DO_NOT_TELL_USERS is defined, server gives "user not in" notification
+ * instead of "no such user".
+ */
+/* #define DO_NOT_TELL_USERS 1 */
+/*
+ * If rwrited program is not going to be ran as a tty-group setgid
+ * process you should define NO_TERMINAL_SGID to ensure that VRFY
+ * command works about right.
+ */
+/* #define NO_TERMINAL_SGID 1 */
+
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
 #define RWRITED_VERSION_NUMBER	"1.0b"		/* Server version   */
 #define RWRITE_VERSION_NUMBER	"1.0b"		/* Client version   */
@@ -66,11 +82,13 @@
 #define RWRITE_FILE_ALLOW	".rwrite-allow"
 #define RWRITE_FILE_FORWARD	".rwrite-forward"	/* Not implemented */
 #define RWRITE_FILE_AGENT	".rwrite-agent"		/* Not implemented */
-/*
- * If DO_NOT_TELL_USERS is defined, server gives "user not in" notification
- * instead of "no such user".
- */
-/* #define DO_NOT_TELL_USERS 1 */
+
+/*************************************************/
+/*************************************************/
+/********* END OF THE USER CONFIGURATION *********/
+/*************************************************/
+/*************************************************/
+
 /*
  * #
  * # Entry to enable rwrite service in /etc/services.

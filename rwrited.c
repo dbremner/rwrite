@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Tue Sep 20 11:20:05 1994 tri
+ * Last modified: Tue Sep 20 22:04:47 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.6 $
+ * $Revision: 1.7 $
  * $State: Exp $
- * $Date: 1994/09/20 08:24:13 $
+ * $Date: 1994/09/20 19:08:57 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.6  1994/09/20 08:24:13  tri
+ * Revision 1.7  1994/09/20 19:08:57  tri
+ * Added a configuration option for rwrited ran
+ * without tty setgid.
+ *
+ * Revision 1.6  1994/09/20  08:24:13  tri
  * Support for .rwrite-allow and .rwrite-deny files.
  *
  * Revision 1.5  1994/09/19  22:40:37  tri
@@ -53,7 +57,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.6 1994/09/20 08:24:13 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.7 1994/09/20 19:08:57 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -342,7 +346,11 @@ int term_chk(char *tty, int *msgsokP, time_t *atimeP)
 	(void)sprintf(path, "/dev/%s", tty);
 	if (stat(path, &s) < 0)
 		return 1;
+#ifdef NO_TERMINAL_SGID
+	*msgsokP = (s.st_mode & (S_IWRITE >> 6)) != 0;	/* all write bit */
+#else
 	*msgsokP = (s.st_mode & (S_IWRITE >> 3)) != 0;	/* group write bit */
+#endif
 	*atimeP = s.st_atime;
 	return 0;
 }

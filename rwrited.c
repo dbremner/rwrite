@@ -7,13 +7,17 @@
  * Created      : Tue Sep 13 15:27:46 1994 tri
  * Last modified: Sun Dec 11 16:55:06 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.22 $
+ * $Revision: 1.23 $
  * $State: Exp $
- * $Date: 1994/12/11 14:56:13 $
+ * $Date: 1994/12/11 15:41:19 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.22  1994/12/11 14:56:13  tri
+ * Revision 1.23  1994/12/11 15:41:19  tri
+ * #include <fcntl.h> for Solaris.  Should not make any harm
+ * for other systems.
+ *
+ * Revision 1.22  1994/12/11  14:56:13  tri
  * Minor fix.
  *
  * Revision 1.21  1994/12/10  11:28:38  tri
@@ -110,7 +114,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.22 1994/12/11 14:56:13 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.23 1994/12/11 15:41:19 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -135,6 +139,7 @@ static char *RCS_id = "$Id: rwrited.c,v 1.22 1994/12/11 14:56:13 tri Exp $";
 #include <netinet/ip.h>
 
 #include <utmp.h>
+#include <fcntl.h>
 
 #ifndef UT_LINESIZE
 #  define UT_LINESIZE 32

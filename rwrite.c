@@ -5,15 +5,19 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Wed Dec 14 05:02:07 1994 tri
+ * Last modified: Wed Dec 14 21:11:55 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.33 $
+ * $Revision: 1.34 $
  * $State: Exp $
- * $Date: 1994/12/14 03:03:23 $
+ * $Date: 1994/12/14 19:12:36 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.33  1994/12/14 03:03:23  tri
+ * Revision 1.34  1994/12/14 19:12:36  tri
+ * Hacked udp connection type a bit, but it
+ * does not seem to work.
+ *
+ * Revision 1.33  1994/12/14  03:03:23  tri
  * Fixed a few annoying features and added
  * -version flag.
  *
@@ -146,7 +150,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.33 1994/12/14 03:03:23 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.34 1994/12/14 19:12:36 tri Exp $";
 #endif /* not lint */
 
 #define RWRITE_VERSION_NUMBER	"1.1b25"	/* Client version   */
@@ -442,7 +446,11 @@ char **read_user_message(FILE *f)
     /*NOTREACHED*/
 }
 
-int dump_msg_to_outlogs(char **msg, char *addr, int failed, char *userhome)
+int dump_msg_to_outlogs(char **msg, 
+			char *addr, 
+			int failed, 
+			char *userhome, 
+			int udp_p)
 {
     int i, n;
     FILE *f;
@@ -472,9 +480,10 @@ int dump_msg_to_outlogs(char **msg, char *addr, int failed, char *userhome)
 	    strcpy(logfile, rc_outlog[i]);
 	}
 	if(f = fopen(logfile, "a")) {
-	    fprintf(f, "\n%s%cessage to %s at %s", 
+	    fprintf(f, "\n%s%s%cessage to %s at %s", 
 		    (failed ? "Failed " : ""),
-		    (failed ? 'm' : 'M'),
+		    (udp_p ? "UDP " : ""),
+		    ((failed || udp_p) ? 'm' : 'M'),
 		    addr, 
 		    nowstr);
 	    dequote_and_write(f,
@@ -523,6 +532,27 @@ int write_string(int fd, char *s)
     return 1;
 }
 
+/*
+ * Is string NULL or empty or full of whitespace?
+ */
+int is_str_whitespace(char *str)
+{
+    if((!str) || (!(*str))) {
+	return 1;
+    } else {
+	char *hlp;
+	for(hlp = str; ((*hlp) && ((*hlp == ' ') || (*hlp == '\011'))); hlp++)
+	    /*NOTHING*/;
+	if(!(*hlp))
+	    return 1;
+    }
+    return 0;
+}
+
+
+
+
+
 #define LEGAL_CODE(c) (((c)>=100)&&((c)<=999))
 #define IGNORABLE_CODE(c) ((((c)>=500)&&((c)<=599))  && \
                            ((c) != RWRITE_AUTOREPLY) && \
@@ -554,17 +584,13 @@ int rwp_dialog(int s,
     int mode, modeattr;
     FILE *hist_file;
 
-    if((!to) || (!(*to))) {
+    if(is_str_whitespace(to)) {
 	fprintf(stderr, "rwrite: Empty address.\n");
 	return 0;
-    } else {
-	char *hlp;
-	for(hlp = to; ((*hlp) && ((*hlp == ' ') || (*hlp == '\011'))); hlp++)
-	    /*NOTHING*/;
-	if(!(*hlp)) {
-	    fprintf(stderr, "rwrite: Empty address.\n");
-	    return 0;
-	}
+    }
+    if(is_str_whitespace(from)) {
+	fprintf(stderr, "rwrite: Empty from address.\n");
+	return 0;
     }
 
     if(!autoreply_sz) {
@@ -611,7 +637,10 @@ int rwp_dialog(int s,
 		}
 		modeattr = 1;
 		if(verbose > 1)
-		    fprintf(stderr, ">>>>TO %s\n", to);
+		    if(tty)
+			fprintf(stderr, ">>>>TO %s %s\n", to, tty);
+		    else
+			fprintf(stderr, ">>>>TO %s\n", to);
 		WRITE_STRING(s, "TO ");
 		WRITE_STRING(s, to);
 		if(tty) {
@@ -1074,9 +1103,26 @@ int rwp_dialog(int s,
     return 1;
 }
 
+int get_port_no(char *port)
+{
+    int p = 0;
+    char *hlp;
+    
+    if(port && *port && (strlen(port) < 7)) {
+	for(hlp = port; *hlp; hlp++)
+	    if((*hlp < '0') || (*hlp > '9'))
+		return -1;
+	    else
+		p = (p * 10) + (*hlp - '0');
+	if(p > 0) 
+	    return p;
+    }
+    return -1;
+}
+
 /**************** From Berkeley Unix's finger(1) *****************/
 /********************* Modifications by tri *********************/
-int open_to(char *name)
+int open_to(char *name, int udp_p)
 {
     int defport;
     struct in_addr defaddr;
@@ -1084,15 +1130,27 @@ int open_to(char *name)
     struct servent *sp;
     struct sockaddr_in sin;
     int s;
-
+    char *port = NULL;
+    int portno = 0;
     char *alist[1], *host;
     u_long inet_addr();
 
     if(!(host = strrchr(name, '@'))) {
 	host = "localhost";
+	if(!(port = strrchr(name, '#'))) {
+	    port = "rwrite";
+	} else {
+	    *port++ = '\000';
+	}
     } else {
 	*host++ = '\000';
+	if(!(port = strrchr(host, '#'))) {
+	    port = "rwrite";
+	} else {
+	    *port++ = '\000';
+	}
     }
+    portno = get_port_no(port);
     if(!(hp = gethostbyname(host))) {
 	defaddr.s_addr = inet_addr(host);
 	if(defaddr.s_addr == -1) {
@@ -1107,14 +1165,20 @@ int open_to(char *name)
 	def.h_aliases = 0;
 	hp = &def;
     }
-    if(!(sp = getservbyname("rwrite", "tcp"))) {
-	if(RWRITE_DEFAULT_PORT > 0) {
+    if(!(sp = getservbyname(port, (udp_p ? "udp" : "tcp")))) {
+	if(portno > 0) {
+	    defport = portno;
+	} else if((RWRITE_DEFAULT_PORT > 0) && (!(strcmp(port, "rwrite")))) {
 	    if(verbose)
-		fprintf(stderr, "rwrite: Warning, tcp port defaulted to %d.  Update /etc/services.\n", RWRITE_DEFAULT_PORT);
+		fprintf(stderr, 
+			"rwrite: Warning, port defaulted to %d.  Update /etc/services.\n", 
+			RWRITE_DEFAULT_PORT);
 	    defport = RWRITE_DEFAULT_PORT;
 	} else {
-	    fprintf(stderr, "rwrite: rwrite/tcp unknown service.  Update /etc/services.\n");
-	    return 0;
+	    fprintf(stderr, 
+		    "rwrite: %s unknown service.  Update /etc/services.\n", 
+		    port);
+	    return -1;
 	}
     } else {
 	defport = 0;
@@ -1122,7 +1186,9 @@ int open_to(char *name)
     sin.sin_family = hp->h_addrtype;
     memcpy((char *)&sin.sin_addr, hp->h_addr, hp->h_length);
     sin.sin_port = (sp ? (sp->s_port) : htons(defport));
-    if((s = socket(hp->h_addrtype, SOCK_STREAM, 0)) < 0) {
+    if((s = socket(hp->h_addrtype,
+		   (udp_p ? SOCK_DGRAM : SOCK_STREAM),
+		   0)) < 0) {
 	perror("rwrite: socket");
 	return -1;
     }
@@ -1225,9 +1291,66 @@ void flush_stdin()
     return;
 }
 
+char *generete_udp_dialog(char *to, 
+			  char *tty, 
+			  char *from, 
+			  char **msg, 
+			  int *len)
+{
+    int dialog_len;
+    char *dialog;
+    int ttyp;
+    int i;
+
+    if((!msg) || (!(msg[0]))) {
+	fprintf(stderr, "rwrite: Empty message.\n");
+	return NULL;
+    }
+    if(is_str_whitespace(to)) {
+	fprintf(stderr, "rwrite: Empty address.\n");
+	return NULL;
+    }
+    if(is_str_whitespace(from)) {
+	fprintf(stderr, "rwrite: Empty from address.\n");
+	return NULL;
+    }
+    ttyp = !(is_str_whitespace(tty));
+
+    dialog_len = 64 + strlen(to) + strlen(from);
+    if(ttyp)
+	dialog_len += strlen(tty) + 1;
+    for(i = 0; msg[i]; i++)
+	dialog_len += strlen(msg[i]) + 1;
+    if(dialog_len > UDP_DIALOG_LEN_MAX) {
+	fprintf(stderr, "rwrite: Too long UDP message..\n");
+	return NULL;
+    }
+    if(!(dialog = (char *)malloc(dialog_len * sizeof(char)))) {
+	fprintf(stderr, "rwrite: Out of memory.\n");
+	return NULL;
+    }
+    strcpy(dialog, "FROM ");
+    strcat(dialog, from);
+    strcat(dialog, "\012TO ");
+    strcat(dialog, to);
+    if(ttyp) {
+	strcat(dialog, " ");
+	strcat(dialog, tty);
+    }
+    strcat(dialog, "\012DATA\012");
+    for(i = 0; msg[i]; i++) {
+	strcat(dialog, msg[i]);
+	strcat(dialog, "\012");
+    }
+    strcat(dialog, ".\012SEND\012QUIT\012");
+    if(len)
+	*len = strlen(dialog);
+    return(dialog);
+}
+
 #define USAGE()           \
      { fprintf(stderr,    \
-	       "Usage: rwrite [-r] [-b|B] [-v[v]] user[@host][:tty] ...\n"); }
+       "Usage: rwrite [-r] [-b|B] [-t|u] [-v[v]] user[@host][#port][:tty] ...\n"); }
 
 int main(int argc, char **argv)
 {
@@ -1236,14 +1359,14 @@ int main(int argc, char **argv)
     char **msg;
     extern char *optarg;
     extern int optind, optopt;
-    int resend = 0, explicit_bg = 0, background = 0;
+    int resend = 0, explicit_bg = 0, background = 0, udp = 0;
     char *userhome;
-    
+
     if((argc == 2) && (!(strcmp("-version", argv[1])))) {
 	fprintf(stderr, "Rwrite version %s.\n", RWRITE_VERSION_NUMBER);
 	exit(0);
     }
-    while ((ch = getopt(argc, argv, ":vrf:bBq")) != -1) {
+    while ((ch = getopt(argc, argv, ":vrf:bBqut")) != -1) {
 	switch(ch) {
 	case 'v':	
 	    verbose++;
@@ -1269,6 +1392,15 @@ int main(int argc, char **argv)
 	    break;
 	case 'q':
 	    quiet = 1;
+	    break;
+	case 't':
+	    udp = 0;
+	    break;
+	case 'u':
+	    udp = 1;
+	    fprintf(stderr, 
+		    "rwrite: UDP is not supported.\n");
+	    exit(1);
 	    break;
 	case ':':
 	    fprintf(stderr, 
@@ -1314,21 +1446,21 @@ int main(int argc, char **argv)
     }	
     if(!explicit_bg)
 	background = default_bg();
-    if(((argc - optind) == 1) && (!resend) && (!background)) {
+    if(((argc - optind) == 1) && (!resend) && (!background) && (!udp)) {
 	if(!(to = (char *)malloc(strlen(argv[optind]) + 1))) {
 	    exit(2);
 	}
 	strcpy(to, argv[optind]);
 	blow_target_addr(to, &to, &tty);
 	fix_tty_quote(tty);
-	if(0 > (s = open_to(to))) {
+	if(0 > (s = open_to(to, 0))) {
 	    flush_stdin();
 	    exit(3);
 	}
 	ret = rwp_dialog(s, to, tty, from, NULL, 1);
 	close(s);
 	spit_autoreply(argv[optind]);
-	dump_msg_to_outlogs(last_msg, argv[optind], (!ret), userhome);
+	dump_msg_to_outlogs(last_msg, argv[optind], (!ret), userhome, 0);
 	if(!ret)
 	    flush_stdin();
 	exit(ret ? 0 : (4));
@@ -1386,19 +1518,47 @@ int main(int argc, char **argv)
 	    strcpy(to, argv[i]);
 	    blow_target_addr(to, &to, &tty);
 	    fix_tty_quote(tty);
-	    if(0 > (s = open_to(to))) {
-		if(!quiet)
-		    fprintf(stderr, "rwrite: Skipped %s.\n", argv[i]);
-	    } else {
-		ret = rwp_dialog(s, to, tty, from, msg, 0);
-		close(s);
-		if(!ret) {
+	    if(udp) {
+		if(0 > (s = open_to(to, 1))) {
+		    ret = 0;
 		    if(!quiet)
 			fprintf(stderr, "rwrite: Skipped %s.\n", argv[i]);
+		} else {
+		    int len;
+		    char *dialog;
+
+		    if(dialog = generete_udp_dialog(to, tty, from, msg, &len)) {
+			/* Dump dialog to the socket. XXX */
+			ret = 0;
+			ret = (len == send(s, dialog, len, 0));
+			free(dialog);
+		    } else {
+			ret = 0;
+			if(!quiet)
+			    fprintf(stderr, "rwrite: Skipped %s.\n", argv[i]);
+		    }
+		    close(s);
+		    if(!ret) {
+			if(!quiet)
+			    fprintf(stderr, "rwrite: Skipped %s.\n", argv[i]);
+		    }
 		}
-		spit_autoreply(argv[i]);
-		dump_msg_to_outlogs(last_msg, argv[i], (!ret), userhome);
+	    } else {
+		if(0 > (s = open_to(to, 0))) {
+		    ret = 0;
+		    if(!quiet)
+			fprintf(stderr, "rwrite: Skipped %s.\n", argv[i]);
+		} else {
+		    ret = rwp_dialog(s, to, tty, from, msg, 0);
+		    close(s);
+		    if(!ret) {
+			if(!quiet)
+			    fprintf(stderr, "rwrite: Skipped %s.\n", argv[i]);
+		    }
+		    spit_autoreply(argv[i]);
+		}
 	    }
+	    dump_msg_to_outlogs(last_msg, argv[i], (!ret), userhome, udp);
 	    free(to);
 	}
 	/* Message array msg could be freed here but... XXX */

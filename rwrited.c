@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Wed Dec 14 05:01:38 1994 tri
+ * Last modified: Wed Dec 14 20:35:44 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.33 $
+ * $Revision: 1.34 $
  * $State: Exp $
- * $Date: 1994/12/14 03:03:23 $
+ * $Date: 1994/12/14 19:12:36 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.33  1994/12/14 03:03:23  tri
+ * Revision 1.34  1994/12/14 19:12:36  tri
+ * Hacked udp connection type a bit, but it
+ * does not seem to work.
+ *
+ * Revision 1.33  1994/12/14  03:03:23  tri
  * Fixed a few annoying features and added
  * -version flag.
  *
@@ -149,7 +153,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.33 1994/12/14 03:03:23 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.34 1994/12/14 19:12:36 tri Exp $";
 #endif /* not lint */
 
 #define RWRITED_VERSION_NUMBER	"1.1b25"	/* Server version   */
@@ -341,56 +345,70 @@ void set_hostnames(int get_remote)
 /*
  * Simple commands
  */
-void rwrite_helo()
+void rwrite_helo(int udp)
 { 
-    fprintf(stdout, "%03d Hello %s.  This is %s speaking.\n",
-	    RWRITE_HELO, 
-	    (remote_host[0] ? remote_host : "UNKNOWN"),
-	    my_host); 
-    fflush(stdout);
+    if(!udp) {
+	fprintf(stdout, "%03d Hello %s.  This is %s speaking.\n",
+		RWRITE_HELO, 
+		(remote_host[0] ? remote_host : "UNKNOWN"),
+		my_host); 
+	fflush(stdout);
+    }
     return;
 }
 
-void rwrite_ver()
+void rwrite_ver(int udp)
 {
-    RWRITE_MSG(RWRITE_VER, "Rwrited version " RWRITED_VERSION_NUMBER ".");
+    if(!udp) {
+	RWRITE_MSG(RWRITE_VER, "Rwrited version " RWRITED_VERSION_NUMBER ".");
+    }
     return;
 }
 
-void rwrite_prot()
+void rwrite_prot(int udp)
 {
-    RWRITE_MSG(RWRITE_PROT, "RWP version " RWP_VERSION_NUMBER ".");
+    if(!udp) {
+	RWRITE_MSG(RWRITE_PROT, "RWP version " RWP_VERSION_NUMBER ".");
+    }
     return;
 }
 
-void rwrite_ready()
+void rwrite_ready(int udp)
 {
-    RWRITE_MSG(RWRITE_READY, "Ready.");
+    if(!udp) {
+	RWRITE_MSG(RWRITE_READY, "Ready.");
+    }
     return;
 }
 
-void rwrite_help()
+void rwrite_help(int udp)
 {
-    RWRITE_MSG(RWRITE_HELP, "Valid commands are:");
-    RWRITE_MSG(RWRITE_HELP, "    BYE,    DATA,   HELP,   HELO,");
-    RWRITE_MSG(RWRITE_HELP, "    RSET,   SEND,   PROT,   QUIT,");
-    RWRITE_MSG(RWRITE_HELP, "    VRFY,   VER");
-    RWRITE_MSG(RWRITE_HELP, "    FROM senderlogin");
-    RWRITE_MSG(RWRITE_HELP, "    FHST senderhost");
-    RWRITE_MSG(RWRITE_HELP, "    TO   recipentlogin");
-    RWRITE_MSG(RWRITE_HELP, "    FWDS current_hop_count");
+    if(!udp) {
+	RWRITE_MSG(RWRITE_HELP, "Valid commands are:");
+	RWRITE_MSG(RWRITE_HELP, "    BYE,    DATA,   HELP,   HELO,");
+	RWRITE_MSG(RWRITE_HELP, "    RSET,   SEND,   PROT,   QUIT,");
+	RWRITE_MSG(RWRITE_HELP, "    VRFY,   VER");
+	RWRITE_MSG(RWRITE_HELP, "    FROM senderlogin");
+	RWRITE_MSG(RWRITE_HELP, "    FHST senderhost");
+	RWRITE_MSG(RWRITE_HELP, "    TO   recipentlogin");
+	RWRITE_MSG(RWRITE_HELP, "    FWDS current_hop_count");
+    }
     return;
 }
 
-void rwrite_bye()
+void rwrite_bye(int udp)
 {
-    RWRITE_MSG(RWRITE_BYE, "Goodbye.");
+    if(!udp) {
+	RWRITE_MSG(RWRITE_BYE, "Goodbye.");
+    }
     exit(0);
 }
 
-void rwrite_quit()
+void rwrite_quit(int udp)
 {
-    RWRITE_MSG(RWRITE_BYE, "Quit.");
+    if(!udp) {
+	RWRITE_MSG(RWRITE_BYE, "Quit.");
+    }
     exit(0);
 }
 
@@ -403,7 +421,7 @@ void rwrite_quit()
 
 static char *gm_getline (FILE *pf, int *p_limit, int *p_EOF);
 
-char **get_msg (FILE *pf, int line_limit, int char_limit)
+char **get_msg (FILE *pf, int line_limit, int char_limit, int udp)
 {
     int pos = 0;
     int eof = 0;
@@ -420,8 +438,9 @@ char **get_msg (FILE *pf, int line_limit, int char_limit)
 
     p_buffer[line_limit] = NULL;
 
-    RWRITE_MSG(RWRITE_GETMSG, 
-	       "Enter message.  Single dot '.' on line terminates.");
+    if(!udp)
+	RWRITE_MSG(RWRITE_GETMSG, 
+		   "Enter message.  Single dot '.' on line terminates.");
 
     while (!eof && char_limit) {
 	if(pos == line_limit)
@@ -951,8 +970,11 @@ int main(int argc, char **argv)
     char **message;
     int cmdmaxlen;
     int cmdeofp;
+    int udp = 0;
+    char *udpbuf;
+    int udpbuflen;
 
-    if((argc == 2) && (!(strcmp("-version", argv[1])))) {
+    if((argc > 1) && (!(strcmp("-version", argv[1])))) {
 	fprintf(stderr, "Rwrited version %s.\n", RWRITED_VERSION_NUMBER);
 	exit(0);
     }
@@ -966,46 +988,81 @@ int main(int argc, char **argv)
 #else
     server_egid = getgid();
 #endif
-    if((argc == 2) && (argv[1][0] == '-') && (argv[1][1] == '\000')) {
+    if((argc > 1) && (argv[1][0] == '-') && (argv[1][1] == '\000')) {
 	/*
 	 * We can run this on cmd-line using flag -.
 	 */
 	cmd_line = 1;
 	set_hostnames(0);
+	udp = 0; /* commad line is reliable :) */
     } else {
 	/*
 	 * Otherwise we presume we are running through a socket.
 	 */
 	cmd_line = 0;
+	udp = ((argc > 1) && (!(strcmp(argv[1], "udp"))));
 	set_hostnames(1);
     }
-    rwrite_helo();
-    rwrite_ver();
-    rwrite_prot();
+    if(udp) {
+	if(!(udpbuf = 
+	     (char *)malloc((UDP_DIALOG_LEN_MAX + 1) * sizeof(char)))) {
+	    /* Out of memory */
+	    exit(1);
+	}
+	if(0 >= 
+	   (udpbuflen = recv(0, udpbuf, UDP_DIALOG_LEN_MAX, MSG_WAITALL))) {
+	    /* Failed */
+	    exit(1);
+	}
+	udpbuflen = 0;
+    }
+    rwrite_helo(udp);
+    rwrite_ver(udp);
+    rwrite_prot(udp);
     if(!(identify_remote_by_identd(identd_from_user, 
 				   sizeof(identd_from_user))))
 	identd_from_user[0] = '\000';
     message = NULL;
     do {
-	rwrite_ready();
+	rwrite_ready(udp);
 	cmdmaxlen = 1024;
 	cmdeofp = 0;
-	cmd = gm_getline(stdin, &cmdmaxlen, &cmdeofp);
+	if(udp) {
+	    if(*udpbuf) {
+		cmd = udpbuf;
+		while((*udpbuf) && (*udpbuf != '\012'))
+		    udpbuf++;
+		if(*udpbuf) {
+		    *udpbuf = '\000';
+		    udpbuf++;
+		} else {
+		    cmdeofp = 1;
+		}
+	    } else {
+		cmd = NULL;
+		cmdeofp = 0;
+	    }
+	} else {
+	    int len;
+	    cmd = gm_getline(stdin, &cmdmaxlen, &cmdeofp);
+	    if(cmd && (len = strlen(cmd)) && (cmd[len - 1] == '\015'))
+		cmd[len - 1] = '\000';
+	}
 	if(!cmd)
 	    break;
 	if(strlen(cmd)) {
 	    if((!(strcmp(cmd, "bye")) || (!(strcmp(cmd, "BYE"))))) {
-		rwrite_bye();
+		rwrite_bye(udp);
 	    } else if((!(strcmp(cmd, "quit"))) || (!(strcmp(cmd, "QUIT")))) {
-		rwrite_quit();
+		rwrite_quit(udp);
 	    } else if((!(strcmp(cmd, "help"))) || (!(strcmp(cmd, "HELP")))) {
-		rwrite_help();
+		rwrite_help(udp);
 	    } else if((!(strcmp(cmd, "helo"))) || (!(strcmp(cmd, "HELO")))) {
-		rwrite_helo();
+		rwrite_helo(udp);
 	    } else if((!(strcmp(cmd, "ver"))) || (!(strcmp(cmd, "VER")))) {
-		rwrite_ver();
+		rwrite_ver(udp);
 	    } else if((!(strcmp(cmd, "prot"))) || (!(strcmp(cmd, "PROT")))) {
-		rwrite_prot();
+		rwrite_prot(udp);
 	    } else if((!(strcmp(cmd, "rset"))) || (!(strcmp(cmd, "RSET")))) {
 		if(from_path) {
 		    free(from_path);
@@ -1019,7 +1076,8 @@ int main(int argc, char **argv)
 		    message = NULL;
 		}
 		set_hostnames((!cmd_line) ? 1 : 0);
-		RWRITE_MSG(RWRITE_RSET_OK, "RSET ok.");
+		if(!udp)
+		    RWRITE_MSG(RWRITE_RSET_OK, "RSET ok.");
 	    } else if((!(strcmp(cmd, "from"))) || 
 		      (!(strcmp(cmd, "FROM"))) ||
 		      (!(strncmp(cmd, "from ", 5))) || 
@@ -1030,27 +1088,32 @@ int main(int argc, char **argv)
 		if((!user_from) || 
 		   (!(strlen(user_from))) || 
 		   ((strlen(user_from) + 2) >= sizeof(from_user))) {
-		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FROM userid");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FROM userid");
 		    goto out_of_parse;
 		}
 		strcpy(from_user, user_from);
 #ifdef NO_IDENTD
-		RWRITE_MSG(RWRITE_SENDER_OK, "Sender ok.");
+		if(!udp)
+		    RWRITE_MSG(RWRITE_SENDER_OK, "Sender ok.");
 #else
 		if(!(identd_from_user[0])) {
 		    /* Identd failed so no-one knows. */
 		    fake_user = 1;
-		    RWRITE_MSG(RWRITE_SENDER_OK, 
-			       "Sender ok but nonconfirmed.");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_SENDER_OK, 
+				   "Sender ok but nonconfirmed.");
 		} else if(strcmp(from_user, identd_from_user)) {
 		    /* It's a fake. */
 		    fake_user = 2;
-		    RWRITE_MSG(RWRITE_SENDER_OK, 
-			       "Sender ok but doesn't match with identd.");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_SENDER_OK, 
+				   "Sender ok but doesn't match with identd.");
 		} else {
 		    /* It's confirmed by identd. */
 		    fake_user = 0;
-		    RWRITE_MSG(RWRITE_SENDER_OK, "Sender ok.");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_SENDER_OK, "Sender ok.");
 		}
 #endif /* NO_IDENTD */
 	    } else if((!(strcmp(cmd, "to"))) ||
@@ -1068,7 +1131,8 @@ int main(int argc, char **argv)
 		if((!user_to) || 
 		   (!(len = strlen(user_to))) || 
 		   (len >= sizeof(to_user))) {
-		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: TO userid [tty]");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: TO userid [tty]");
 		    goto out_of_parse;
 		}
 		strcpy(to_user, user_to);
@@ -1083,8 +1147,9 @@ int main(int argc, char **argv)
 		}
 		if(tty_to && (len = strlen(tty_to))) {
 		    if((len + 6) >= sizeof(tty_hint)) {
-			RWRITE_MSG(RWRITE_ERR_SYNTAX, 
-				   "Syntax: TO userid [tty]");
+			if(!udp)
+			    RWRITE_MSG(RWRITE_ERR_SYNTAX, 
+				       "Syntax: TO userid [tty]");
 			goto out_of_parse;
 		    }
 		    if((tty_to[0] == '[') && (tty_to[len - 1] == ']')) {
@@ -1092,8 +1157,9 @@ int main(int argc, char **argv)
 			tty_to[len - 1] = '\000';
 			tty_to++;
 			if(!(strlen(tty_to))) {
-			    RWRITE_MSG(RWRITE_ERR_SYNTAX, 
-				       "Syntax: TO userid [tty]");
+			    if(!udp)
+				RWRITE_MSG(RWRITE_ERR_SYNTAX, 
+					   "Syntax: TO userid [tty]");
 			    goto out_of_parse;
 			}
 			strcpy(tty_hint, "/dev/");
@@ -1104,7 +1170,8 @@ int main(int argc, char **argv)
 			strcat(tty_force, tty_to);
 		    }
 		}
-		RWRITE_MSG(RWRITE_RCPT_OK, "Recipient ok.");
+		if(!udp)
+		    RWRITE_MSG(RWRITE_RCPT_OK, "Recipient ok.");
 	    } else if((!(strcmp(cmd, "fhst"))) ||
 		      (!(strcmp(cmd, "FHST"))) ||
 		      (!(strncmp(cmd, "fhst ", 5))) || 
@@ -1113,12 +1180,14 @@ int main(int argc, char **argv)
 		char *frm = get_user_name(cmd);
 		if((!frm) ||
 		   (!(strlen(frm)))) {
-		    RWRITE_MSG(RWRITE_ERR_SYNTAX, 
-			       "Syntax: FHST remote.host ...");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_ERR_SYNTAX, 
+				   "Syntax: FHST remote.host ...");
 		    goto out_of_parse;
 		}
 		if(!(strcmp(frm, remote_host))) {
-		    RWRITE_MSG(RWRITE_FHST_OK, "Original sender host ok.");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_FHST_OK, "Original sender host ok.");
 		    goto out_of_parse;
 		}
 		hlp1 = frm;
@@ -1161,7 +1230,8 @@ int main(int argc, char **argv)
 		}
 		strncpy(from_host, frm, sizeof(from_host));
 		from_host[sizeof(from_host) - 1] = '\000';
-		RWRITE_MSG(RWRITE_FHST_OK, "Original sender host ok.");
+		if(!udp)
+		    RWRITE_MSG(RWRITE_FHST_OK, "Original sender host ok.");
 	    } else if((!(strcmp(cmd, "fwds"))) ||
 		      (!(strcmp(cmd, "FWDS"))) ||
 		      (!(strncmp(cmd, "fwds ", 5))) || 
@@ -1172,7 +1242,8 @@ int main(int argc, char **argv)
 
 		if((!n_str) ||
 		   (!(strlen(n_str)))) {
-		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FWDS number");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FWDS number");
 		    goto out_of_parse;
 		}
 		hlp = n_str;
@@ -1180,28 +1251,33 @@ int main(int argc, char **argv)
 		    hlp++;
 		for(/*NOTHING*/; *hlp; hlp++) {
 		    if(!(isdigit(*hlp))) {
-			RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FWDS number");
+			if(!udp)
+			    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FWDS number");
 			goto out_of_parse;
 		    }
 		}
 		if((n = atoi(n_str)) < -1) {
-		    RWRITE_MSG(RWRITE_ERR_SYNTAX, 
-			       "Number of forwards less than -1.");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_ERR_SYNTAX, 
+				   "Number of forwards less than -1.");
 		    goto out_of_parse;
 		}
 		if((n != -1) && (n <= RWRITE_FWD_LIMIT)) {
-		    RWRITE_MSG(RWRITE_RCPT_OK_TO_FWD, "Ok to forward.");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_RCPT_OK_TO_FWD, "Ok to forward.");
 		} else {
-		    RWRITE_MSG(RWRITE_ERR_FWD_LIMIT_EXCEEDED,
-			       "Forward limit exceeded.");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_ERR_FWD_LIMIT_EXCEEDED,
+				   "Forward limit exceeded.");
 		}
 		fwd_count = n;
 	    } else if((!(strcmp(cmd, "vrfy"))) || (!(strcmp(cmd, "VRFY")))) {
 		int d_status;
 
 		if(!(to_user[0])) {
-		    RWRITE_MSG(RWRITE_ERR_NO_ADDRESS, 
-			       "Use TO before VRFY.");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_ERR_NO_ADDRESS, 
+				   "Use TO before VRFY.");
 		    goto out_of_parse;
 		}
 		if((d_status = can_deliver(to_user, 
@@ -1210,24 +1286,29 @@ int main(int argc, char **argv)
 		    switch(d_status) {
 		    case DELIVER_NO_SUCH_USER:
 #ifndef DO_NOT_TELL_USERS
-			RWRITE_MSG(RWRITE_ERR_NO_SUCH_USER, "No such user.");
+			if(!udp)
+			    RWRITE_MSG(RWRITE_ERR_NO_SUCH_USER, "No such user.");
 			break;
 #endif
 		    case DELIVER_USER_NOT_IN:
-			RWRITE_MSG(RWRITE_ERR_USER_NOT_IN, "User not in.");
+			if(!udp)
+			    RWRITE_MSG(RWRITE_ERR_USER_NOT_IN, "User not in.");
 			break;
 		    case DELIVER_PERMISSION_DENIED:
-			RWRITE_MSG(RWRITE_ERR_PERMISSION_DENIED, 
-				   "Permission denied.");
+			if(!udp)
+			    RWRITE_MSG(RWRITE_ERR_PERMISSION_DENIED, 
+				       "Permission denied.");
 			break;
 		    default:
-			RWRITE_MSG(RWRITE_ERR_UNKNOWN, "Unknown error.");
+			if(!udp)
+			    RWRITE_MSG(RWRITE_ERR_UNKNOWN, "Unknown error.");
 			break;
 		    }
 		    /* Possible autoreply could be given here */
 		    goto out_of_parse;
 		}
-		RWRITE_MSG(RWRITE_RCPT_OK_TO_SEND, "Recipient ok to send.");
+		if(!udp)
+		    RWRITE_MSG(RWRITE_RCPT_OK_TO_SEND, "Recipient ok to send.");
 	    } else if((!(strcmp(cmd, "data"))) || (!(strcmp(cmd, "DATA")))) {
 		if(message) {
 		    int i;
@@ -1235,27 +1316,33 @@ int main(int argc, char **argv)
 			free(message[i]);
 		    free(message);
 		}
-		if(!(message = get_msg(stdin, DATA_MAXLINES, DATA_MAXCHARS))) {
-		    RWRITE_MSG(RWRITE_ERR_NO_MESSAGE, "No message.");
+		if(!(message =
+		     get_msg(stdin, DATA_MAXLINES, DATA_MAXCHARS, udp))) {
+		    if(!udp)
+			RWRITE_MSG(RWRITE_ERR_NO_MESSAGE, "No message.");
 		    goto out_of_parse;
 		}
-		RWRITE_MSG(RWRITE_MSG_OK, "Message ok.");
+		if(!udp)
+		    RWRITE_MSG(RWRITE_MSG_OK, "Message ok.");
 	    } else if((!(strcmp(cmd, "send"))) || (!(strcmp(cmd, "SEND")))) {
 		int d_status;
 
 		if(!(from_user[0])) {
-		    RWRITE_MSG(RWRITE_ERR_NO_SENDER, 
-			       "Use FROM before SEND.");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_ERR_NO_SENDER, 
+				   "Use FROM before SEND.");
 		    goto out_of_parse;
 		}
 		if(!(to_user[0])) {
-		    RWRITE_MSG(RWRITE_ERR_NO_ADDRESS, 
-			       "Use TO before SEND.");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_ERR_NO_ADDRESS, 
+				   "Use TO before SEND.");
 		    goto out_of_parse;
 		}
 		if(!message) {
-		    RWRITE_MSG(RWRITE_ERR_NO_DATA, 
-			       "Use DATA before SEND.");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_ERR_NO_DATA, 
+				   "Use DATA before SEND.");
 		    goto out_of_parse;
 		}
 		if((d_status = deliver(to_user, 
@@ -1266,42 +1353,51 @@ int main(int argc, char **argv)
 				       message)) != DELIVER_OK) {
 		    switch(d_status) {
 		    case DELIVER_NO_SUCH_USER:
-			RWRITE_MSG(RWRITE_ERR_NO_SUCH_USER, "No such user.");
+			if(!udp)
+			    RWRITE_MSG(RWRITE_ERR_NO_SUCH_USER, "No such user.");
 			break;
 		    case DELIVER_USER_NOT_IN:
-			RWRITE_MSG(RWRITE_ERR_USER_NOT_IN, "User not in.");
+			if(!udp)
+			    RWRITE_MSG(RWRITE_ERR_USER_NOT_IN, "User not in.");
 			break;
 		    case DELIVER_PERMISSION_DENIED:
-			RWRITE_MSG(RWRITE_ERR_PERMISSION_DENIED, 
-				   "Permission denied.");
+			if(!udp)
+			    RWRITE_MSG(RWRITE_ERR_PERMISSION_DENIED, 
+				       "Permission denied.");
 			break;
 		    default:
-			RWRITE_MSG(RWRITE_ERR_UNKNOWN,"Unknown error.");
+			if(!udp)
+			    RWRITE_MSG(RWRITE_ERR_UNKNOWN,"Unknown error.");
 			break;
 		    }
 		    goto out_of_parse;
 		}
-		RWRITE_MSG(RWRITE_DELIVERY_OK, "Message delivered.");
+		if(!udp)
+		    RWRITE_MSG(RWRITE_DELIVERY_OK, "Message delivered.");
 	    } else if((!(strcmp(cmd, "quote"))) ||
 		      (!(strcmp(cmd, "QUOTE"))) ||
 		      (!(strncmp(cmd, "quote ", 6))) || 
 		      (!(strncmp(cmd, "QUOTE ", 6)))) {
 		char *qcmd =  get_user_name(cmd);
 		if((!qcmd) && (!(*qcmd))) {
-		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: QUOTE cmd ...");
+		    if(!udp)
+			RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: QUOTE cmd ...");
 		    goto out_of_parse;
 		}
 		/* Here we should deal with commands like CHARSET. XXX */
-                RWRITE_MSG(RWRITE_ERR_QUOTE_CMD_UNKNOWN, 
-			   "Unknown QUOTE command.");
+		if(!udp)
+		    RWRITE_MSG(RWRITE_ERR_QUOTE_CMD_UNKNOWN, 
+			       "Unknown QUOTE command.");
 	    } else {
-                RWRITE_MSG(RWRITE_ERR_SYNTAX, "Does not compute.");
+		if(!udp)
+		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Does not compute.");
             }
    	}
-	free(cmd);
+	if(!udp)
+	    free(cmd);
     out_of_parse:;
     } while(!cmdeofp);
-    rwrite_bye();
+    rwrite_bye(udp);
     /*NOTREACHED*/
     return 0;
 }

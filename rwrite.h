@@ -6,15 +6,19 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Tue Dec 13 21:56:50 1994 tri
+ * Last modified: Wed Dec 14 18:27:54 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.33 $
+ * $Revision: 1.34 $
  * $State: Exp $
- * $Date: 1994/12/13 20:29:53 $
+ * $Date: 1994/12/14 19:12:36 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.33  1994/12/13 20:29:53  tri
+ * Revision 1.34  1994/12/14 19:12:36  tri
+ * Hacked udp connection type a bit, but it
+ * does not seem to work.
+ *
+ * Revision 1.33  1994/12/13  20:29:53  tri
  * Preparation for autoconfig and tcp-port change.
  *
  * Revision 1.32  1994/12/13  16:25:06  tri
@@ -183,6 +187,11 @@
  */
 #define DEFAULT_MAX_LINES_IN	1024
 #define DEFAULT_MAX_CHARS_IN	(DEFAULT_MAX_LINES_IN * 64)
+
+/*
+ * Maximum length of the packet sent via udp.
+ */
+#define UDP_DIALOG_LEN_MAX 512
 
 /*
  * Maximum number of lines that DATA command can get.

@@ -5,15 +5,20 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Thu Dec 15 17:34:36 1994 tri
+ * Last modified: Sun Jun 11 18:23:36 1995 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.40 $
+ * $Revision: 1.41 $
  * $State: Exp $
- * $Date: 1995/02/10 07:32:50 $
+ * $Date: 1995/06/11 15:27:33 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.40  1995/02/10 07:32:50  tri
+ * Revision 1.41  1995/06/11 15:27:33  tri
+ * Does not block in tty open if
+ * utmp is broken and user has
+ * logged out.
+ *
+ * Revision 1.40  1995/02/10  07:32:50  tri
  * Wrap it up and call it 1.1.
  *
  * Revision 1.39  1994/12/15  15:34:56  tri
@@ -173,7 +178,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.40 1995/02/10 07:32:50 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.41 1995/06/11 15:27:33 tri Exp $";
 #endif /* not lint */
 
 #define RWRITED_VERSION_NUMBER	"1.1"	/* Server version   */
@@ -875,9 +880,19 @@ int writeto(char *tty,
 {
     int ttyp;
     FILE *f;
+#ifdef HAVE_FDOPEN
+    int tmpfd;
+#endif
 
+#ifdef HAVE_FDOPEN
+    if(0 > (tmpfd = open(tty, O_NONBLOCK |  O_WRONLY | O_APPEND, 0)))
+	return 0;
+    if(!(f = fdopen(tmpfd, "a")))
+	return 0;
+#else
     if(!(f = fopen(tty, "a")))
 	return 0;
+#endif /* HAVE_FDOPEN */
     if((ttyp = isatty(fileno(f))) && ring_bell())
 	fputc('\007', f);
     fputc('\n', f);
@@ -932,7 +947,17 @@ int writeto(char *tty,
     free(remotehost);
     if(via)
 	free(via);
+#ifdef HAVE_FDOPEN
+    {
+	int ret = 0;
+	ret = dequote_and_write(f, msg, max_lines_in(), max_chars_in(), ttyp); 
+	fclose(f);
+	close(tmpfd);
+	return(ret);
+    }
+#else
     return(dequote_and_write(f, msg, max_lines_in(), max_chars_in(), ttyp));
+#endif /* NO_FDOPEN */
 }
 /*
  * This is a function that should be developed radically.

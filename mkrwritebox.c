@@ -7,13 +7,16 @@
  * Created      : Sat Dec 10 17:27:21 1994 toka
  * Last modified: Sun Dec 11 20:34:37 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.3 $
+ * $Revision: 1.4 $
  * $State: Exp $
- * $Date: 1994/12/11 18:40:28 $
+ * $Date: 1994/12/11 18:48:49 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: mkrwritebox.c,v $
- * Revision 1.3  1994/12/11 18:40:28  tri
+ * Revision 1.4  1994/12/11 18:48:49  tri
+ * Fixed potential security bug.
+ *
+ * Revision 1.3  1994/12/11  18:40:28  tri
  * Now makerules work like the lavatory in the train
  * and portability is as good as I can make it.
  *
@@ -45,7 +48,7 @@
  */
 #define __MKRWRITEBOX_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: mkrwritebox.c,v 1.3 1994/12/11 18:40:28 tri Exp $";
+static char *RCS_id = "$Id: mkrwritebox.c,v 1.4 1994/12/11 18:48:49 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -109,7 +112,7 @@ int main(int argc, char **argv) {
 	perror("mkrwritebox");
 	return(3);
     }
-    if(0 > (chown(path, uid, ttygid))) {
+    if(0 > (fchown(f, uid, ttygid))) {
 	perror("mkrwritebox");
 	(void)unlink(path);
 	return(4);

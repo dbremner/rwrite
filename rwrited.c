@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Fri Dec  9 12:27:15 1994 tri
+ * Last modified: Sat Dec 10 01:50:38 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.19 $
+ * $Revision: 1.20 $
  * $State: Exp $
- * $Date: 1994/12/09 10:28:56 $
+ * $Date: 1994/12/09 23:57:49 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.19  1994/12/09 10:28:56  tri
+ * Revision 1.20  1994/12/09 23:57:49  tri
+ * Added a outbond message logging.
+ *
+ * Revision 1.19  1994/12/09  10:28:56  tri
  * Fixed a return value of dequote_and_send().
  *
  * Revision 1.18  1994/12/09  10:17:26  tri
@@ -100,7 +103,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.19 1994/12/09 10:28:56 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.20 1994/12/09 23:57:49 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -129,8 +132,6 @@ static char *RCS_id = "$Id: rwrited.c,v 1.19 1994/12/09 10:28:56 tri Exp $";
 #ifndef UT_LINESIZE
 #  define UT_LINESIZE 32
 #endif
-
-
 
 #ifndef _PATH_UTMP
 #  ifdef PATH_UTMP
@@ -687,7 +688,7 @@ int writeto(char *tty,
 
     if(!(f = fopen(tty, "a")))
 	return 0;
-    if(ttyp = isatty(fileno(f)))
+    if((ttyp = isatty(fileno(f))) && ring_bell())
 	fputc('\a', f);
     fputc('\n', f);
     if(ttyp)
@@ -701,14 +702,14 @@ int writeto(char *tty,
 		    via,
 		    PATH_SEPARATOR,
 		    remotehost, 
-		    (nowstr ? nowstr : "xxx"));
+		    (nowstr ? nowstr : "xxx\n"));
 	} else {
 	    fprintf(f, "Message from %s@%s (via %s) at %s", from, fromhost, 
-		    remotehost, (nowstr ? nowstr : "xxx"));
+		    remotehost, (nowstr ? nowstr : "xxx\n"));
 	}
     else
 	fprintf(f, "Message from %s@%s at %s", from, fromhost, 
-		(nowstr ? nowstr : "xxx"));
+		(nowstr ? nowstr : "xxx\n"));
     return(dequote_and_write(f, msg, max_lines_in(), max_chars_in(), ttyp));
 }
 /*

@@ -6,15 +6,18 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Fri Dec  9 23:07:54 1994 tri
+ * Last modified: Sat Dec 10 01:43:09 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.17 $
+ * $Revision: 1.18 $
  * $State: Exp $
- * $Date: 1994/12/09 21:08:12 $
+ * $Date: 1994/12/09 23:57:49 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.17  1994/12/09 21:08:12  tri
+ * Revision 1.18  1994/12/09 23:57:49  tri
+ * Added a outbond message logging.
+ *
+ * Revision 1.17  1994/12/09  21:08:12  tri
  * Added flush_stdin().
  *
  * Revision 1.16  1994/12/09  10:28:56  tri
@@ -116,7 +119,7 @@
 /* #define NO_GETEGID 1 */
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.1b5"		/* Server version   */
+#define RWRITED_VERSION_NUMBER	"1.1b6"		/* Server version   */
 #define RWRITE_VERSION_NUMBER	"1.1b6"		/* Client version   */
 /*
  * User definitions are in the following files.
@@ -163,6 +166,7 @@
  * Prototypes of the resource functions
  */
 int rc_read_p(void);
+int ring_bell(void);
 int max_lines_in(void);
 int add_to_list(char ***list, int *list_sz, char *str);
 int add_list_to_list(char ***tgt, int *tgt_sz, char **list);
@@ -178,6 +182,7 @@ int dequote_and_write(FILE *f, char **msg, int maxlines, int maxchars,
 		      int is_f_tty);
 #ifndef __RWRITERC_C__
 extern char **rc_tty_list;
+extern char **rc_outlog;
 #endif
 /*
  * #

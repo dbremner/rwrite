@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Fri Dec  9 23:02:08 1994 tri
+ * Last modified: Sat Dec 10 01:55:22 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.15 $
+ * $Revision: 1.16 $
  * $State: Exp $
- * $Date: 1994/12/09 21:08:12 $
+ * $Date: 1994/12/09 23:57:49 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.15  1994/12/09 21:08:12  tri
+ * Revision 1.16  1994/12/09 23:57:49  tri
+ * Added a outbond message logging.
+ *
+ * Revision 1.15  1994/12/09  21:08:12  tri
  * Added flush_stdin().
  *
  * Revision 1.14  1994/12/09  20:44:05  tri
@@ -85,7 +88,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.15 1994/12/09 21:08:12 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.16 1994/12/09 23:57:49 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -298,6 +301,55 @@ char **read_user_message(FILE *f)
 	buf[i] = line;
     }
     /*NOTREACHED*/
+}
+
+int dump_msg_to_outlogs(char **msg, char *addr, int failed, char *userhome)
+{
+    int i, j, n;
+    FILE *f;
+    time_t now;
+    char *nowstr;
+
+    if((!(rc_read_p())) || 
+       (!rc_outlog) || 
+       (!(*rc_outlog)) ||
+       (!msg) || 
+       (!(*msg)) ||
+       (!userhome))
+	return 0;
+    now = time(NULL);
+    if((!(nowstr = ctime(&now))) || (!(*nowstr)))
+	nowstr = "xxx\n";
+    if((!addr) || (!(*addr)))
+	addr = "xxx";
+    for((i = 0, n = 0); rc_outlog[i]; i++) {
+	char logfile[MAXPATHLEN];
+
+	if(((rc_outlog[i][0]) == '~') && 
+	   ((rc_outlog[i][1]) == '/') &&
+	   ((strlen(rc_outlog[i]) + strlen(userhome)) <  MAXPATHLEN)) {
+	    sprintf(logfile, "%s/%s", userhome, &(rc_outlog[i][2]));
+	} else {
+	    strcpy(logfile, rc_outlog[i]);
+	}
+	if(f = fopen(logfile, "a")) {
+	    fprintf(f, "\n%s%cessage to %s at %s\n", 
+		    (failed ? "Failed " : ""),
+		    (failed ? 'm' : 'M'),
+		    addr, 
+		    nowstr);
+	    for(j = 0; msg[j]; j++)
+		fprintf(f, "%s\n", msg[j]);
+	    fputc('\n', f);
+	    fclose(f);
+	    n++;
+	} else {
+	    fprintf(stderr,
+		    "rwrite: Warning, can't open outlog file \"%s\".\n", 
+		    logfile);
+	}
+    }
+    return(n);
 }
 
 char *read_rwp_resp(int s, int *code)
@@ -981,7 +1033,7 @@ int spit_autoreply(char *user)
 
     if(autoreply_lines) {
 	fprintf(stdout, "Automatic reply from %s at %s", 
-		user, nowstr ? nowstr : "xxx");
+		user, nowstr ? nowstr : "xxx\n");
 	return(dequote_and_write(stdout,
 				 autoreply, 
 				 max_lines_in(), 
@@ -992,17 +1044,27 @@ int spit_autoreply(char *user)
     return 0;
 }
 
+/*
+ * We try to flush input in the failure.
+ */
 void flush_stdin()
 {
 #ifndef DONT_FLUSH_INPUT_IN_FAILURE
     int a, r;
-    char buf[1024];
-    ioctl(0, FIONREAD, &a);
-    while (a > 0) {
-	r = read(0, buf, 1024);
-	if(r <= 0)
+    char buf[256];
+
+    while(1) {
+	ioctl(0, FIONREAD, &a);
+	if(!a)
 	    break;
-	a -= r;
+	while (a > 0) {
+	    r = read(0, buf, sizeof(buf));
+	    if(r < 0)
+		return;
+	    if(r == 0)
+		break;
+	    a -= r;
+	}
     }
 #endif
     return;
@@ -1016,7 +1078,8 @@ int main(int argc, char **argv)
     extern char *optarg;
     extern int optind, optopt;
     int resend;
-
+    char *userhome;
+    
     while ((ch = getopt(argc, argv, ":vrf:bq")) != -1) {
 	switch(ch) {
 	case 'v':	
@@ -1069,6 +1132,9 @@ int main(int argc, char **argv)
 	    
 	    sprintf(rcfilename, "%s/%s", pwd->pw_dir, RWRITE_CONFIG_FILE);
 	    read_rc(rcfilename);
+	    userhome = pwd->pw_dir;
+	} else {
+	    userhome = "/nonexistent";
 	}
 	if(!(from = (char *)malloc(strlen(tmp) + 1))) {
 	    exit(2);
@@ -1089,6 +1155,7 @@ int main(int argc, char **argv)
 	ret = rwp_dialog(s, to, tty, from, NULL, 1);
 	close(s);
 	spit_autoreply(argv[optind]);
+	dump_msg_to_outlogs(last_msg, argv[optind], (!ret), userhome);
 	if(!ret)
 	    flush_stdin();
 	exit(ret ? 0 : (4));
@@ -1158,6 +1225,7 @@ int main(int argc, char **argv)
 			fprintf(stderr, "rwrite: Skipped %s.\n", argv[i]);
 		}
 		spit_autoreply(argv[i]);
+		dump_msg_to_outlogs(last_msg, argv[i], (!ret), userhome);
 	    }
 	    free(to);
 	}

@@ -5,15 +5,18 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Fri Dec  9 12:27:54 1994 tri
+ * Last modified: Sat Dec 10 01:17:32 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.7 $
+ * $Revision: 1.8 $
  * $State: Exp $
- * $Date: 1994/12/09 10:28:56 $
+ * $Date: 1994/12/09 23:57:49 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.7  1994/12/09 10:28:56  tri
+ * Revision 1.8  1994/12/09 23:57:49  tri
+ * Added a outbond message logging.
+ *
+ * Revision 1.7  1994/12/09  10:28:56  tri
  * Fixed a return value of dequote_and_send().
  *
  * Revision 1.6  1994/12/08  23:38:11  tri
@@ -60,7 +63,7 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.7 1994/12/09 10:28:56 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.8 1994/12/09 23:57:49 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -86,6 +89,7 @@ int rc_tty_list_sz  = 0;
 int rc_outlog_sz    = 0;
 int rc_incoming_max    = DEFAULT_MAX_LINES_IN;
 int rc_ch_incoming_max = DEFAULT_MAX_CHARS_IN;
+int no_bell = 0;
 
 #define KILL_C_TABLE(c) { char **_x = c; if(c) { while(*_x) {  \
                                                      free(*_x); *_x = NULL; }}}
@@ -94,6 +98,11 @@ static char hex_char[] = { '0', '1', '2', '3', '4', '5', '6', '7',
 			   '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
 static char quote_list[256] = { '\000' };
+
+int ring_bell()
+{
+    return(rc_read ? (!(no_bell)) : 1);
+}
 
 int max_lines_in()
 {
@@ -183,6 +192,7 @@ void reset_rc()
     KILL_C_TABLE(rc_tty_list);
     KILL_C_TABLE(rc_outlog);
 
+    no_bell = 0;
     rc_read = 0;
     all_ttys = 0;
     show_quoted = 0;
@@ -389,6 +399,20 @@ void read_rc(char *fn)
 			    free(value);
 #ifdef DEBUG
 			fprintf(stdout, "%03d ok notty\n", RWRITE_DEBUG);
+#endif
+		    } else if(!(strcmp(tag, "bell"))) {
+			no_bell = 0;
+			if(value)
+			    free(value);
+#ifdef DEBUG
+			fprintf(stdout, "%03d ok bell\n", RWRITE_DEBUG);
+#endif
+		    } else if(!(strcmp(tag, "nobell"))) {
+			no_bell = 1;
+			if(value)
+			    free(value);
+#ifdef DEBUG
+			fprintf(stdout, "%03d ok nobell\n", RWRITE_DEBUG);
 #endif
 		    } else if(!(strcmp(tag, "showquoted"))) {
 			show_quoted = 1;

@@ -5,14 +5,17 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Tue Oct 24 23:53:56 1995 tri
+ * Last modified: Tue Nov 14 08:30:46 1995 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.40 $
+ * $Revision: 1.41 $
  * $State: Exp $
- * $Date: 1995/10/24 21:54:56 $
+ * $Date: 1995/11/14 06:35:54 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
+ * Revision 1.41  1995/11/14 06:35:54  tri
+ * Readline library can be disabled in rc-file.
+ *
  * Revision 1.40  1995/10/24 21:54:56  tri
  * Added support for gnu libreadline.
  *
@@ -170,7 +173,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.40 1995/10/24 21:54:56 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.41 1995/11/14 06:35:54 tri Exp $";
 #endif /* not lint */
 
 #define RWRITE_VERSION_NUMBER	"1.1"	/* Client version   */
@@ -444,7 +447,7 @@ char **read_user_message(FILE *f)
     for(i = 0; /*NOTHING*/; i++) {
 	char *hlp;
 
-	if(f == stdin) {
+	if(use_readline() && (f == stdin)) {
 #ifdef HAVE_LIBREADLINE
 	    line = readline(RWRITE_PROMPT);
 	    if(line) {

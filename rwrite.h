@@ -6,14 +6,17 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Tue Oct 24 23:27:56 1995 tri
+ * Last modified: Tue Nov 14 08:29:35 1995 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.36 $
+ * $Revision: 1.37 $
  * $State: Exp $
- * $Date: 1995/10/24 21:54:56 $
+ * $Date: 1995/11/14 06:35:54 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
+ * Revision 1.37  1995/11/14 06:35:54  tri
+ * Readline library can be disabled in rc-file.
+ *
  * Revision 1.36  1995/10/24 21:54:56  tri
  * Added support for gnu libreadline.
  *
@@ -195,6 +198,7 @@ int is_in_list(char **list, char *str);
 void reset_rc(void);
 void read_rc(char *fn);
 int is_allowed(char *name, char *host);
+int use_readline(void);
 int deliver_all_ttys(void);
 int no_tty_delivery(void);
 char *quote_str(char *s);

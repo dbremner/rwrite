@@ -5,15 +5,18 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Fri Sep 29 21:19:10 1995 tri
+ * Last modified: Tue Nov 14 08:33:46 1995 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.17 $
+ * $Revision: 1.18 $
  * $State: Exp $
- * $Date: 1995/09/29 19:30:06 $
+ * $Date: 1995/11/14 06:35:54 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.17  1995/09/29 19:30:06  tri
+ * Revision 1.18  1995/11/14 06:35:54  tri
+ * Readline library can be disabled in rc-file.
+ *
+ * Revision 1.17  1995/09/29  19:30:06  tri
  * Just cleaning a bit.
  *
  * Revision 1.16  1994/12/14  00:46:16  tri
@@ -96,7 +99,7 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.17 1995/09/29 19:30:06 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.18 1995/11/14 06:35:54 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -114,6 +117,7 @@ char **deny_user = NULL;
 char **allow_user = NULL;
 char **rc_tty_list = NULL;
 char **rc_outlog = NULL;
+char *rc_prompt = NULL;
 
 int rc_read = 0;
 int all_ttys = 0;
@@ -128,6 +132,7 @@ int rc_incoming_max    = DEFAULT_MAX_LINES_IN;
 int rc_ch_incoming_max = DEFAULT_MAX_CHARS_IN;
 int no_bell = 0;
 int bg_default = 0;
+int use_readline_lib = 1;
 
 #define KILL_C_TABLE(c) { char **_x = c; if(c) { while(*_x) {   \
                                                      free(*_x); \
@@ -137,6 +142,21 @@ static char hex_char[] = { '0', '1', '2', '3', '4', '5', '6', '7',
 			   '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
 static char quote_list[256] = { '\000' };
+
+static void strip_quotes(char *str)
+{
+    int len;
+
+    if((!str) || (!(*str)))
+	return;
+    if(*str == '"') {
+	len = strlen(str);
+	if((len > 1) && (str[len - 1] == '"')) {
+	    str[len - 1] = 0;
+	    strcpy(str, &(str[1]));
+	}
+    }
+}
 
 int ring_bell()
 {
@@ -230,6 +250,11 @@ int is_in_list(char **list, char *str)
     return 0;
 }
 
+int use_readline()
+{
+    return((rc_read && (!use_readline_lib)) ? 0 : 1);
+}
+
 void reset_rc()
 {
     KILL_C_TABLE(deny_user);
@@ -237,6 +262,7 @@ void reset_rc()
     KILL_C_TABLE(rc_tty_list);
     KILL_C_TABLE(rc_outlog);
 
+    use_readline_lib = 1;
     no_bell = 0;
     rc_read = 0;
     all_ttys = 0;
@@ -336,6 +362,13 @@ void read_rc(char *fn)
 			add_to_list(&rc_tty_list,
 				    &rc_tty_list_sz,
 				    value);
+#ifdef DEBUG
+			fprintf(stdout, "%03d ok > %s %s\n", 
+				RWRITE_DEBUG, tag, value);
+#endif
+		    } else if((!(strcmp(tag, "prompt"))) && value) {
+			strip_quotes(value);
+			rc_prompt = value;
 #ifdef DEBUG
 			fprintf(stdout, "%03d ok > %s %s\n", 
 				RWRITE_DEBUG, tag, value);
@@ -455,6 +488,20 @@ void read_rc(char *fn)
 #endif
 		    } else if(!(strcmp(tag, "nobell"))) {
 			no_bell = 1;
+			if(value)
+			    free(value);
+#ifdef DEBUG
+			fprintf(stdout, "%03d ok nobell\n", RWRITE_DEBUG);
+#endif
+		    } else if(!(strcmp(tag, "readline"))) {
+			use_readline_lib = 1;
+			if(value)
+			    free(value);
+#ifdef DEBUG
+			fprintf(stdout, "%03d ok nobell\n", RWRITE_DEBUG);
+#endif
+		    } else if(!(strcmp(tag, "noreadline"))) {
+			use_readline_lib = 0;
 			if(value)
 			    free(value);
 #ifdef DEBUG

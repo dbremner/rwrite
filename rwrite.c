@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Fri Dec  9 00:42:30 1994 tri
+ * Last modified: Fri Dec  9 22:43:21 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.13 $
+ * $Revision: 1.14 $
  * $State: Exp $
- * $Date: 1994/12/08 22:56:45 $
+ * $Date: 1994/12/09 20:44:05 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.13  1994/12/08 22:56:45  tri
+ * Revision 1.14  1994/12/09 20:44:05  tri
+ * Nuked the global resend variable.
+ *
+ * Revision 1.13  1994/12/08  22:56:45  tri
  * Fixed the quotation system on message
  * delivery.  Same message can now be quoted
  * differently for the each receiver.
@@ -79,7 +82,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.13 1994/12/08 22:56:45 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.14 1994/12/09 20:44:05 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -98,12 +101,12 @@ static char *RCS_id = "$Id: rwrite.c,v 1.13 1994/12/08 22:56:45 tri Exp $";
 
 int verbose = 0;
 int quiet = 0;
-int resend = 0;
 int fwds = 0;
 int backround = 0;
 char **autoreply = NULL;
 int autoreply_lines = 0;
 int autoreply_sz = 0;
+char **last_msg = NULL;
 
 /*
  * There is a possible race condition here if many messages are written
@@ -249,24 +252,26 @@ char *read_line(FILE *f)
 /*
  * Read message data until EOF from console.
  */
-char **read_user_message()
+char **read_user_message(FILE *f)
 {
     int buflen, i;
     char **buf;
     char *line;
 
+    last_msg = NULL;
     if(!(buf = ((char **)malloc(BUF_ALLOC_STEP * sizeof(char *)))))
 	return NULL;
     buflen = BUF_ALLOC_STEP;
     for(i = 0; /*NOTHING*/; i++) {
 	char *hlp;
 
-	if(!(line = read_line(stdin))) {
+	if(!(line = read_line(f))) {
 	    if(!i) {
 		free(buf);
 		return NULL;
 	    }
 	    buf[i] = NULL;
+	    last_msg = buf;
 	    return buf;
 	}
 	hlp = quote_str(line);
@@ -319,7 +324,9 @@ int write_string(int fd, char *s)
 }
 
 #define LEGAL_CODE(c) (((c)>=100)&&((c)<=999))
-#define IGNORABLE_CODE(c) ((((c)>=500)&&((c)<=599))&&((c) != RWRITE_AUTOREPLY)&&((c) != RWRITE_AUTOREPLY_AS_COMMENT))
+#define IGNORABLE_CODE(c) ((((c)>=500)&&((c)<=599))  && \
+                           ((c) != RWRITE_AUTOREPLY) && \
+                           ((c) != RWRITE_AUTOREPLY_AS_COMMENT))
 
 #define WRITE_STRING(f, str) {                                            \
        if(!(write_string(s, str))) {                                      \
@@ -384,7 +391,9 @@ int rwp_dialog(int s,
 	    switch(code) {
 	    case RWRITE_READY:
 		if(modeattr != 0) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		modeattr = 1;
@@ -400,7 +409,9 @@ int rwp_dialog(int s,
 		goto redo_dialog_loop;
 	    case RWRITE_RCPT_OK:
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n",
+			    code);
 		    return 0;
 		}
 		mode = DIALOG_TO;
@@ -408,7 +419,9 @@ int rwp_dialog(int s,
 		goto redo_dialog_loop;
 	    case RWRITE_ERR_PERMISSION_DENIED:
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		fprintf(stderr, "rwrite: Permission denied.\n");
@@ -416,7 +429,9 @@ int rwp_dialog(int s,
 	    case RWRITE_ERR_NO_SUCH_USER:
 #ifndef DO_NOT_TELL_USERS
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n",
+			    code);
 		    return 0;
 		}
 		fprintf(stderr, "rwrite: No such user.\n");
@@ -424,20 +439,26 @@ int rwp_dialog(int s,
 #endif
 	    case RWRITE_ERR_USER_NOT_IN:
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		fprintf(stderr, "rwrite: User not in.\n");
 		return 0;
 	    default:
-		fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		fprintf(stderr, 
+			"rwrite: Unexpected RWP response code (%03d).\n", 
+			code);
 		return 0;
 	    }
 	case DIALOG_TO:
 	    switch(code) {
 	    case RWRITE_READY:
 		if(modeattr != 0) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		modeattr = 1;
@@ -449,7 +470,9 @@ int rwp_dialog(int s,
 		goto redo_dialog_loop;
 	    case RWRITE_SENDER_OK:
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		mode = DIALOG_FROM;
@@ -457,14 +480,18 @@ int rwp_dialog(int s,
 		goto redo_dialog_loop;
 	    /* here maybe some error handling XXX */
 	    default:
-		fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		fprintf(stderr, 
+			"rwrite: Unexpected RWP response code (%03d).\n", 
+			code);
 		return 0;
 	    }
 	case DIALOG_FROM:
 	    switch(code) {
 	    case RWRITE_READY:
 		if(modeattr != 0) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		modeattr = 1;
@@ -477,7 +504,9 @@ int rwp_dialog(int s,
 		{
 		    char *hlp;
 		    if(modeattr != 1) {
-			fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+			fprintf(stderr, 
+				"rwrite: Unexpected RWP response code (%03d).\n",
+				code);
 			return 0;
 		    }
 		    for(hlp = resp; (*hlp && (*hlp != '|')); hlp++)
@@ -489,7 +518,9 @@ int rwp_dialog(int s,
 			hlp++;
 			if((autoreply_lines + 2) >= autoreply_sz) {
 			    char **newauto;
-			    if(!(newauto = (char **)calloc(BUF_ALLOC_STEP + autoreply_sz, sizeof(char *)))) {
+			    if(!(newauto = 
+				 (char **)calloc(BUF_ALLOC_STEP + autoreply_sz,
+						 sizeof(char *)))) {
 				fprintf(stderr, "rwrite: Out of memory.\n");
 				return 0;
 			    }
@@ -500,7 +531,8 @@ int rwp_dialog(int s,
 			    autoreply = newauto;
 			    autoreply_sz += BUF_ALLOC_STEP;
 			}
-			if(!(autoreply[autoreply_lines] = malloc(strlen(hlp) + 1))) {
+			if(!(autoreply[autoreply_lines] = 
+			     malloc(strlen(hlp) + 1))) {
 			    fprintf(stderr, "rwrite: Out of memory.\n");
 			    return 0;
 			}
@@ -510,7 +542,9 @@ int rwp_dialog(int s,
 		goto redo_dialog_loop;
 	    case RWRITE_RCPT_OK_TO_SEND:
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		/*
@@ -527,27 +561,35 @@ int rwp_dialog(int s,
 		goto redo_dialog_loop;
 	    case RWRITE_ERR_PERMISSION_DENIED:
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		fprintf(stderr, "rwrite: Permission denied.\n");
 		return 0;
 	    case RWRITE_ERR_USER_NOT_IN:
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		fprintf(stderr, "rwrite: User not in.\n");
 		return 0;
 	    case RWRITE_ERR_NO_SUCH_USER:
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		fprintf(stderr, "rwrite: No such user.\n");
 		return 0;
 	    default:
-		fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		fprintf(stderr, 
+			"rwrite: Unexpected RWP response code (%03d).\n", 
+			code);
 		return 0;
 	    }
 	case DIALOG_VRFY:
@@ -559,7 +601,9 @@ int rwp_dialog(int s,
 		switch(code) {
 		case RWRITE_READY:
 		    if(modeattr != 0) {
-			fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+			fprintf(stderr, 
+				"rwrite: Unexpected RWP response code (%03d).\n",
+				code);
 			return 0;
 		    }
 		    modeattr = 1;
@@ -574,7 +618,9 @@ int rwp_dialog(int s,
 		    goto redo_dialog_loop;
 		case RWRITE_RCPT_OK_TO_FWD:
 		    if(modeattr != 1) {
-			fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+			fprintf(stderr, 
+				"rwrite: Unexpected RWP response code (%03d).\n",
+				code);
 			return 0;
 		    }
 		    mode = DIALOG_FWDS;
@@ -582,13 +628,17 @@ int rwp_dialog(int s,
 		    goto redo_dialog_loop;
 		case RWRITE_ERR_FWD_LIMIT_EXCEEDED:
 		    if(modeattr != 1) {
-			fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+			fprintf(stderr,
+				"rwrite: Unexpected RWP response code (%03d).\n",
+				code);
 			return 0;
 		    }
 		    fprintf(stderr, "rwrite: Forward limit exceeded.\n");
 		    return 0;
 		default:
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr,
+			    "rwrite: Unexpected RWP response code (%03d).\n",
+			    code);
 		    return 0;
 		}
 	    }
@@ -596,7 +646,9 @@ int rwp_dialog(int s,
 	    switch(code) {
 	    case RWRITE_READY:
 		if(modeattr != 0) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr,
+			    "rwrite: Unexpected RWP response code (%03d).\n",
+			    code);
 		    return 0;
 		}
 		modeattr = 1;
@@ -605,77 +657,44 @@ int rwp_dialog(int s,
 		WRITE_STRING(s, "DATA\012");
 		goto redo_dialog_loop;
 	    case RWRITE_GETMSG:
-		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
-		    return 0;
-		}
-		if(resend) {
-		    if(!(hist_file = open_history_read())) {
-			fprintf(stderr, "rwrite: Can't open history file.\n");
+		{
+		    int i;
+		    if(modeattr != 1) {
+			fprintf(stderr,
+				"rwrite: Unexpected RWP response code (%03d).\n",
+				code);
 			return 0;
 		    }
-		    while(line = read_line(hist_file)) {
+		    if(!msg) {
+			if(!(msg = read_user_message(stdin))) 
+			    return 0;
+			else
+			    writehist = 1;
+		    }
+		    /*
+		     * Message is in msg array.
+		     */
+		    if(writehist) {
+			if(!(hist_file = open_history_write()))
+			    if(!quiet)
+				fprintf(stderr,
+					"rwrite: Warning, can't open history file.\n");
+		    } else {
+			hist_file = NULL;
+		    }
+		    for((i = 0, line = msg[i]); line; line = msg[++i]) {
+			if(hist_file)
+			    fprintf(hist_file, "%s\n", line);
 			if(verbose > 1)
 			    fprintf(stderr, ">>>>%s\n", line);
 			WRITE_STRING(s, line);
 			WRITE_STRING(s, "\012");
 		    }
-		} else {
-		    if(msg) {
-			int i;
-			/*
-			 * Message is in msg array.
-			 */
-			if(writehist) {
-			    if(!(hist_file = open_history_write()))
-				if(!quiet)
-				    fprintf(stderr, "rwrite: Warning, can't open history file.\n");
-			} else {
-			    hist_file = NULL;
-			}
-			for((i = 0, line = msg[i]); line; line = msg[++i]) {
-			    if(hist_file)
-				fprintf(hist_file, "%s\n", line);
-			    if(verbose > 1)
-				fprintf(stderr, ">>>>%s\n", line);
-			    WRITE_STRING(s, line);
-			    WRITE_STRING(s, "\012");
-			}
-			if(hist_file) {
-			    if(!(close_history_write(hist_file)))
-				if(!quiet)
-				    fprintf(stderr, "rwrite: Warning, can't close history file.\n");
-			}
-		    } else {
-			/*
-			 * Read message from user input.
-			 */
-			if(writehist) {
-			    if(!(hist_file = open_history_write()))
-				if(!quiet)
-				    fprintf(stderr, "rwrite: Warning, can't open history file.\n");
-			} else {
-			    hist_file = NULL;
-			}
-			    
-			while(line = read_line(stdin)) {
-			    char *hlp;
-			    
-			    hlp = quote_str(line);
-			    free(line);
-			    line = hlp;
-			    if(hist_file)
-				fprintf(hist_file, "%s\n", line);
-			    if(verbose > 1)
-				fprintf(stderr, ">>>>%s\n", line);
-			    WRITE_STRING(s, line);
-			    WRITE_STRING(s, "\012");
-			}
-			if(hist_file) {
-			    if(!(close_history_write(hist_file)))
-				if(!quiet)
-				    fprintf(stderr, "rwrite: Warning, can't close history file.\n");
-			}
+		    if(hist_file) {
+			if(!(close_history_write(hist_file)))
+			    if(!quiet)
+				fprintf(stderr, 
+					"rwrite: Warning, can't close history file.\n");
 		    }
 		}
 		if(verbose > 1)
@@ -685,28 +704,36 @@ int rwp_dialog(int s,
 		goto redo_dialog_loop;
 	    case RWRITE_ERR_NO_MESSAGE:
 		if(modeattr != 2) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr,
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		fprintf(stderr, "rwrite: Empty message.\n");
 		return 0;
 	    case RWRITE_MSG_OK:
 		if(modeattr != 2) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr,
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		mode = DIALOG_DATA;
 		modeattr = 0;
 		goto redo_dialog_loop;
 	    default:
-		fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		fprintf(stderr,
+			"rwrite: Unexpected RWP response code (%03d).\n", 
+			code);
 		return 0;
 	    }
 	case DIALOG_DATA:
 	    switch(code) {
 	    case RWRITE_READY:
 		if(modeattr != 0) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr,
+			    "rwrite: Unexpected RWP response code (%03d).\n",
+			    code);
 		    return 0;
 		}
 		modeattr = 1;
@@ -717,7 +744,9 @@ int rwp_dialog(int s,
 	    case RWRITE_DELIVERY_OK:
 	    case RWRITE_DELIVERY_FORWARDED:
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		mode = DIALOG_SEND;
@@ -728,7 +757,9 @@ int rwp_dialog(int s,
 		{
 		    char *hlp;
 		    if(modeattr != 1) {
-			fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+			fprintf(stderr, 
+				"rwrite: Unexpected RWP response code (%03d).\n",
+				code);
 			return 0;
 		    }
 		    for(hlp = resp; (*hlp && (*hlp != '|')); hlp++)
@@ -740,7 +771,9 @@ int rwp_dialog(int s,
 			hlp++;
 			if((autoreply_lines + 2) >= autoreply_sz) {
 			    char **newauto;
-			    if(!(newauto = (char **)calloc(BUF_ALLOC_STEP + autoreply_sz, sizeof(char *)))) {
+			    if(!(newauto = 
+				 (char **)calloc(BUF_ALLOC_STEP + autoreply_sz,
+						 sizeof(char *)))) {
 				fprintf(stderr, "rwrite: Out of memory.\n");
 				return 0;
 			    }
@@ -751,7 +784,8 @@ int rwp_dialog(int s,
 			    autoreply = newauto;
 			    autoreply_sz += BUF_ALLOC_STEP;
 			}
-			if(!(autoreply[autoreply_lines] = malloc(strlen(hlp) + 1))) {
+			if(!(autoreply[autoreply_lines] = 
+			     malloc(strlen(hlp) + 1))) {
 			    fprintf(stderr, "rwrite: Out of memory.\n");
 			    return 0;
 			}
@@ -761,27 +795,35 @@ int rwp_dialog(int s,
 		goto redo_dialog_loop;
 	    case RWRITE_ERR_PERMISSION_DENIED:
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		fprintf(stderr, "rwrite: Permission denied.\n");
 		return 0;
 	    case RWRITE_ERR_USER_NOT_IN:
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		fprintf(stderr, "rwrite: User not in.\n");
 		return 0;
 	    case RWRITE_ERR_NO_SUCH_USER:
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 0;
 		}
 		fprintf(stderr, "rwrite: No such user.\n");
 		return 0;
 	    default:
-		fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		fprintf(stderr,
+			"rwrite: Unexpected RWP response code (%03d).\n", 
+			code);
 		return 0;
 	    }
 	    /*
@@ -792,7 +834,9 @@ int rwp_dialog(int s,
 	    switch(code) {
 	    case RWRITE_READY:
 		if(modeattr != 0) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 1;
 		}
 		modeattr = 1;
@@ -802,7 +846,9 @@ int rwp_dialog(int s,
 		goto redo_dialog_loop;
 	    case RWRITE_BYE:
 		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
 		    return 1;
 		}
 		return 1;
@@ -946,7 +992,8 @@ int main(int argc, char **argv)
     char **msg;
     extern char *optarg;
     extern int optind, optopt;
-    
+    int resend;
+
     while ((ch = getopt(argc, argv, ":vrf:bq")) != -1) {
 	switch(ch) {
 	case 'v':	
@@ -1021,28 +1068,39 @@ int main(int argc, char **argv)
 	exit(ret ? 0 : (4));
     } else if((argc - optind) >= 1) {
 	int i;
+	FILE *f;
+
 	if(resend) {
-	    msg = NULL;
+	    FILE *hist_file;
+	    if(!(f = open_history_read())) {
+		fprintf(stderr, "rwrite: Can't open history file.\n");
+		exit(7);
+	    }
+	    if(!(msg = read_user_message(f))) {
+		fprintf(stderr, "rwrite: Empty message.\n");
+		fclose(f);
+		exit(4);
+	    }
+	    fclose(hist_file);
 	} else {
-	    FILE *f;
-		
-	    if(!(msg = read_user_message())) {
+	    if(!(msg = read_user_message(stdin))) {
 		fprintf(stderr, "rwrite: Empty message.\n");
 		exit(4);
 	    }
 	    /* Writes history file. */
 	    if(!(f = open_history_write())) {
 		if(!quiet)
-		    fprintf(stderr, "rwrite: Warning, can't open history file.\n");
+		    fprintf(stderr, 
+			    "rwrite: Warning, can't open history file.\n");
 	    } else {
-		int i;
 		char *line;
 		
 		for((i = 0, line = msg[i]); line; line = msg[++i])
 		    fprintf(f, "%s\n", line);
 		if((!(close_history_write(f))))
 		    if(!quiet)
-			fprintf(stderr, "rwrite: Warning, can't close history file.\n");
+			fprintf(stderr, 
+				"rwrite: Warning, can't close history file.\n");
 	    }
 	}
 	if(backround) {
@@ -1079,7 +1137,8 @@ int main(int argc, char **argv)
 	}
 	/* Message array msg could be freed here but... XXX */
     } else {
-	fprintf(stderr, "USAGE: rwrite [-f #] [-r] [-v] [-b] user[@host] ...\n");
+	fprintf(stderr, 
+		"USAGE: rwrite [-f #] [-r] [-v] [-b] user[@host][:tty] ...\n");
 	exit(1);
     }
     /*NOTREACHED*/

@@ -5,15 +5,19 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Fri Dec  9 00:46:54 1994 tri
+ * Last modified: Fri Dec  9 01:11:50 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.4 $
+ * $Revision: 1.5 $
  * $State: Exp $
- * $Date: 1994/12/08 22:56:45 $
+ * $Date: 1994/12/08 23:12:04 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.4  1994/12/08 22:56:45  tri
+ * Revision 1.5  1994/12/08 23:12:04  tri
+ * Fixed a quite serious quotation bug that appeared
+ * when only the global configuration was present.
+ *
+ * Revision 1.4  1994/12/08  22:56:45  tri
  * Fixed the quotation system on message
  * delivery.  Same message can now be quoted
  * differently for the each receiver.
@@ -50,7 +54,7 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.4 1994/12/08 22:56:45 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.5 1994/12/08 23:12:04 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -178,6 +182,7 @@ void reset_rc()
     show_quoted = 0;
     rc_incoming_max = DEFAULT_MAX_LINES_IN;
     rc_ch_incoming_max = DEFAULT_MAX_CHARS_IN;
+    memset(quote_list, 0, sizeof(quote_list));
     return;
 }
 
@@ -228,7 +233,6 @@ void read_rc(char *fn)
     int len;
 
     rc_read = 1;
-    memset(quote_list, 0, sizeof(quote_list));
     if(f = fopen(fn, "r")) {
 #ifdef DEBUG
 	fprintf(stdout, "%03d Opened \"%s\".\n", RWRITE_DEBUG, fn);

@@ -5,15 +5,18 @@
 # Make rules for rwrite.
 # ----------------------------------------------------------------------
 # Created      : Sun Dec 11 20:12:18 1994 tri
-# Last modified: Tue Dec 13 00:11:14 1994 tri
+# Last modified: Tue Dec 13 18:24:22 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 # $State: Exp $
-# $Date: 1994/12/12 22:11:28 $
+# $Date: 1994/12/13 16:25:06 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: Makefile.in,v $
-# Revision 1.15  1994/12/12 22:11:28  tri
+# Revision 1.16  1994/12/13 16:25:06  tri
+# Nothing.
+#
+# Revision 1.15  1994/12/12  22:11:28  tri
 # Version number + cleanup.
 #
 # Revision 1.14  1994/12/12  21:17:55  tri
@@ -79,7 +82,7 @@
 
 SHELL		= /bin/sh
 
-PACKET_VERSION	= 1.1b20
+PACKET_VERSION	= 1.1b21
 
 BINDIR		= /usr/local/bin
 MANDIR		= /usr/local/man

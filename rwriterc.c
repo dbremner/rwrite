@@ -7,13 +7,16 @@
  * Created      : Fri Oct 07 00:27:30 1994 tri
  * Last modified: Sun Nov 20 02:29:35 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.1 $
+ * $Revision: 1.2 $
  * $State: Exp $
- * $Date: 1994/11/20 00:47:18 $
+ * $Date: 1994/11/20 13:17:39 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.1  1994/11/20 00:47:18  tri
+ * Revision 1.2  1994/11/20 13:17:39  tri
+ * Included ctype.h.
+ *
+ * Revision 1.1  1994/11/20  00:47:18  tri
  * Initial revision
  *
  * ----------------------------------------------------------------------
@@ -37,12 +40,13 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.1 1994/11/20 00:47:18 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.2 1994/11/20 13:17:39 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "rwrite.h"
 #include "match.h"
 

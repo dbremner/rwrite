@@ -6,26 +6,23 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Wed Dec 14 18:27:54 1994 tri
+ * Last modified: Thu Dec 15 00:05:55 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.34 $
+ * $Revision: 1.35 $
  * $State: Exp $
- * $Date: 1994/12/14 19:12:36 $
+ * $Date: 1994/12/14 22:06:07 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.34  1994/12/14 19:12:36  tri
+ * Revision 1.35  1994/12/14 22:06:07  tri
+ * Cleanup.
+ *
+ * Revision 1.34  1994/12/14  19:12:36  tri
  * Hacked udp connection type a bit, but it
  * does not seem to work.
  *
  * Revision 1.33  1994/12/13  20:29:53  tri
  * Preparation for autoconfig and tcp-port change.
- *
- * Revision 1.32  1994/12/13  16:25:06  tri
- * Nothing.
- *
- * Revision 1.31  1994/12/12  22:11:48  tri
- * Version numbers.
  *
  * Revision 1.30  1994/12/12  21:17:55  tri
  * Closed files more pedantically.
@@ -34,12 +31,6 @@
  * Revision 1.29  1994/12/12  19:50:16  tri
  * Fixed a small but potentially harmful fclose(NULL) -bug.
  *
- * Revision 1.28  1994/12/12  15:58:41  tri
- * Copyright fixed a bit.
- *
- * Revision 1.27  1994/12/12  14:53:51  tri
- * Version number.
- *
  * Revision 1.26  1994/12/12  11:08:14  tri
  * Moved the name of the file containing last
  * message into rwrite.h
@@ -47,15 +38,9 @@
  * Revision 1.25  1994/12/11  21:25:30  tri
  * Cleaned up some warnings.  No functional changes.
  *
- * Revision 1.24  1994/12/11  18:45:50  tri
- * Minor fix.
- *
  * Revision 1.23  1994/12/11  18:16:28  tri
  * Some portability fixes and configuration stuff
  * moved to Makefile.
- *
- * Revision 1.22  1994/12/11  14:56:13  tri
- * Minor fix.
  *
  * Revision 1.21  1994/12/11  13:29:29  tri
  * Background message sending can be defaulted in
@@ -74,14 +59,8 @@
  * Revision 1.18  1994/12/09  23:57:49  tri
  * Added a outbond message logging.
  *
- * Revision 1.17  1994/12/09  21:08:12  tri
- * Added flush_stdin().
- *
  * Revision 1.16  1994/12/09  10:28:56  tri
  * Fixed a return value of dequote_and_send().
- *
- * Revision 1.15  1994/12/08  23:38:11  tri
- * Version strings update.
  *
  * Revision 1.14  1994/12/08  22:56:45  tri
  * Fixed the quotation system on message
@@ -123,12 +102,6 @@
  *
  * Revision 1.4  1994/09/15  20:14:42  tri
  * Completed the support of RWP version 1.0.
- *
- * Revision 1.3  1994/09/14  16:04:50  tri
- * Nothing really.
- *
- * Revision 1.2  1994/09/14  14:59:48  tri
- * Added a few codes.
  *
  * Revision 1.1  1994/09/13  12:32:13  tri
  * Initial revision

@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Mon Dec 12 13:30:42 1994 tri
+ * Last modified: Mon Dec 12 21:46:36 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.27 $
+ * $Revision: 1.28 $
  * $State: Exp $
- * $Date: 1994/12/12 15:58:41 $
+ * $Date: 1994/12/12 19:50:16 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.27  1994/12/12 15:58:41  tri
+ * Revision 1.28  1994/12/12 19:50:16  tri
+ * Fixed a small but potentially harmful fclose(NULL) -bug.
+ *
+ * Revision 1.27  1994/12/12  15:58:41  tri
  * Copyright fixed a bit.
  *
  * Revision 1.26  1994/12/12  11:30:54  tri
@@ -126,7 +129,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.27 1994/12/12 15:58:41 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.28 1994/12/12 19:50:16 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1230,11 +1233,10 @@ int main(int argc, char **argv)
 	    flush_stdin();
 	exit(ret ? 0 : (4));
     } else if((argc - optind) >= 1) {
-	int i;
-	FILE *f;
+	int i = 0;
+	FILE *f = NULL;
 
 	if(resend) {
-	    FILE *hist_file;
 	    if(!(f = open_history_read())) {
 		fprintf(stderr, "rwrite: Can't open history file.\n");
 		exit(7);
@@ -1244,7 +1246,6 @@ int main(int argc, char **argv)
 		fclose(f);
 		exit(4);
 	    }
-	    fclose(hist_file);
 	} else {
 	    if(!(msg = read_user_message(stdin))) {
 		fprintf(stderr, "rwrite: Empty message.\n");

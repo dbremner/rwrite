@@ -5,14 +5,17 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Tue Nov 14 08:30:46 1995 tri
+ * Last modified: Fri Jan 26 15:04:06 1996 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.41 $
+ * $Revision: 1.42 $
  * $State: Exp $
- * $Date: 1995/11/14 06:35:54 $
+ * $Date: 1996/05/17 12:08:52 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
+ * Revision 1.42  1996/05/17 12:08:52  tri
+ * *** empty log message ***
+ *
  * Revision 1.41  1995/11/14 06:35:54  tri
  * Readline library can be disabled in rc-file.
  *
@@ -173,7 +176,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.41 1995/11/14 06:35:54 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.42 1996/05/17 12:08:52 tri Exp $";
 #endif /* not lint */
 
 #define RWRITE_VERSION_NUMBER	"1.1"	/* Client version   */
@@ -1436,6 +1439,9 @@ int main(int argc, char **argv)
     int resend = 0, explicit_bg = 0, background = 0, udp = 0;
     char *userhome;
 
+#ifdef HAVE_LIBREADLINE
+    rl_readline_name = "rwrite";
+#endif
     if((argc == 2) && (!(strcmp("-version", argv[1])))) {
 	fprintf(stderr, "Rwrite version %s.\n", RWRITE_VERSION_NUMBER);
 	exit(0);

@@ -7,13 +7,16 @@
  * Created      : Tue Sep 13 15:28:07 1994 tri
  * Last modified: Thu Dec 15 06:57:13 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.38 $
+ * $Revision: 1.39 $
  * $State: Exp $
- * $Date: 1994/12/15 04:57:33 $
+ * $Date: 1995/02/10 07:32:50 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.38  1994/12/15 04:57:33  tri
+ * Revision 1.39  1995/02/10 07:32:50  tri
+ * Wrap it up and call it 1.1.
+ *
+ * Revision 1.38  1994/12/15  04:57:33  tri
  * Fixed udp-support.
  *
  * Revision 1.37  1994/12/14  22:22:38  tri
@@ -164,10 +167,10 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.38 1994/12/15 04:57:33 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.39 1995/02/10 07:32:50 tri Exp $";
 #endif /* not lint */
 
-#define RWRITE_VERSION_NUMBER	"1.1b30"	/* Client version   */
+#define RWRITE_VERSION_NUMBER	"1.1"	/* Client version   */
 
 #include <stdio.h>
 #include <string.h>

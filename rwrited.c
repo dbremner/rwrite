@@ -7,13 +7,16 @@
  * Created      : Tue Sep 13 15:27:46 1994 tri
  * Last modified: Thu Dec 15 17:34:36 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.39 $
+ * $Revision: 1.40 $
  * $State: Exp $
- * $Date: 1994/12/15 15:34:56 $
+ * $Date: 1995/02/10 07:32:50 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.39  1994/12/15 15:34:56  tri
+ * Revision 1.40  1995/02/10 07:32:50  tri
+ * Wrap it up and call it 1.1.
+ *
+ * Revision 1.39  1994/12/15  15:34:56  tri
  * Added one semicolon to make SQI compiler happy.
  *
  * Revision 1.38  1994/12/15  04:58:28  tri
@@ -170,10 +173,10 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.39 1994/12/15 15:34:56 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.40 1995/02/10 07:32:50 tri Exp $";
 #endif /* not lint */
 
-#define RWRITED_VERSION_NUMBER	"1.1b30"	/* Server version   */
+#define RWRITED_VERSION_NUMBER	"1.1"	/* Server version   */
 
 #include <stdio.h>
 #include <string.h>

@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Sun Dec 11 23:21:46 1994 tri
+ * Last modified: Mon Dec 12 04:22:29 1994 cirion
  * ----------------------------------------------------------------------
- * $Revision: 1.22 $
+ * $Revision: 1.23 $
  * $State: Exp $
- * $Date: 1994/12/11 21:25:30 $
+ * $Date: 1994/12/12 11:03:42 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.22  1994/12/11 21:25:30  tri
+ * Revision 1.23  1994/12/12 11:03:42  tri
+ * Added compatibility fixes from toka.
+ *
+ * Revision 1.22  1994/12/11  21:25:30  tri
  * Cleaned up some warnings.  No functional changes.
  *
  * Revision 1.21  1994/12/11  18:16:28  tri
@@ -110,7 +113,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.22 1994/12/11 21:25:30 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.23 1994/12/12 11:03:42 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -145,6 +148,11 @@ static char *RCS_id = "$Id: rwrite.c,v 1.22 1994/12/11 21:25:30 tri Exp $";
 #include <sys/ioctl.h>
 #endif
 
+#include <limits.h>
+#ifndef MAXPATHLEN
+#  define MAXPATHLEN PATH_MAX
+#endif
+
 #include "rwrite.h"
 
 int verbose = 0;
@@ -171,7 +179,11 @@ FILE *open_history_write()
     sprintf(path, "%s/.lastrwrite#", home);
     f = fopen(path, "w");
     if(f)
+#ifndef NEITHER_FCHOWN_NOR_FCHMOD
 	fchmod(fileno(f), 0600);
+#else
+	chmod(path, 0600);
+#endif
     return(f);
 } 
 
@@ -969,10 +981,11 @@ int open_to(char *name)
     struct servent *sp;
     struct sockaddr_in sin;
     int s;
-    char *alist[1], *host, *rindex();
+
+    char *alist[1], *host;
     u_long inet_addr();
 
-    if(!(host = rindex(name, '@'))) {
+    if(!(host = strrchr(name, '@'))) {
 	host = "localhost";
     } else {
 	*host++ = '\000';

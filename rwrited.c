@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Mon Dec 12 00:03:32 1994 tri
+ * Last modified: Mon Dec 12 04:11:53 1994 cirion
  * ----------------------------------------------------------------------
- * $Revision: 1.26 $
+ * $Revision: 1.27 $
  * $State: Exp $
- * $Date: 1994/12/11 22:04:16 $
+ * $Date: 1994/12/12 11:03:42 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.26  1994/12/11 22:04:16  tri
+ * Revision 1.27  1994/12/12 11:03:42  tri
+ * Added compatibility fixes from toka.
+ *
+ * Revision 1.26  1994/12/11  22:04:16  tri
  * Added support for ancient System V style
  * utmp that holds all kind of bogus information.
  *
@@ -125,7 +128,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.26 1994/12/11 22:04:16 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.27 1994/12/12 11:03:42 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -173,6 +176,10 @@ static char *RCS_id = "$Id: rwrited.c,v 1.26 1994/12/11 22:04:16 tri Exp $";
 #      define _PATH_UTMP "/etc/utmp"
 #    endif
 #  endif
+#endif
+
+#ifndef MAXPATHLEN
+#  define MAXPATHLEN PATH_MAX
 #endif
 
 #include "rwrite.h"

@@ -5,15 +5,18 @@
 # Make rules for rwrite.
 # ----------------------------------------------------------------------
 # Created      : Sun Dec 11 20:12:18 1994 tri
-# Last modified: Mon Dec 12 00:03:00 1994 tri
+# Last modified: Mon Dec 12 12:59:57 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $State: Exp $
-# $Date: 1994/12/11 22:04:16 $
+# $Date: 1994/12/12 11:03:42 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: Makefile.in,v $
-# Revision 1.6  1994/12/11 22:04:16  tri
+# Revision 1.7  1994/12/12 11:03:42  tri
+# Added compatibility fixes from toka.
+#
+# Revision 1.6  1994/12/11  22:04:16  tri
 # Added support for ancient System V style
 # utmp that holds all kind of bogus information.
 #
@@ -57,7 +60,7 @@
 
 SHELL		= /bin/sh
 
-PACKET_VERSION	= 1.1b15
+PACKET_VERSION	= 1.1b16
 
 BINDIR		= /usr/local/bin
 MANDIR		= /usr/local/man
@@ -68,45 +71,54 @@ MAN_OWNER	= bin
 MAN_GROUP	= bin
 MAN_MODE	= 444
 
+# The group which owns ttys. Usually "tty" or "terminal".
+# If you are running a trilobite which doesn't have a group for
+# ttys, your best bet is to create a new group for rwrite and
+# use that as RWRITED_GROUP.
 RWRITED_GROUP	= tty
 RWRITED_MODE	= 2555
 RWRITED_BINDIR	= $(BINDIR)
 
 CC		= gcc
-INSTALL		= install -c
+INSTALL 	= install -s -c
+INSTALLMAN	= install -c
+#INSTALL	= install
+#INSTALLMAN	= install
 TAR		= tar cvf
 COMPRESS	= gzip -9
 
-CFLAGS		= -DTTY_GROUP_NAME=\"$(RWRITED_GROUP)\"
-CFLAGS		+= -O
-#CFLAGS		+= -Wall
-#CFLAGS		+= -DDEBUG -g 
-
-# Some ancient systems miss these ones.
-#CFLAGS		+= -DNO_UNISTD_H=1
-#CFLAGS		+= -DNO_STDLIB_H=1
+#LDADD		= -linet -lPW
+MYCFLAGS	= -O
 
 # If DO_NOT_TELL_USERS is defined, server gives 
 # "user not in" notification instead of "no such
 # user".
-#CFLAGS		+= -DDO_NOT_TELL_USERS=1
+#CONF0		= -DDO_NOT_TELL_USERS=1
    
 # We try to flush stdin after the failed message.
 # But if you don't want this to be done, define
 # DONT_FLUSH_INPUT_IN_FAILURE.  In some systems
 # flushing may cause busyloop after nonsuccesful
 # message.  If shit happens, try this one out.
-#CFLAGS		+= -DDONT_FLUSH_INPUT_IN_FAILURE=1
+#CONF1		= -DDONT_FLUSH_INPUT_IN_FAILURE=1
 
 # Everyone should have following but...
-#CFLAGS		+= NO_GETEUID=1
-#CFLAGS		+= NO_GETEGID=1
+#CONF2		= -DNO_GETEUID=1
+#CONF3		= -DNO_GETEGID=1
+#CONF4		= -DNEITHER_FCHOWN_NOR_FCHMOD=damn
+
+# Some ancient systems miss these.
+#CONF5		= -DNO_UNISTD_H=1
+#CONF6		= -DNO_STDLIB_H=1
+
+# Someone may want to do debugging.
+#DEBUGFLAGS	= -Wall -DDEBUG -g 
 
 # Next define should never be needed, but in some braindamaged
 # system that have SystemV style definitions in headers but still
 # BSD like utmp format then you may get a compilation barf
 # "struct utmp has no member ut_type".  Next one should help.
-#CFLAGS		+= -DNO_UT_TYPE_IN_STRUCT_UTMP=1
+#CONF7		= -DNO_UT_TYPE_IN_STRUCT_UTMP=1
 
 PROGS	= rwrited rwrite mkrwritebox
 MAN1	= rwrite.1 mkrwritebox.1
@@ -114,16 +126,20 @@ MAN8	= rwrited.8
 
 SRCS	= match.c mkrwritebox.c rwriterc.c rwrite.c rwrited.c
 
+CFLAGS	= $(CONF0) $(CONF1) $(CONF2) $(CONF3) $(CONF4) $(CONF5) $(CONF6) \
+          $(CONF7) $(CONF8) $(CONF9) -DTTY_GROUP_NAME=\"$(RWRITED_GROUP)\" \
+	  $(MYCFLAGS) $(DEBUGFLAGS)
+
 all:	$(PROGS)
 
 depend:
 	mkdep $(CFLAGS) $(SRCS)
 
 rwrite: rwrite.o rwriterc.o match.o
-	$(CC) $(CFLAGS) -o rwrite rwrite.o rwriterc.o match.o
+	$(CC) $(CFLAGS) -o rwrite rwrite.o rwriterc.o match.o $(LDADD)
 
 rwrited: rwrited.o match.o rwriterc.o
-	$(CC) $(CFLAGS) -o rwrited rwrited.o match.o rwriterc.o
+	$(CC) $(CFLAGS) -o rwrited rwrited.o match.o rwriterc.o $(LDADD)
 
 mkrwritebox:	mkrwritebox.o
 	$(CC) $(CFLAGS) -o mkrwritebox mkrwritebox.o
@@ -136,17 +152,48 @@ rwrite.o:	rwrite.h
 match.o:	match.h
 rwriterc.o:	rwrite.h match.h
 
-install: $(PROGS) $(MAN1) $(MAN8)
-	$(INSTALL) -s -o $(BIN_OWNER) -g $(RWRITED_GROUP) -m $(RWRITED_MODE) \
-	  rwrited $(RWRITED_BINDIR)
-	$(INSTALL) -s -o $(BIN_OWNER) -g $(RWRITED_GROUP) -m $(RWRITED_MODE) \
-	  mkrwritebox $(BINDIR)
-	$(INSTALL) -s -o $(BIN_OWNER) -g $(BIN_GROUP) -m $(BIN_MODE) \
-	  rwrite $(BINDIR)
-	$(INSTALL) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
+# Use this if your machine has a sane install which can handle multiple
+# files on one invocation.
+install: commoninstall $(MAN1)
+	$(INSTALLMAN) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
 	  $(MAN1) $(MANDIR)/man1
-	$(INSTALL) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
+	@echo "Edit /etc/services and /etc/inetd.conf and"
+	@echo "create /etc/rwrite.conf. See *.add and sample*."
+
+# Use this if it doesn't. Or get the GNU install.
+install_please: commoninstall $(MAN1)
+	( for i in $(MAN1); do \
+	    $(INSTALLMAN) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
+	      $$i $(MANDIR)/man1; \
+	done )
+	@echo "Edit /etc/services and /etc/inetd.conf and"
+	@echo "create /etc/rwrite.conf. See *.add and sample*."
+
+commoninstall: $(PROGS) $(MAN8)
+	$(INSTALL) -o $(BIN_OWNER) -g $(RWRITED_GROUP) -m $(RWRITED_MODE) \
+	  rwrited $(RWRITED_BINDIR)
+	$(INSTALL) -o $(BIN_OWNER) -g $(RWRITED_GROUP) -m $(RWRITED_MODE) \
+	  mkrwritebox $(BINDIR)
+	$(INSTALL) -o $(BIN_OWNER) -g $(BIN_GROUP) -m $(BIN_MODE) \
+	  rwrite $(BINDIR)
+	$(INSTALLMAN) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
 	  $(MAN8) $(MANDIR)/man8
+
+# Interactive's install is really different. Sheesh...
+sysvinstall: $(PROGS) $(MAN1) $(MAN8)
+	$(INSTALL) -f $(RWRITED_BINDIR) \
+	  -u $(BIN_OWNER) -g $(RWRITED_GROUP) -m $(RWRITED_MODE) rwrited 
+	$(INSTALL) -f $(BINDIR) \
+	  -u $(BIN_OWNER) -g $(RWRITED_GROUP) -m $(RWRITED_MODE) mkrwritebox
+	$(INSTALL) -f  $(BINDIR) \
+	  -u $(BIN_OWNER) -g $(BIN_GROUP) -m $(BIN_MODE) rwrite
+	$(INSTALLMAN) -f $(MANDIR)/man8 \
+	  -u $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) $(MAN8)
+	( for i in $(MAN1); do \
+	    $(INSTALLMAN) -f $(MANDIR)/man1 \
+	      -u $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
+	      $$i ; \
+	done ) 
 	@echo "Edit /etc/services and /etc/inetd.conf and"
 	@echo "create /etc/rwrite.conf. See *.add and sample*."
 
@@ -155,24 +202,3 @@ clean:
 
 clobber: clean
 	rm -f $(PROGS) *~
-
-
-TARFILES	= *.[ch18] Makefile *.txt *.ps *.add
-TARFILES	+= rwrite_agent __rwrite_agent 
-TARFILES	+= sample-etc-rwrite.conf sample-dot-rwriterc
-
-# Gmake doesn't digest this the way I'd like it to. Tough. //toka
-# Hpux's make always barfs on this. Outcomment it or use gmake :-)
-
-tar:
-	( $(TAR) rwrite-$(PACKET_VERSION)-private.tar $(TARFILES) RCS )
-
-pubtar:
-	( mkdir rwrite-$(PACKET_VERSION) &&                                 \
-	cp $(TARFILES) rwrite-$(PACKET_VERSION) &&                          \
-	chmod 644 rwrite-$(PACKET_VERSION)/* &&                             \
-	$(TAR) rwrite-$(PACKET_VERSION).tar ./rwrite-$(PACKET_VERSION)/* && \
-	$(COMPRESS) rwrite-$(PACKET_VERSION).tar ;                          \
-	rm -fr ./rwrite-$(PACKET_VERSION) )
-
-# EOF (Makefile)

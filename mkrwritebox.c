@@ -1,20 +1,19 @@
-/*  -*- c -*-
- *
- * $RCSfile: mkrwritebox.c,v $
- * ----------------------------------------------------------------------
- * Make rwrite inboxes writable by tty group .
+/*
  * ----------------------------------------------------------------------
  * Created      : Sat Dec 10 17:27:21 1994 toka
- * Last modified: Sun Dec 11 20:34:37 1994 tri
+ * Last modified: Mon Dec 12 13:01:51 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.4 $
+ * $Revision: 1.5 $
  * $State: Exp $
- * $Date: 1994/12/11 18:48:49 $
+ * $Date: 1994/12/12 11:03:42 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: mkrwritebox.c,v $
- * Revision 1.4  1994/12/11 18:48:49  tri
- * Fixed potential security bug.
+ * Revision 1.5  1994/12/12 11:03:42  tri
+ * Added compatibility fixes from toka.
+ *
+ * Revision 1.4  1994/12/11  18:48:49  cirion
+ * Fixed potential security bug. Minor cleanup.
  *
  * Revision 1.3  1994/12/11  18:40:28  tri
  * Now makerules work like the lavatory in the train
@@ -48,7 +47,7 @@
  */
 #define __MKRWRITEBOX_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: mkrwritebox.c,v 1.4 1994/12/11 18:48:49 tri Exp $";
+static char *RCS_id = "$Id: mkrwritebox.c,v 1.5 1994/12/12 11:03:42 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -66,12 +65,16 @@ static char *RCS_id = "$Id: mkrwritebox.c,v 1.4 1994/12/11 18:48:49 tri Exp $";
 #include <sys/stat.h>
 #include <sys/param.h>
 
+#ifndef MAXPATHLEN
+#  define MAXPATHLEN PATH_MAX
+#endif
+
 int main(int argc, char **argv) {
     struct passwd *pwd = NULL;
     struct group *grp = NULL;
-    char path[MAXPATHLEN + 1];
-    char file[MAXPATHLEN + 1];
-    char *t1 = NULL, *t2 = NULL;
+    char path[MAXPATHLEN + 1] = {NULL};
+    char *file = NULL;
+    char *t = NULL;
     int f = -1;
     uid_t uid = -1;
     gid_t ttygid = -1;
@@ -80,20 +83,20 @@ int main(int argc, char **argv) {
 	fprintf(stderr, "Usage: mkrwritebox filename\n");
 	return(1);
     }
+    file = argv[1];
 
 #define BADFNAMEXIT()                                       \
     fputs("mkrwritebox: Bad filename. Exiting.\n", stderr); \
     return(7);
 
-    if(!(*(argv[1])) || !(strcmp("..", argv[1])) || !(strcmp(".", argv[1]))) {
+    if(!(*file) || !(strcmp("..", file)) || !(strcmp(".", file))) {
 	BADFNAMEXIT();
     }
 
-    for(t1 = argv[1], t2 = file; t1 && *t1 ; t1++) {
-	if(*t1 == '/') {
+    for(t = file; t && *t ; t++) {
+	if(*t == '/') {
 	    BADFNAMEXIT();
 	}
-	*(t2++) = *t1;
     }
 
     pwd = getpwuid(uid = getuid());
@@ -112,11 +115,20 @@ int main(int argc, char **argv) {
 	perror("mkrwritebox");
 	return(3);
     }
-    if(0 > (fchown(f, uid, ttygid))) {
-	perror("mkrwritebox");
-	(void)unlink(path);
-	return(4);
-    }
+#ifndef NEITHER_FCHOWN_NOR_FCHMOD
+    if(0 > (fchown(f, uid, ttygid)))
+#else
+    /*
+     * Chown supposedly clears sgids, in case some Fast Eddie
+     * managed to set it after open(). 
+     */
+    if(0 > (chown(path, uid, ttygid)))
+#endif
+	{
+	    perror("mkrwritebox");
+	    (void)unlink(path);
+	    return(4);
+	}
     (void)close(f);
     return(0);
 }

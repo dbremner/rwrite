@@ -1,0 +1,152 @@
+#  -*- make -*-
+#
+# $RCSfile: Makefile.in,v $
+# ----------------------------------------------------------------------
+# Make rules for rwrite.
+# ----------------------------------------------------------------------
+# Created      : Sun Dec 11 20:12:18 1994 tri
+# Last modified: Sun Dec 11 20:13:39 1994 tri
+# ----------------------------------------------------------------------
+# $Revision: 1.1 $
+# $State: Exp $
+# $Date: 1994/12/11 18:14:27 $
+# $Author: tri $
+# ----------------------------------------------------------------------
+# $Log: Makefile.in,v $
+# Revision 1.1  1994/12/11 18:14:27  tri
+# Initial revision
+#
+# ----------------------------------------------------------------------
+# Copyright 1994, Tomi Kause <toka@cirion.fi> and Cirion oy.
+# Copyright 1994, Timo Rinne <tri@cirion.fi> and Cirion oy.
+# 
+# Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
+# 
+# Even though this code is copyrighted property of the author, it can
+# still be used for any purpose under following conditions:
+# 
+#     1) This copyright notice is not removed.
+#     2) Source code follows any distribution of the software
+#        if possible.
+#     3) Copyright notice above is found in the documentation
+#        of the distributed software.
+# 
+# Any express or implied warranties are disclaimed.  In no event
+# shall the author be liable for any damages caused (directly or
+# otherwise) by the use of this software.
+# ----------------------------------------------------------------------
+#
+
+SHELL		= /bin/sh
+
+PACKET_VERSION	= 1.1b12
+
+BINDIR		= /usr/local/bin
+MANDIR		= /usr/local/man
+BIN_OWNER	= bin
+BIN_GROUP	= bin
+BIN_MODE	= 555
+MAN_OWNER	= bin
+MAN_GROUP	= bin
+MAN_MODE	= 444
+
+RWRITED_GROUP	= tty
+RWRITED_MODE	= 2555
+RWRITED_BINDIR	= $(BINDIR)
+
+CC		= gcc
+INSTALL		= install -c
+TAR		= tar cvf
+COMPRESS	= gzip -9
+
+CFLAGS		= -DTTY_GROUP_NAME=\"$(RWRITED_GROUP)\"
+#CFLAGS		+= -Wall -DDEBUG -g 
+
+# Some ancient systems miss these ones.
+#CFLAGS		+= -DNO_UNISTD_H=1
+#CFLAGS		+= -DNO_STDLIB_H=1
+
+# If DO_NOT_TELL_USERS is defined, server gives 
+# "user not in" notification instead of "no such
+# user".
+#CFLAGS		+= -DDO_NOT_TELL_USERS=1
+   
+# We try to flush stdin after the failed message.
+# But if you don't want this to be done, define
+# DONT_FLUSH_INPUT_IN_FAILURE.  In some systems
+# flushing may cause busyloop after nonsuccesful
+# message.  If shit happens, try this one out.
+#CFLAFS		+= -DDONT_FLUSH_INPUT_IN_FAILURE=1
+
+# Everyone should have following but...
+#CFLAGS		+= NO_GETEUID=1
+#CFLAGS		+= NO_GETEGID=1
+
+PROGS	= rwrited rwrite mkrwritebox
+MAN1	= rwrite.1 mkrwritebox.1
+MAN8	= rwrited.8
+
+SRCS	= match.c mkrwritebox.c rwriterc.c rwrite.c rwrited.c
+
+all:	$(PROGS)
+
+depend:
+	mkdep $(CFLAGS) $(SRCS)
+
+rwrite: rwrite.o rwriterc.o match.o
+	$(CC) $(CFLAGS) -o rwrite rwrite.o rwriterc.o match.o
+
+rwrited: rwrited.o match.o rwriterc.o
+	$(CC) $(CFLAGS) -o rwrited rwrited.o match.o rwriterc.o
+
+mkrwritebox:	mkrwritebox.o
+	$(CC) $(CFLAGS) -o mkrwritebox mkrwritebox.o
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+rwrited.o:	rwrite.h
+rwrite.o:	rwrite.h
+match.o:	match.h
+rwriterc.o:	rwrite.h match.h
+
+install: $(PROGS) $(MAN1) $(MAN8)
+	$(INSTALL) -s -o $(BIN_OWNER) -g $(RWRITED_GROUP) -m $(RWRITED_MODE) \
+	  rwrited $(RWRITED_BINDIR)
+	$(INSTALL) -s -o $(BIN_OWNER) -g $(RWRITED_GROUP) -m $(RWRITED_MODE) \
+	  mkrwritebox $(BINDIR)
+	$(INSTALL) -s -o $(BIN_OWNER) -g $(BIN_GROUP) -m $(BIN_MODE) \
+	  rwrite $(BINDIR)
+	$(INSTALL) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
+	  $(MAN1) $(MANDIR)/man1
+	$(INSTALL) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
+	  $(MAN8) $(MANDIR)/man8
+	@echo "Edit /etc/services and /etc/inetd.conf and"
+	@echo "create /etc/rwrite.conf. See *.add and sample*."
+
+clean:
+	rm -f core rwrited.o rwrite.o rwriterc.o mkrwritebox.o match.o
+
+clobber: clean
+	rm -f $(PROGS) *~
+
+
+TARFILES	= $(LWD)/*.[ch18] $(LWD)/Makefile $(LWD)/*.txt $(LWD)/*.add
+TARFILES	+= $(LWD)/rwrite_agent $(LWD)/__rwrite_agent 
+TARFILES	+= $(LWD)/sample-etc-rwrite.conf $(LWD)/sample-dot-rwriterc
+MYTARFILES	=  $(TARF) $(LWD)/RCS
+
+# Gmake doesn't digest this the way I'd like it to. Tough. //toka
+# Hpux's make always barfs on this. Outcomment it or use gmake :-)
+
+LWD	!= basename `pwd`
+
+tar:
+	( cd ..;$(TAR) $(LWD)/rwrite-$(PACKET_VERSION).tar $(MYTARFILES) )
+
+pubtar:
+	-rm -f rwrite-$(PACKET_VERSION).tar rwrite-$(PACKET_VERSION).tar.gz
+	( cd ..;$(TAR) $(LWD)/rwrite-$(PACKET_VERSION).tar $(TARFILES) )
+	$(COMPRESS) rwrite-$(PACKET_VERSION).tar
+
+# EOF (Makefile)

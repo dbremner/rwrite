@@ -5,15 +5,19 @@
 # Make rules for rwrite.
 # ----------------------------------------------------------------------
 # Created      : Sun Dec 11 20:12:18 1994 tri
-# Last modified: Mon Dec 12 21:49:48 1994 tri
+# Last modified: Mon Dec 12 23:17:38 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $State: Exp $
-# $Date: 1994/12/12 19:50:16 $
+# $Date: 1994/12/12 21:17:55 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: Makefile.in,v $
-# Revision 1.13  1994/12/12 19:50:16  tri
+# Revision 1.14  1994/12/12 21:17:55  tri
+# Closed files more pedantically.
+# Fix by toka & tri.
+#
+# Revision 1.13  1994/12/12  19:50:16  tri
 # Version increment.
 #
 # Revision 1.12  1994/12/12  15:58:41  tri
@@ -78,7 +82,7 @@
 
 SHELL		= /bin/sh
 
-PACKET_VERSION	= 1.1b18
+PACKET_VERSION	= 1.1b19
 
 BINDIR		= /usr/local/bin
 MANDIR		= /usr/local/man

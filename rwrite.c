@@ -5,15 +5,19 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Mon Dec 12 21:46:36 1994 tri
+ * Last modified: Mon Dec 12 23:12:31 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.28 $
+ * $Revision: 1.29 $
  * $State: Exp $
- * $Date: 1994/12/12 19:50:16 $
+ * $Date: 1994/12/12 21:17:55 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.28  1994/12/12 19:50:16  tri
+ * Revision 1.29  1994/12/12 21:17:55  tri
+ * Closed files more pedantically.
+ * Fix by toka & tri.
+ *
+ * Revision 1.28  1994/12/12  19:50:16  tri
  * Fixed a small but potentially harmful fclose(NULL) -bug.
  *
  * Revision 1.27  1994/12/12  15:58:41  tri
@@ -129,7 +133,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.28 1994/12/12 19:50:16 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.29 1994/12/12 21:17:55 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -210,9 +214,10 @@ int close_history_write(FILE *f)
     char *home;
     int r;
 
-    if(!(home = getenv("HOME"))) {
+    if((!(home = getenv("HOME"))) || !f) {
 	return NULL;
     }
+    fclose(f);
     sprintf(path1, "%s/%s#", home, RWRITE_LAST_SENT_MSG);
     sprintf(path2, "%s/%s", home, RWRITE_LAST_SENT_MSG);
     r = rename(path1, path2);
@@ -1136,6 +1141,10 @@ void flush_stdin()
     return;
 }
 
+#define USAGE()           \
+     { fprintf(stderr,    \
+	       "Usage: rwrite [-r] [-b|B] [-v[v]] user[@host][:tty] ...\n"); }
+
 int main(int argc, char **argv)
 {
     int ch, s, ret;
@@ -1158,6 +1167,7 @@ int main(int argc, char **argv)
 	    fwds = atoi(optarg);
 	    if((fwds < 1) && (fwds != (-1))) {
 		fprintf(stderr, "rwrite: -f needs an argument > 0.\n");
+		USAGE();
 		exit(1);
 	    }
 	    break;
@@ -1175,9 +1185,11 @@ int main(int argc, char **argv)
 	case ':':
 	    fprintf(stderr, 
 		    "rwrite: Option -%c needs an option-argument\n.", optopt);
+	    USAGE();
 	    exit(1);
 	case '?':
 	    fprintf (stderr, "rwrite: Unrecognized option: -%c\n.", optopt);
+	    USAGE();
 	    exit(1);
 	default:
 	    fprintf(stderr, "rwrite: Internal error.\n");
@@ -1246,6 +1258,7 @@ int main(int argc, char **argv)
 		fclose(f);
 		exit(4);
 	    }
+	    fclose(f);
 	} else {
 	    if(!(msg = read_user_message(stdin))) {
 		fprintf(stderr, "rwrite: Empty message.\n");
@@ -1302,8 +1315,7 @@ int main(int argc, char **argv)
 	}
 	/* Message array msg could be freed here but... XXX */
     } else {
-	fprintf(stderr, 
-		"USAGE: rwrite [-r] [-b|B] [-v[v]] user[@host][:tty] ...\n");
+	USAGE();
 	exit(1);
     }
     /*NOTREACHED*/

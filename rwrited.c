@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Fri Dec  9 00:50:20 1994 tri
+ * Last modified: Fri Dec  9 12:16:56 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.17 $
+ * $Revision: 1.18 $
  * $State: Exp $
- * $Date: 1994/12/08 22:56:45 $
+ * $Date: 1994/12/09 10:17:26 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.17  1994/12/08 22:56:45  tri
+ * Revision 1.18  1994/12/09 10:17:26  tri
+ * Fixed Camillo's violent debug output.
+ *
+ * Revision 1.17  1994/12/08  22:56:45  tri
  * Fixed the quotation system on message
  * delivery.  Same message can now be quoted
  * differently for the each receiver.
@@ -94,7 +97,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.17 1994/12/08 22:56:45 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.18 1994/12/09 10:17:26 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -356,7 +359,7 @@ GetMsg (FILE* pf, int line_limit, int char_limit)
 	  p_buffer[pos] = gm_getline (pf, &char_limit, &eof);
 	  if (p_buffer[pos] == NULL) { break; }
 #ifdef DEBUG
-	  printf("<<<%s\n", p_buffer[pos]);
+	  printf("%03d <<<%s\n", RWRITE_DEBUG, p_buffer[pos]);
 #endif
 	  if (*p_buffer[pos] == '.' &&
 	      *(p_buffer[pos]+1) == '\0')
@@ -371,7 +374,7 @@ GetMsg (FILE* pf, int line_limit, int char_limit)
     if (! eof)
       {
 #ifdef DEBUG
-	  printf ("Skipping input up to '.'\n");
+	  printf ("%03d Skipping input up to '.'\n", RWRITE_DEBUG);
 #endif
 	  while (1)
 	    {
@@ -385,7 +388,12 @@ GetMsg (FILE* pf, int line_limit, int char_limit)
 		while ((c = fgetc(pf)) != EOF && c != '\n') ;
 	    }
       }
-    return p_buffer;
+    if(p_buffer[0] && (p_buffer[0][0] || p_buffer[1])) {
+	return p_buffer;
+    } else {
+	free(p_buffer);
+	return NULL;
+    }
 }
 
 #define GL_BUFFER_SIZE 256

@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Tue Sep 20 22:04:47 1994 tri
+ * Last modified: Tue Sep 27 01:12:59 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.7 $
+ * $Revision: 1.8 $
  * $State: Exp $
- * $Date: 1994/09/20 19:08:57 $
+ * $Date: 1994/09/26 23:14:14 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.7  1994/09/20 19:08:57  tri
+ * Revision 1.8  1994/09/26 23:14:14  tri
+ * Fixed a minor feature that made helo resopnse
+ * look a bit weird before fhst command.
+ *
+ * Revision 1.7  1994/09/20  19:08:57  tri
  * Added a configuration option for rwrited ran
  * without tty setgid.
  *
@@ -57,7 +61,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.7 1994/09/20 19:08:57 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.8 1994/09/26 23:14:14 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -214,7 +218,7 @@ void rwrite_helo()
 { 
     fprintf(stdout, "%03d Hello %s.  This is %s speaking.\n",
 	    RWRITE_HELO, 
-	    remote_host, 
+	    (remote_host[0] ? remote_host : from_host), 
 	    my_host); 
     fflush(stdout);
     return;

@@ -5,15 +5,20 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Wed Dec 14 21:25:43 1994 tri
+ * Last modified: Thu Dec 15 00:01:58 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.35 $
+ * $Revision: 1.36 $
  * $State: Exp $
- * $Date: 1994/12/14 19:26:16 $
+ * $Date: 1994/12/14 22:02:58 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.35  1994/12/14 19:26:16  tri
+ * Revision 1.36  1994/12/14 22:02:58  tri
+ * Fixed the autoreply logic a bit.  Now one can get
+ * autoreply from the remote user even if the delivery
+ * of the original message is not possible.
+ *
+ * Revision 1.35  1994/12/14  19:26:16  tri
  * Minor fix.
  *
  * Revision 1.34  1994/12/14  19:12:36  tri
@@ -153,10 +158,10 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.35 1994/12/14 19:26:16 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.36 1994/12/14 22:02:58 tri Exp $";
 #endif /* not lint */
 
-#define RWRITE_VERSION_NUMBER	"1.1b27"	/* Client version   */
+#define RWRITE_VERSION_NUMBER	"1.1b28"	/* Client version   */
 
 #include <stdio.h>
 #include <string.h>
@@ -459,6 +464,7 @@ int dump_msg_to_outlogs(char **msg,
     FILE *f;
     time_t now;
     char *nowstr;
+    int len;
 
     if((!(rc_read_p())) || 
        (!rc_outlog) || 
@@ -467,9 +473,15 @@ int dump_msg_to_outlogs(char **msg,
        (!(*msg)) ||
        (!userhome))
 	return 0;
+
     now = time(NULL);
-    if((!(nowstr = ctime(&now))) || (!(*nowstr)))
-	nowstr = "xxx\n";
+    nowstr = ctime(&now);
+    if((!nowstr) || (!(*nowstr))) {
+	nowstr = "xxx";
+    } else if('\n' == (nowstr[len = (strlen(nowstr) - 1)])) {
+	nowstr[len] = '\000';
+    }
+
     if((!addr) || (!(*addr)))
 	addr = "xxx";
     for((i = 0, n = 0); rc_outlog[i]; i++) {
@@ -483,7 +495,7 @@ int dump_msg_to_outlogs(char **msg,
 	    strcpy(logfile, rc_outlog[i]);
 	}
 	if(f = fopen(logfile, "a")) {
-	    fprintf(f, "\n%s%s%cessage to %s at %s", 
+	    fprintf(f, "\n%s%s%cessage to %s at %s:\n", 
 		    (failed ? "Failed " : ""),
 		    (udp_p ? "UDP " : ""),
 		    ((failed || udp_p) ? 'm' : 'M'),
@@ -586,6 +598,7 @@ int rwp_dialog(int s,
     char *resp, *line;
     int mode, modeattr;
     FILE *hist_file;
+    int we_have_autoreply = 0;
 
     if(is_str_whitespace(to)) {
 	fprintf(stderr, "rwrite: Empty address.\n");
@@ -792,15 +805,10 @@ int rwp_dialog(int s,
 			    code);
 		    return 0;
 		}
-		/*
-		 * We nuke the possible autoreply here.
-		 */
-		if(autoreply_lines) {
-		    int i;
-		    for(i = 0; i < autoreply_lines; i++)
-			free(autoreply[i]);
-		}
-		memset(autoreply, 0, sizeof(char *) * autoreply_sz);
+		if(autoreply_lines)
+		    we_have_autoreply = 1;
+		else
+		    we_have_autoreply = 0;
 		mode = DIALOG_VRFY;
 		modeattr = 0;
 		goto redo_dialog_loop;
@@ -999,6 +1007,22 @@ int rwp_dialog(int s,
 		goto redo_dialog_loop;
 	    case RWRITE_AUTOREPLY:
 	    case RWRITE_AUTOREPLY_AS_COMMENT:
+		if(we_have_autoreply) {
+		    /*
+		     * We have autoreply from VRFY command, but remote
+		     * wants to give it to us again.  We nuke the old one
+		     * and be very happy with the new version of the
+		     * autoreply.
+		     */
+		    if(autoreply_lines) {
+			int i;
+			for(i = 0; i < autoreply_lines; i++)
+			    free(autoreply[i]);
+		    }
+		    memset(autoreply, 0, sizeof(char *) * autoreply_sz);
+		    we_have_autoreply = 0;
+		    autoreply_lines = 0;
+		}
 		{
 		    char *hlp;
 		    if(modeattr != 1) {
@@ -1245,17 +1269,29 @@ int fix_tty_quote(char *str)
 }
 
 
-int spit_autoreply(char *user)
+int spit_autoreply(char *user, int not_delivered)
 {
     time_t now;
     char *nowstr;
+    int len;
 
     now = time(NULL);
     nowstr = ctime(&now);
+    if((!nowstr) || (!(*nowstr))) {
+	nowstr = "xxx";
+    } else if('\n' == (nowstr[len = (strlen(nowstr) - 1)])) {
+	nowstr[len] = '\000';
+    }
 
     if(autoreply_lines) {
-	fprintf(stdout, "Automatic reply from %s at %s", 
-		user, nowstr ? nowstr : "xxx\n");
+	if(not_delivered)
+	    fprintf(stdout, 
+		    "Your message could not be delivered, but remote host sent\n");
+	fprintf(stdout,
+		"%sutomatic reply from %s at %s:\n", 
+		(not_delivered ? "an a" : "A"),
+		user,
+		nowstr);
 	return(dequote_and_write(stdout,
 				 autoreply, 
 				 max_lines_in(), 
@@ -1294,7 +1330,7 @@ void flush_stdin()
     return;
 }
 
-char *generete_udp_dialog(char *to, 
+char *generate_udp_dialog(char *to, 
 			  char *tty, 
 			  char *from, 
 			  char **msg, 
@@ -1462,7 +1498,7 @@ int main(int argc, char **argv)
 	}
 	ret = rwp_dialog(s, to, tty, from, NULL, 1);
 	close(s);
-	spit_autoreply(argv[optind]);
+	spit_autoreply(argv[optind], (!ret));
 	dump_msg_to_outlogs(last_msg, argv[optind], (!ret), userhome, 0);
 	if(!ret)
 	    flush_stdin();
@@ -1530,7 +1566,7 @@ int main(int argc, char **argv)
 		    int len;
 		    char *dialog;
 
-		    if(dialog = generete_udp_dialog(to, tty, from, msg, &len)) {
+		    if(dialog = generate_udp_dialog(to, tty, from, msg, &len)) {
 			/* Dump dialog to the socket. XXX */
 			ret = 0;
 			ret = (len == send(s, dialog, len, 0));
@@ -1554,11 +1590,11 @@ int main(int argc, char **argv)
 		} else {
 		    ret = rwp_dialog(s, to, tty, from, msg, 0);
 		    close(s);
-		    if(!ret) {
+		    spit_autoreply(argv[i], (!ret));
+		    if(!ret && !autoreply_lines) {
 			if(!quiet)
 			    fprintf(stderr, "rwrite: Skipped %s.\n", argv[i]);
 		    }
-		    spit_autoreply(argv[i]);
 		}
 	    }
 	    dump_msg_to_outlogs(last_msg, argv[i], (!ret), userhome, udp);

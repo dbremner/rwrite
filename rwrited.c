@@ -5,15 +5,20 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Wed Dec 14 21:25:54 1994 tri
+ * Last modified: Thu Dec 15 00:02:11 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.35 $
+ * $Revision: 1.36 $
  * $State: Exp $
- * $Date: 1994/12/14 19:26:16 $
+ * $Date: 1994/12/14 22:02:58 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.35  1994/12/14 19:26:16  tri
+ * Revision 1.36  1994/12/14 22:02:58  tri
+ * Fixed the autoreply logic a bit.  Now one can get
+ * autoreply from the remote user even if the delivery
+ * of the original message is not possible.
+ *
+ * Revision 1.35  1994/12/14  19:26:16  tri
  * Minor fix.
  *
  * Revision 1.34  1994/12/14  19:12:36  tri
@@ -156,10 +161,10 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.35 1994/12/14 19:26:16 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.36 1994/12/14 22:02:58 tri Exp $";
 #endif /* not lint */
 
-#define RWRITED_VERSION_NUMBER	"1.1b27"	/* Server version   */
+#define RWRITED_VERSION_NUMBER	"1.1b28"	/* Server version   */
 
 #include <stdio.h>
 #include <string.h>
@@ -257,6 +262,8 @@ char tty_force[MAXPATHLEN + 1];
 int fwd_count = 0;          /* Hop count. -1 if all forwarding is forbidden */
 int fake_user = 0;	    /* 0=ok, 1=nonconfirmed, 2=fake */
 
+int sent_autoreply = 0;     /* See if autoreply is sent during this conv. */
+
 #define HAS_TTY_HINT()  (tty_hint[0] != '\000')
 #define HAS_TTY_FORCE() (tty_force[0] != '\000')
 
@@ -266,7 +273,11 @@ int cmd_line    = 0;        /* Is rwrited invoked from the command line */
 
 int identify_remote_by_identd(char *buf, int bufsize)
 {
+#ifdef NO_IDENTD
+    return 0;
+#else
     return 0;    /* We could dig remote user with identd here. XXX */
+#endif
 }
 
 char *read_line(FILE *f)
@@ -413,6 +424,43 @@ void rwrite_quit(int udp)
 	RWRITE_MSG(RWRITE_BYE, "Quit.");
     }
     exit(0);
+}
+
+int give_users_autoreply(char *home)
+{
+    FILE *f;
+    char *line;
+    char rcfilename[MAXPATHLEN + 1];
+
+    if((!home) || (!(*home)))
+	return 0;
+
+    sprintf(rcfilename, "%s/%s", home, RWRITE_AUTOREPLY_FILE);
+    if(f = fopen(rcfilename, "r")) {
+	int n;
+	
+	n = 0;
+	while((line = read_line(f)) && 
+	      ((MAX_AUTOREPLY_LINES == -1) || (n < MAX_AUTOREPLY_LINES))) {
+	    char *hlp;
+	    
+	    hlp = quote_str(line);
+	    free(line);
+	    line = hlp;
+	    n++;
+	    fprintf(stdout, "%03d |%s\n", RWRITE_AUTOREPLY, line);
+	    free(line);
+	}
+	fclose(f);
+	return(n ? 1 : 0);
+    }
+#ifdef DEBUG
+    else {
+	fprintf(stdout, "%03d Can't open \"%s\".\n", 
+		RWRITE_DEBUG, rcfilename);
+    }
+#endif
+    return 0;
 }
 
 /*
@@ -800,7 +848,8 @@ int writeto(char *tty,
 	    char *fromhost,
 	    char *via,
 	    char *remotehost,
-	    char *nowstr)
+	    char *nowstr, 
+	    int replied)
 {
     int ttyp;
     FILE *f;
@@ -826,23 +875,36 @@ int writeto(char *tty,
 	if(!(via = dequote_str(via, 1024, NULL))) {
 	    RWRITE_FATAL("Out of memory.");
 	}
+    if((!nowstr) || (!(*nowstr))) {
+	nowstr = "xxx";
+    }
     if(strcmp(remotehost, fromhost))
 	if(via) {
 	    fprintf(f, 
-		    "Message from %s@%s (via %s%c%s) at %s", 
+		    "Message from %s@%s (via %s%c%s) at %s%s:\n", 
 		    from, 
 		    fromhost, 
 		    via,
 		    PATH_SEPARATOR,
 		    remotehost, 
-		    (nowstr ? nowstr : "xxx\n"));
+		    nowstr,
+		    (replied ? " (autoreplied)" : ""));
 	} else {
-	    fprintf(f, "Message from %s@%s (via %s) at %s", from, fromhost, 
-		    remotehost, (nowstr ? nowstr : "xxx\n"));
+	    fprintf(f, 
+		    "Message from %s@%s (via %s) at %s%s:\n",
+		    from, 
+		    fromhost, 
+		    remotehost, 
+		    nowstr,
+		    (replied ? " (autoreplied)" : ""));
 	}
     else
-	fprintf(f, "Message from %s@%s at %s", from, fromhost, 
-		(nowstr ? nowstr : "xxx\n"));
+	fprintf(f, 
+		"Message from %s@%s at %s%s:\n", 
+		from, 
+		fromhost, 
+		nowstr,
+		(replied ? " (autoreplied)" : ""));
     free(from);
     free(fromhost);
     free(remotehost);
@@ -871,9 +933,16 @@ int deliver(char *user,
     struct passwd *pwd;
     char **all_ttys;
     int succeeded;
-
+    int len;
+    
     now = time(NULL);
     nowstr = ctime(&now);
+    if((!nowstr) || (!(*nowstr))) {
+	nowstr = "xxx";
+    } else if('\n' == (nowstr[len = (strlen(nowstr) - 1)])) {
+	nowstr[len] = '\000';
+    }
+
     succeeded = 0;
 
     if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
@@ -890,6 +959,8 @@ int deliver(char *user,
     if(!(is_allowed(from, fromhost))) {
 	return DELIVER_PERMISSION_DENIED;
     }
+    if(!sent_autoreply)
+	sent_autoreply = give_users_autoreply(pwd->pw_dir);
     if((d_status = search_utmp(user, pwd->pw_uid,
 			       pwd->pw_dir, &all_ttys)) != 
        DELIVER_OK)
@@ -906,50 +977,22 @@ int deliver(char *user,
 				 fromhost,
 				 via,
 				 remotehost,
-				 nowstr) ||
+				 nowstr,
+				 sent_autoreply) ||
 			 succeeded);
 	    free(all_ttys[i]);
 	}
 	free(all_ttys);
     }
-    if(succeeded) {
-	/* See if there is a autoreply file */
-	FILE *f;
-	char *line;
-
-	sprintf(rcfilename, "%s/%s", pwd->pw_dir, RWRITE_AUTOREPLY_FILE);
-	if(f = fopen(rcfilename, "r")) {
-	    int l;
-	    
-	    l = 0;
-	    while((line = read_line(f)) && 
-		  ((MAX_AUTOREPLY_LINES == -1) || (l < MAX_AUTOREPLY_LINES))) {
-		char *hlp;
-	    
-		hlp = quote_str(line);
-		free(line);
-		line = hlp;
-		l++;
-		fprintf(stdout, "%03d |%s\n", RWRITE_AUTOREPLY, line);
-		free(line);
-	    }
-	    fclose(f);
-	}
-#ifdef DEBUG
-	else {
-	    fprintf(stdout, "%03d Can't open \"%s\".\n", 
-		    RWRITE_DEBUG, rcfilename);
-	}
-#endif
-    }
     return(succeeded ? DELIVER_OK : DELIVER_PERMISSION_DENIED);
 }
 
-int can_deliver(char *user, char *from, char *fromhost)
+int can_deliver(char *user, char *from, char *fromhost, int autoreply)
 {
     char tty[MAXPATHLEN + 1];
     struct passwd *pwd;
-    
+    int ret;
+
     if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
 	return DELIVER_NO_SUCH_USER;
     }
@@ -964,7 +1007,16 @@ int can_deliver(char *user, char *from, char *fromhost)
      */
     if(from && fromhost && (!(is_allowed(from, fromhost))))
 	return DELIVER_PERMISSION_DENIED;
-    return(search_utmp(user, pwd->pw_uid, pwd->pw_dir, NULL));
+    ret = search_utmp(user, pwd->pw_uid, pwd->pw_dir, NULL);
+    if(autoreply &&
+       from &&
+       (*from) &&
+       (!sent_autoreply) &&
+       ((ret == DELIVER_USER_NOT_IN) ||
+	(ret == DELIVER_OK))) {
+	sent_autoreply = give_users_autoreply(pwd->pw_dir);
+    }
+    return(ret);
 }
 
 int main(int argc, char **argv)
@@ -1131,6 +1183,7 @@ int main(int argc, char **argv)
 		to_user[0] = '\000';
 		tty_hint[0] = '\000';
 		tty_force[0] = '\000';
+		sent_autoreply = 0;
 		if((!user_to) || 
 		   (!(len = strlen(user_to))) || 
 		   (len >= sizeof(to_user))) {
@@ -1285,7 +1338,8 @@ int main(int argc, char **argv)
 		}
 		if((d_status = can_deliver(to_user, 
 					   (from_user[0] ? from_user : NULL),
-					   from_host)) != DELIVER_OK) {
+					   from_host,
+					   1)) != DELIVER_OK) {
 		    switch(d_status) {
 		    case DELIVER_NO_SUCH_USER:
 #ifndef DO_NOT_TELL_USERS
@@ -1307,7 +1361,6 @@ int main(int argc, char **argv)
 			    RWRITE_MSG(RWRITE_ERR_UNKNOWN, "Unknown error.");
 			break;
 		    }
-		    /* Possible autoreply could be given here */
 		    goto out_of_parse;
 		}
 		if(!udp)

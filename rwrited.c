@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Wed Sep 14 18:10:03 1994 tri
+ * Last modified: Thu Sep 15 23:11:46 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.3 $
+ * $Revision: 1.4 $
  * $State: Exp $
- * $Date: 1994/09/14 15:10:18 $
+ * $Date: 1994/09/15 20:14:42 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.3  1994/09/14 15:10:18  tri
+ * Revision 1.4  1994/09/15 20:14:42  tri
+ * Completed the support of RWP version 1.0.
+ *
+ * Revision 1.3  1994/09/14  15:10:18  tri
  * Reports now also the protocol version on startup.
  *
  * Revision 1.2  1994/09/14  14:58:53  tri
@@ -43,7 +46,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.3 1994/09/14 15:10:18 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.4 1994/09/15 20:14:42 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -95,10 +98,12 @@ static char *RCS_id = "$Id: rwrited.c,v 1.3 1994/09/14 15:10:18 tri Exp $";
 /*
  * Globals.  Eh... Urp... Well... Who cares...
  */
+char from_host[128];
 char remote_host[128];
 char remote_user[64];
 char to_user[64];
 char my_host[128];
+int fwd_count = 0;
 
 char *read_line(FILE *f)
 {
@@ -146,6 +151,8 @@ void set_hostnames(int get_remote)
     struct hostent *remote_hostent;
 
     remote_user[0] = '\000';
+    remote_host[0] = '\000';
+    from_host[0] = '\000';
     to_user[0] = '\000';
     gethostname(my_host, sizeof(my_host));
     my_host[sizeof(my_host) - 1] = '\000';
@@ -161,11 +168,11 @@ void set_hostnames(int get_remote)
 	   (!(remote_hostent->h_name))) {
 	    RWRITE_FATAL("Gethostbyaddr failed.");
 	}
-	strncpy(remote_host, remote_hostent->h_name, sizeof(remote_host));
+	strncpy(from_host, remote_hostent->h_name, sizeof(from_host));
     } else {
-	strncpy(remote_host, my_host, sizeof(remote_host));
+	strncpy(from_host, my_host, sizeof(from_host));
     }
-    remote_host[sizeof(remote_host) - 1] = '\000';
+    from_host[sizeof(from_host) - 1] = '\000';
 
     return; 
 }
@@ -208,7 +215,9 @@ void rwrite_help()
     RWRITE_MSG(RWRITE_HELP, "    RSET,   SEND,   PROT,   QUIT,");
     RWRITE_MSG(RWRITE_HELP, "    TOOK,   VER");
     RWRITE_MSG(RWRITE_HELP, "    FROM senderlogin");
-    RWRITE_MSG(RWRITE_HELP, "    TO recipentlogin");
+    RWRITE_MSG(RWRITE_HELP, "    FHST senderhost");
+    RWRITE_MSG(RWRITE_HELP, "    TO   recipentlogin");
+    RWRITE_MSG(RWRITE_HELP, "    FWDS current_hop_count");
     return;
 }
 
@@ -370,7 +379,11 @@ int search_utmp(char *user, char *tty)
  * Also support for some kind of support for kinda 
  * message agent would be nice.
  */
-int deliver(char *user, char *from, char *fromhost, char **msg)
+int deliver(char *user, 
+	    char *from, 
+	    char *fromhost, 
+	    char *remotehost, 
+	    char **msg)
 {
     FILE *f;
     int i;
@@ -387,8 +400,12 @@ int deliver(char *user, char *from, char *fromhost, char **msg)
     if(!(f = fopen(tty, "w")))
 	return DELIVER_PERMISSION_DENIED;
     fputc('\007', f);
-    fprintf(f, "\nMessage from %s@%s at %s\n", from, fromhost, 
-	    (nowstr ? nowstr : "xxx"));
+    if(remotehost && (*remotehost))
+	fprintf(f, "\nMessage from %s@%s (via %s) at %s\n", from, fromhost, 
+		remotehost, (nowstr ? nowstr : "xxx"));
+    else
+	fprintf(f, "\nMessage from %s@%s at %s\n", from, fromhost, 
+		(nowstr ? nowstr : "xxx"));
     for(i = 0; msg[i]; i++)
 	fprintf(f, "%s\n", msg[i]);
     fputc('\n', f);
@@ -441,6 +458,12 @@ int main(int argc, char **argv)
 	    } else if((!(strcmp(cmd, "rset"))) || (!(strcmp(cmd, "RSET")))) {
 		remote_user[0] = '\000';
 		to_user[0] = '\000';
+		fwd_count = 0;
+		if(remote_host[0]) {
+		    strncpy(from_host, remote_host, sizeof(from_host));
+		    from_host[sizeof(from_host) - 1] = '\000';
+		    remote_host[0] = '\000';
+		}
 		if(message) {
 		    int i;
 		    for(i = 0; message[i]; i++)
@@ -479,6 +502,56 @@ int main(int argc, char **argv)
 		}
 		strcpy(to_user, user_to);
 		RWRITE_MSG(RWRITE_RCPT_OK, "Recipient ok.");
+	    } else if((!(strcmp(cmd, "fhst"))) ||
+		      (!(strcmp(cmd, "FHST"))) ||
+		      (!(strncmp(cmd, "fhst ", 5))) || 
+		      (!(strncmp(cmd, "fhst ", 5)))) {
+		char *frm = get_user_name(cmd);
+
+		if((!frm) ||
+		   (!(strlen(frm)))) {
+		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FHST remote.host");
+		    goto out_of_parse;
+		}
+		if(strcmp(frm, from_host)) {
+		    if(!(remote_host[0])) {
+			strncpy(remote_host, from_host, sizeof(remote_host));
+			remote_host[sizeof(remote_host) - 1] = '\000';
+		    }
+		    strncpy(from_host, frm, sizeof(from_host));
+		    from_host[sizeof(from_host) - 1] = '\000';
+		}
+		RWRITE_MSG(RWRITE_FHST_OK, "Original sender host ok.");
+	    } else if((!(strcmp(cmd, "fwds"))) ||
+		      (!(strcmp(cmd, "FWDS"))) ||
+		      (!(strncmp(cmd, "fwds ", 5))) || 
+		      (!(strncmp(cmd, "FWDS ", 5)))) {
+		char *n_str = get_user_name(cmd);
+		char *hlp;
+		int n, i;
+
+		if((!n_str) ||
+		   (!(strlen(n_str)))) {
+		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FWDS number");
+		    goto out_of_parse;
+		}
+		for(hlp = n_str; *hlp; hlp++) {
+		    if(!(isdigit(*hlp))) {
+			RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FWDS number");
+			goto out_of_parse;
+		    }
+		}
+		if((n = atoi(n_str)) < 0) {
+		    RWRITE_MSG(RWRITE_ERR_SYNTAX, 
+			       "Number of forwards less than 0.");
+		    goto out_of_parse;
+		}
+		if(n <= RWRITE_FWD_LIMIT) {
+		    RWRITE_MSG(RWRITE_RCPT_OK_TO_FWD, "Ok to forward.");
+		} else {
+		    RWRITE_MSG(RWRITE_ERR_FWD_LIMIT_EXCEEDED,
+			       "Forward limit exceeded.");
+		}
 	    } else if((!(strcmp(cmd, "took"))) || (!(strcmp(cmd, "TOOK")))) {
 		int d_status;
 
@@ -538,6 +611,7 @@ int main(int argc, char **argv)
 		}
 		if((d_status = deliver(to_user, 
 				       remote_user, 
+				       from_host,
 				       remote_host,
 				       message)) != DELIVER_OK) {
 		    switch(d_status) {
@@ -558,7 +632,12 @@ int main(int argc, char **argv)
 		    goto out_of_parse;
 		}
 		RWRITE_MSG(RWRITE_DELIVERY_OK, "Message delivered.");
-            } else {
+	    } else if((!(strcmp(cmd, "quote"))) ||
+		      (!(strcmp(cmd, "QUOTE"))) ||
+		      (!(strncmp(cmd, "quote ", 6))) || 
+		      (!(strncmp(cmd, "QUOTE ", 6)))) {
+                RWRITE_MSG(RWRITE_ERR_SYNTAX, "Unknown QUOTE command.");
+	    } else {
                 RWRITE_MSG(RWRITE_ERR_SYNTAX, "Does not compute.");
             }
    	}

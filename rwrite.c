@@ -5,15 +5,18 @@
  * Simple client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Wed Sep 14 19:00:17 1994 tri
+ * Last modified: Thu Sep 15 23:01:37 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.2 $
+ * $Revision: 1.3 $
  * $State: Exp $
- * $Date: 1994/09/14 16:04:50 $
+ * $Date: 1994/09/15 20:14:42 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.2  1994/09/14 16:04:50  tri
+ * Revision 1.3  1994/09/15 20:14:42  tri
+ * Completed the support of RWP version 1.0.
+ *
+ * Revision 1.2  1994/09/14  16:04:50  tri
  * Added -r option.
  *
  * Revision 1.1  1994/09/14  14:58:53  tri
@@ -40,7 +43,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.2 1994/09/14 16:04:50 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.3 1994/09/15 20:14:42 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -416,6 +419,8 @@ int rwp_dialog(int s, char *to, char *from)
 			if(hist_file)
 			    fprintf(hist_file, "%s\n", line);
 			WRITE_STRING(s, line);
+			if((line[0] == '.') && (line[1] == '\000'))
+			    WRITE_STRING(s, " ");
 			WRITE_STRING(s, "\012");
 		    }
 		    if(hist_file) {
@@ -436,6 +441,13 @@ int rwp_dialog(int s, char *to, char *from)
 		WRITE_STRING(s, ".\012");
 		modeattr = 2;
 		goto redo_dialog_loop;
+	    case RWRITE_ERR_NO_MESSAGE:
+		if(modeattr != 2) {
+		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    return 0;
+		}
+		fprintf(stderr, "rwrite: Empty message.\n");
+		return 0;
 	    case RWRITE_MSG_OK:
 		if(modeattr != 2) {
 		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);

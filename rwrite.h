@@ -2,18 +2,22 @@
  *
  * $RCSfile: rwrite.h,v $
  * ----------------------------------------------------------------------
- * <Description of this file and its contents>
+ * Header file of the rwrite and rwrited programs that implement
+ * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Tue Sep 13 20:18:27 1994 tri
+ * Last modified: Thu Sep 15 22:58:36 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.3 $
+ * $Revision: 1.4 $
  * $State: Exp $
- * $Date: 1994/09/14 16:04:50 $
+ * $Date: 1994/09/15 20:14:42 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.3  1994/09/14 16:04:50  tri
+ * Revision 1.4  1994/09/15 20:14:42  tri
+ * Completed the support of RWP version 1.0.
+ *
+ * Revision 1.3  1994/09/14  16:04:50  tri
  * Nothing really.
  *
  * Revision 1.2  1994/09/14  14:59:48  tri
@@ -49,6 +53,10 @@
 #define RWRITED_VERSION_NUMBER	"1.0b"		/* Server version   */
 #define RWRITE_VERSION_NUMBER	"1.0b"		/* Client version   */
 
+#define RWRITE_FWD_LIMIT	32
+/*
+ * Success codes.
+ */
 #define RWRITE_READY		100
 #define RWRITE_BYE		101
 #define RWRITE_DELIVERY_OK	103
@@ -58,17 +66,24 @@
 #define RWRITE_MSG_OK		107
 #define RWRITE_RCPT_OK_TO_SEND	108
 #define RWRITE_RSET_OK		109
-
+#define RWRITE_RCPT_OK_TO_FWD	110
+#define RWRITE_FHST_OK		111
+/*
+ * Server readu to receive message body.
+ */
 #define RWRITE_GETMSG		200
-
+/*
+ * Informational responses.
+ */
 #define RWRITE_HELO		500
 #define RWRITE_VER		501
 #define RWRITE_PROT		502
 #define RWRITE_HELP		510
 #define RWRITE_INFO		511 /* Stuff for client to ignore. */
-
+/*
+ * Error codes.
+ */
 #define RWRITE_ERR_FATAL	666
-#define RWRITE_ERR_EPERM	667
 #define RWRITE_ERR_SYNTAX	668
 #define RWRITE_ERR_PERMISSION_DENIED	669
 #define RWRITE_ERR_USER_NOT_IN	670
@@ -77,7 +92,8 @@
 #define RWRITE_ERR_NO_SENDER	673
 #define RWRITE_ERR_NO_ADDRESS	674
 #define RWRITE_ERR_NO_DATA	675
-
+#define RWRITE_ERR_FWD_LIMIT_EXCEEDED	676
+#define RWRITE_ERR_FWD_FAILED	677
 #define RWRITE_ERR_INTERNAL	698
 #define RWRITE_ERR_UNKNOWN	699
 

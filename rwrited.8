@@ -5,15 +5,18 @@
 .\" Rwrited(1) manual page.
 .\" ----------------------------------------------------------------------
 .\" Created      : Tue Sep 20 13:14:55 1994 tri
-.\" Last modified: Tue Sep 20 13:21:31 1994 tri
+.\" Last modified: Thu Oct  6 20:36:22 1994 tri
 .\" ----------------------------------------------------------------------
-.\" $Revision: 1.1 $
+.\" $Revision: 1.2 $
 .\" $State: Exp $
-.\" $Date: 1994/09/20 10:21:42 $
+.\" $Date: 1994/10/06 18:37:54 $
 .\" $Author: tri $
 .\" ----------------------------------------------------------------------
 .\" $Log: rwrited.8,v $
-.\" Revision 1.1  1994/09/20 10:21:42  tri
+.\" Revision 1.2  1994/10/06 18:37:54  tri
+.\" Added some info about $HOME/.rwrite-tty.
+.\"
+.\" Revision 1.1  1994/09/20  10:21:42  tri
 .\" Initial revision
 .\"
 .\" ----------------------------------------------------------------------
@@ -59,7 +62,11 @@ Files .rwrite-allow and .rwrite-deny consist of lines of usernames
 like user@remote.host.  In these lines wildcards \fI*\fP and \fI?\fP
 can be used.  \fI*\fP can replace any string and \fI?\fP can replace
 any character in the sender address.
-
+.P
+If the target user has file .rwrite-tty in his home directory the
+message is delivered on the tty mentoined on the first line of the
+file.  If file has a word 'all' in its first line the message is
+delivered to all ttys user is logged in.
 .SH OPTIONS
 .B \-
    allows rwrited to be executed from command line.
@@ -70,6 +77,8 @@ Timo J. Rinne <tri@cirion.fi>
 $HOME/.rwrite-allow
 .P
 $HOME/.rwrite-deny
+.P
+$HOME/.rwrite-tty
 .SH BUGS
 Does not support message forwarding or message agent.
 

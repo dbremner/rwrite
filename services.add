@@ -1,5 +1,18 @@
 #
 # Entry to enable rwrite service in /etc/services.
 #
+# ----------------------------------------------------------------------
+# Copyright © 1994-1998
+# Timo J. Rinne <tri@iki.fi>
+# All rights reserved.  See file COPYRIGHT for details.
+#
+# Address: Cirion oy, PO-BOX 250, 00121 Helsinki, Finland
+# ----------------------------------------------------------------------
+# Any express or implied warranties are disclaimed.  In no event
+# shall the author be liable for any damages caused (directly or
+# otherwise) by the use of this software.
+#
+# Please, send your patches to <tri@iki.fi>.
+# ----------------------------------------------------------------------
 rwrite		18/tcp		rwp		# rwrite
 rwrite		18/udp		rwp		# rwrite

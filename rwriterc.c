@@ -5,14 +5,29 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Tue Nov 14 08:33:46 1995 tri
+ * Last modified: Sat Apr 18 23:35:28 1998 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.18 $
+ * Copyright © 1994-1998
+ * Timo J. Rinne <tri@iki.fi>
+ * All rights reserved.  See file COPYRIGHT for details.
+ *
+ * Address: Cirion oy, PO-BOX 250, 00121 Helsinki, Finland
+ * ----------------------------------------------------------------------
+ * Any express or implied warranties are disclaimed.  In no event
+ * shall the author be liable for any damages caused (directly or
+ * otherwise) by the use of this software.
+ *
+ * Please, send your patches to <tri@iki.fi>.
+ * ----------------------------------------------------------------------
+ * $Revision: 1.19 $
  * $State: Exp $
- * $Date: 1995/11/14 06:35:54 $
+ * $Date: 1998/04/18 20:52:28 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
+ * Revision 1.19  1998/04/18 20:52:28  tri
+ * New copyright in COPYRIGHT.
+ *
  * Revision 1.18  1995/11/14 06:35:54  tri
  * Readline library can be disabled in rc-file.
  *
@@ -79,27 +94,10 @@
  * Initial revision
  *
  * ----------------------------------------------------------------------
- * Copyright 1994, Timo J. Rinne <tri@cirion.fi> and Cirion oy.
- * 
- * Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
- * 
- * Even though this code is copyrighted property of the author, it can
- * still be used for any purpose under following conditions:
- * 
- *     1) This copyright notice is not removed.
- *     2) Source code follows any distribution of the software
- *        if possible.
- *     3) Copyright notice above is found in the documentation
- *        of the distributed software.
- * 
- * Any express or implied warranties are disclaimed.  In no event
- * shall the author be liable for any damages caused (directly or
- * otherwise) by the use of this software.
- * ----------------------------------------------------------------------
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.18 1995/11/14 06:35:54 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.19 1998/04/18 20:52:28 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

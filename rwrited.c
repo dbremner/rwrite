@@ -5,14 +5,29 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Fri Sep 29 21:28:08 1995 tri
+ * Last modified: Sat Apr 18 23:35:41 1998 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.43 $
+ * Copyright © 1994-1998
+ * Timo J. Rinne <tri@iki.fi>
+ * All rights reserved.  See file COPYRIGHT for details.
+ *
+ * Address: Cirion oy, PO-BOX 250, 00121 Helsinki, Finland
+ * ----------------------------------------------------------------------
+ * Any express or implied warranties are disclaimed.  In no event
+ * shall the author be liable for any damages caused (directly or
+ * otherwise) by the use of this software.
+ *
+ * Please, send your patches to <tri@iki.fi>.
+ * ----------------------------------------------------------------------
+ * $Revision: 1.44 $
  * $State: Exp $
- * $Date: 1996/05/17 12:31:28 $
+ * $Date: 1998/04/18 20:52:28 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
+ * Revision 1.44  1998/04/18 20:52:28  tri
+ * New copyright in COPYRIGHT.
+ *
  * Revision 1.43  1996/05/17 12:31:28  tri
  * SOCKS support from kivinen@iki.fi.
  *
@@ -165,27 +180,10 @@
  * Initial revision
  *
  * ----------------------------------------------------------------------
- * Copyright 1994, Timo J. Rinne <tri@cirion.fi> and Cirion oy.
- * 
- * Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
- * 
- * Even though this code is copyrighted property of the author, it can
- * still be used for any purpose under following conditions:
- * 
- *     1) This copyright notice is not removed.
- *     2) Source code follows any distribution of the software
- *        if possible.
- *     3) Copyright notice above is found in the documentation
- *        of the distributed software.
- * 
- * Any express or implied warranties are disclaimed.  In no event
- * shall the author be liable for any damages caused (directly or
- * otherwise) by the use of this software.
- * ----------------------------------------------------------------------
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.43 1996/05/17 12:31:28 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.44 1998/04/18 20:52:28 tri Exp $";
 #endif /* not lint */
 
 #define RWRITED_VERSION_NUMBER	"1.1"	/* Server version   */

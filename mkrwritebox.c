@@ -1,14 +1,29 @@
 /*
  * ----------------------------------------------------------------------
  * Created      : Sat Dec 10 17:27:21 1994 toka
- * Last modified: Wed Dec 14 05:35:33 1994 tri
+ * Last modified: Sat Apr 18 23:36:15 1998 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.9 $
+ * Copyright © 1994-1998
+ * Timo J. Rinne <tri@iki.fi>
+ * All rights reserved.  See file COPYRIGHT for details.
+ *
+ * Address: Cirion oy, PO-BOX 250, 00121 Helsinki, Finland
+ * ----------------------------------------------------------------------
+ * Any express or implied warranties are disclaimed.  In no event
+ * shall the author be liable for any damages caused (directly or
+ * otherwise) by the use of this software.
+ *
+ * Please, send your patches to <tri@iki.fi>.
+ * ----------------------------------------------------------------------
+ * $Revision: 1.10 $
  * $State: Exp $
- * $Date: 1994/12/14 03:36:38 $
+ * $Date: 1998/04/18 20:52:28 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: mkrwritebox.c,v $
+ * Revision 1.10  1998/04/18 20:52:28  tri
+ * New copyright in COPYRIGHT.
+ *
  * Revision 1.9  1994/12/14 03:36:38  tri
  * Added -version flag and version number :).
  *
@@ -38,28 +53,10 @@
  * Initial revision
  *
  * ----------------------------------------------------------------------
- * Copyright 1994, Tomi Kause <toka@cirion.fi> and Cirion oy.
- * Copyright 1994, Timo J. Rinne <tri@cirion.fi> and Cirion oy.
- * 
- * Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
- * 
- * Even though this code is copyrighted property of the author, it can
- * still be used for any purpose under following conditions:
- * 
- *     1) This copyright notice is not removed.
- *     2) Source code follows any distribution of the software
- *        if possible.
- *     3) Copyright notice above is found in the documentation
- *        of the distributed software.
- * 
- * Any express or implied warranties are disclaimed.  In no event
- * shall the author be liable for any damages caused (directly or
- * otherwise) by the use of this software.
- * ----------------------------------------------------------------------
  */
 #define __MKRWRITEBOX_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: mkrwritebox.c,v 1.9 1994/12/14 03:36:38 tri Exp $";
+static char *RCS_id = "$Id: mkrwritebox.c,v 1.10 1998/04/18 20:52:28 tri Exp $";
 #endif /* not lint */
 
 #define MKRWRITEBOX_VERSION_NUMBER	"1.0"	/* Program version   */

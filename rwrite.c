@@ -5,15 +5,19 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Tue Oct  4 22:17:14 1994 tri
+ * Last modified: Sun Nov 20 02:24:07 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.7 $
+ * $Revision: 1.8 $
  * $State: Exp $
- * $Date: 1994/10/04 20:50:22 $
+ * $Date: 1994/11/20 00:47:18 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.7  1994/10/04 20:50:22  tri
+ * Revision 1.8  1994/11/20 00:47:18  tri
+ * Completed autoreply and quotation stuff.
+ * We are almost there now.
+ *
+ * Revision 1.7  1994/10/04  20:50:22  tri
  * Conforms now the current RWP protocol.
  *
  * Revision 1.6  1994/09/20  18:52:51  tri
@@ -57,7 +61,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.7 1994/10/04 20:50:22 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.8 1994/11/20 00:47:18 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,17 +77,14 @@ static char *RCS_id = "$Id: rwrite.c,v 1.7 1994/10/04 20:50:22 tri Exp $";
 
 #include "rwrite.h"
 
-/*
- * Allocation step in line buffer allocation. 
- * Has to be at least 2.  No need to modify this anyway.
- */
-#define BUF_ALLOC_STEP	128
-
 int verbose = 0;
 int quiet = 0;
 int resend = 0;
 int fwds = 0;
 int backround = 0;
+char **autoreply = NULL;
+int autoreply_lines = 0;
+int autoreply_sz = 0;
 
 /*
  * There is a possible race condition here if many messages are written
@@ -240,6 +241,11 @@ char **read_user_message()
     buflen = BUF_ALLOC_STEP;
     for(i = 0; /*NOTHING*/; i++) {
 	if(!(line = read_line(stdin))) {
+	    char *hlp;
+	    
+	    hlp = quote_str(line);
+	    free(line);
+	    line = hlp;
 	    if(!i) {
 		free(buf);
 		return NULL;
@@ -294,7 +300,7 @@ int write_string(int fd, char *s)
 }
 
 #define LEGAL_CODE(c) (((c)>=100)&&((c)<=999))
-#define IGNORABLE_CODE(c) (((c)>=500)&&((c)<=599))
+#define IGNORABLE_CODE(c) ((((c)>=500)&&((c)<=599))&&((c) != RWRITE_AUTOREPLY)&&((c) != RWRITE_AUTOREPLY_AS_COMMENT))
 
 #define WRITE_STRING(f, str) {                                            \
        if(!(write_string(s, str))) {                                      \
@@ -321,6 +327,22 @@ int rwp_dialog(int s,
     char *resp, *line;
     int mode, modeattr;
     FILE *hist_file;
+
+    autoreply_lines = 0;
+    if(!autoreply_sz) {
+	if(!(autoreply = (char **)calloc(BUF_ALLOC_STEP, sizeof(char *)))) {
+	    fprintf(stderr, "rwrite: Out of memory.\n");
+	    return 0;
+	}
+	autoreply_sz = BUF_ALLOC_STEP;
+    } else {
+	if(autoreply_lines) {
+	    int i;
+	    for(i = 0; i < autoreply_lines; i++)
+		free(autoreply[i]);
+	}
+	memset(autoreply, 0, sizeof(char *) * autoreply_sz);
+    }
 
     mode = DIALOG_BEGIN;
     modeattr = 0;
@@ -574,13 +596,16 @@ int rwp_dialog(int s,
 			}
 			    
 			while(line = read_line(stdin)) {
+			    char *hlp;
+			    
+			    hlp = quote_str(line);
+			    free(line);
+			    line = hlp;
 			    if(hist_file)
 				fprintf(hist_file, "%s\n", line);
 			    if(verbose > 1)
 				fprintf(stderr, ">>>>%s\n", line);
 			    WRITE_STRING(s, line);
-			    if((line[0] == '.') && (line[1] == '\000'))
-				WRITE_STRING(s, " ");
 			    WRITE_STRING(s, "\012");
 			}
 			if(hist_file) {
@@ -634,6 +659,42 @@ int rwp_dialog(int s,
 		}
 		mode = DIALOG_SEND;
 		modeattr = 0;
+		goto redo_dialog_loop;
+	    case RWRITE_AUTOREPLY:
+	    case RWRITE_AUTOREPLY_AS_COMMENT:
+		{
+		    char *hlp;
+		    if(modeattr != 1) {
+			fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+			return 0;
+		    }
+		    for(hlp = resp; (*hlp && (*hlp != '|')); hlp++)
+			/*NOTHING*/;
+		    /*
+		     * We got autoreply line.
+		     */
+		    if(*hlp == '|') {
+			hlp++;
+			if((autoreply_lines + 2) >= autoreply_sz) {
+			    char **newauto;
+			    if(!(newauto = (char **)calloc(BUF_ALLOC_STEP + autoreply_sz, sizeof(char *)))) {
+				fprintf(stderr, "rwrite: Out of memory.\n");
+				return 0;
+			    }
+			    memcpy(newauto, 
+				   autoreply, 
+				   autoreply_sz * sizeof(char *));
+			    free(autoreply);
+			    autoreply = newauto;
+			    autoreply_sz += BUF_ALLOC_STEP;
+			}
+			if(!(autoreply[autoreply_lines] = malloc(strlen(hlp) + 1))) {
+			    fprintf(stderr, "rwrite: Out of memory.\n");
+			    return 0;
+			}
+			strcpy(autoreply[autoreply_lines++], hlp);
+		    }
+		}
 		goto redo_dialog_loop;
 	    case RWRITE_ERR_PERMISSION_DENIED:
 		if(modeattr != 1) {
@@ -791,6 +852,26 @@ int fix_tty_quote(char *str)
     return 0;
 }
 
+
+int spit_autoreply(char *user)
+{
+    int j;
+    char *hlp;
+	
+    if(autoreply_lines) {
+	fprintf(stdout, "Automatic reply from %s\n\n", user);
+	for(j = 0; j < autoreply_lines; j++) {
+	    
+	    hlp = dequote_str(autoreply[j]);
+	    fprintf(stderr, "%s\n", hlp);
+	    free(hlp);
+	}
+	fputc('\n', stdout);
+	return 1;
+    }
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     int ch, s, ret;
@@ -842,6 +923,15 @@ int main(int argc, char **argv)
 	if(!(tmp = getlogin())) {
 	    pwd = getpwuid(getuid());
 	    tmp = pwd ? (pwd->pw_name) : "UNKNOWN";
+	} else {
+	    pwd = getpwnam(tmp);
+	}
+	read_rc(RWRITE_GLOBAL_CONFIG);
+	if(pwd && (pwd->pw_dir)) {
+	    char rcfilename[MAXPATHLEN];
+	    
+	    sprintf(rcfilename, "%s/%s", pwd->pw_dir, RWRITE_CONFIG_FILE);
+	    read_rc(rcfilename);
 	}
 	if(!(from = (char *)malloc(strlen(tmp) + 1))) {
 	    exit(2);
@@ -860,6 +950,7 @@ int main(int argc, char **argv)
 	}
 	ret = rwp_dialog(s, to, tty, from, NULL, 1);
 	close(s);
+	spit_autoreply(argv[optind]);
 	exit(ret ? 0 : (4));
     } else if((argc - optind) >= 1) {
 	int i;
@@ -915,6 +1006,7 @@ int main(int argc, char **argv)
 		    if(!quiet)
 			fprintf(stderr, "rwrite: Skipped %s.\n", argv[i]);
 		}
+		spit_autoreply(argv[i]);
 	    }
 	    free(to);
 	}

@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Thu Oct  6 20:37:27 1994 tri
+ * Last modified: Sun Nov 20 02:39:59 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.11 $
+ * $Revision: 1.12 $
  * $State: Exp $
- * $Date: 1994/10/06 18:37:54 $
+ * $Date: 1994/11/20 00:47:18 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.11  1994/10/06 18:37:54  tri
+ * Revision 1.12  1994/11/20 00:47:18  tri
+ * Completed autoreply and quotation stuff.
+ * We are almost there now.
+ *
+ * Revision 1.11  1994/10/06  18:37:54  tri
  * Possible coredump in deliver() fixed.
  *
  * Revision 1.10  1994/10/06  18:32:37  tri
@@ -70,7 +74,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.11 1994/10/06 18:37:54 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.12 1994/11/20 00:47:18 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -116,16 +120,11 @@ static char *RCS_id = "$Id: rwrited.c,v 1.11 1994/10/06 18:37:54 tri Exp $";
 #include "match.h"
 
 #define RWRITE_FATAL(msg) { fprintf(stdout,                        \
-				     "%03d RWRITED FATAL: %s\n",   \
+				     "%03d RWRITED FATAL: %s (%s:%d)\n",   \
 				     RWRITE_ERR_FATAL,             \
-				     msg);                         \
+				     msg, __FILE__, __LINE__);     \
 			     exit(1); }
 
-/*
- * Allocation step in line buffer allocation. 
- * Has to be at least 2.  No need to modify this anyway.
- */
-#define BUF_ALLOC_STEP	128
 /*
  * Return status for message delivery functions should be
  * one of the following.
@@ -315,6 +314,8 @@ char **read_message()
     }
     buflen = BUF_ALLOC_STEP;
     for(i = 0; /*NOTHING*/; i++) {
+	char *hlp;
+
 	if(!(line = read_line(stdin))) {
 	    RWRITE_MSG(RWRITE_ERR_NO_MESSAGE, "No message.");
 	    rwrite_bye();
@@ -327,6 +328,9 @@ char **read_message()
 	    buf[i] = NULL;
 	    return buf;
 	}
+	hlp = dequote_str(line);
+	free(line);
+	line = hlp;
 	if((i + 1) >= buflen) {
 	    char **newbuf;
 	    buflen += BUF_ALLOC_STEP;
@@ -368,8 +372,8 @@ char *get_user_name(char *cmd)
     return(ret);
 }
 
-/**************** From Berkeley Unix's write(1) *****************/
-/********************* Modifications by tri *********************/
+/********** Originally from Berkeley Unix's write(1) *****************/
+/************** Almost totally rewritten by tri **********************/
 /*
  * term_chk - check that a terminal exists, and get the message bit
  *     and the access time
@@ -413,10 +417,8 @@ int term_chk(char *tty, int uid, int *msgsokP, time_t *atimeP)
  */
 int search_utmp(char *user,
 		int uid, 
-		char *tty, 
 		char *userhome,
-		char ***ttylist,
-		int *multittyp)
+		char ***ttylist)
 {
 	struct utmp u;
 	time_t bestatime, atime;
@@ -426,170 +428,155 @@ int search_utmp(char *user,
 	int all_ttys_size;
 	int ttylistlen;
 
-	if(ttylist) {
-	    if(!(all_ttys = (char **)calloc(BUF_ALLOC_STEP, sizeof(char *)))) {
-		RWRITE_FATAL("Out of memory.");
-	    }
-	    all_ttys_size = BUF_ALLOC_STEP;
-	    ttylistlen = 0;
-	    *ttylist = all_ttys;
-	}
-	if(multittyp) {
-	    *multittyp = 0;
-	}
-	if(userhome && (*userhome)) {
-	    /* 
-	     * We check first if user has RWRITE_FILE_TARGET file in 
-	     * his home dir.
-	     */
-	    FILE *f;
-
-	    strcpy(atty, userhome);
-	    strcat(atty, "/");
-	    strcat(atty, RWRITE_FILE_TARGET);
-	    if(f = fopen(atty, "r")) {
-		if(fgets(atty, sizeof(atty), f)) {
-		    int len = strlen(atty);
-		    fclose(f); /* We can do it here, so we can forget it. */
-		    if(len) {
-			if(atty[len - 1] == '\n') {
-			    atty[--len] = '\000';
-			}
-			if(!(strcmp(atty, "all"))) {
-			    if(multittyp) {
-				*multittyp = 1;
-			    }
-			    goto continue_utmp_search;
-			}
-			if((!(term_chk(atty, uid, &msgsok, &atime))) && msgsok) {
-			    if(HAS_TTY_FORCE() && (strcmp(atty, tty_force))) {
-				/* Cannot force over the user force tty. */
-				return DELIVER_PERMISSION_DENIED;
-			    }
-			    strcpy(tty, atty);
-			    if(ttylist) {
-				/*
-				 * There's always room for one.
-				 */
-				if(!(all_ttys[0] = malloc(strlen(atty) + 1))) {
-				    RWRITE_FATAL("Out of memory.");
-				}
-				strcpy(all_ttys[0], atty);
-			    }
-			    return DELIVER_OK;
-			}
-		    }
-		}
-		fclose(f); /* Read failed but file is still open. */
-	    }
-	    /* No success this far.  Slip through. */
-	}
-    continue_utmp_search:;
-	if((ufd = open(_PATH_UTMP, O_RDONLY)) < 0) {
-	    return DELIVER_USER_NOT_IN;
-	}
+	all_ttys = NULL;
+	all_ttys_size = 0;
+	ttylistlen = 0;
 	nloggedttys = nttys = 0;
-	bestatime = 0;
-	no_timecomp = 0;
-	while (read(ufd, (char *) &u, sizeof(u)) == sizeof(u))
-	    if (strncmp(user, u.ut_name, sizeof(u.ut_name)) == 0) {
-		nloggedttys++;
-		strcpy(atty, "/dev/");
-		strncat(atty, u.ut_line, UT_LINESIZE);
-		atty[strlen("/dev/") + UT_LINESIZE] = '\000';
-		if(term_chk(atty, uid, &msgsok, &atime))
+	if((rc_read_p()) && rc_tty_list) {
+	    int i;
+	    char *hlp;
+
+	    for(i = 0; rc_tty_list[i]; i++) {
+		char tty[MAXPATHLEN];
+
+		if(((rc_tty_list[i][0]) == '~') && 
+		   ((rc_tty_list[i][1]) == '/') &&
+		   ((strlen(rc_tty_list[i]) + strlen(userhome)) < 
+		    MAXPATHLEN)) {
+		    sprintf(tty, "%s/%s", userhome, &(rc_tty_list[i][2]));
+		} else {
+		    strcpy(tty, rc_tty_list[i]);
+		}
+		if(term_chk(tty, uid, &msgsok, &atime))
 		    continue;	/* bad term? skip */
 		if(!msgsok)
 		    continue;	/* skip ttys with msgs off */
-		if(ttylist) {
-		    if((ttylistlen + 2) >= all_ttys_size) {
-			char **new_all_ttys;
-			if(!(new_all_ttys = 
-			     (char **)calloc(BUF_ALLOC_STEP + all_ttys_size,
-					     sizeof(char *)))) {
-			    RWRITE_FATAL("Out of memory.");
-			}
-			memcpy(new_all_ttys, 
-			       all_ttys, 
-			       all_ttys_size * sizeof(char *));
-			all_ttys_size += BUF_ALLOC_STEP;
-			free(all_ttys);
-			all_ttys = new_all_ttys;
-		    }
-		    if(!(all_ttys[ttylistlen] = malloc(strlen(atty) + 1))) {
-			RWRITE_FATAL("Out of memory.");
-		    }
-		    strcpy(all_ttys[ttylistlen], atty);
-		    ttylistlen++;
-		    *ttylist = all_ttys; /* Not necessary every time but... */
+		if(!(hlp = malloc(strlen(tty) + 1))) {
+		    RWRITE_FATAL("Out of memory.");
 		}
-		if(HAS_TTY_FORCE()) {
-		    if(!(strcmp(atty, tty_force))) {
-			strcpy(tty, atty);
-			nttys++;
-		    }
-		    no_timecomp = 1;
-		    continue;
+		strcpy(hlp, tty);
+		if(!(add_to_list(&all_ttys,
+				 &all_ttys_size,
+				 hlp))) {
+		    RWRITE_FATAL("Out of memory.");
 		}
-		nttys++;
-		if(HAS_TTY_HINT() && (!(strcmp(atty, tty_hint)))) {
-		    strcpy(tty, atty);
-		    no_timecomp = 1;
-		    continue;
-		}
-		if(!(no_timecomp) && (atime > bestatime)) {
-		    bestatime = atime;
-		    strcpy(tty, atty);
+		ttylistlen++;
+	    }
+	}
+	if((rc_read_p()) && (no_tty_delivery()) && (ttylistlen > 0)) {
+	    if(ttylist) {
+		*ttylist = all_ttys;
+	    } else {
+		int i;
+		for(i = 0; i < ttylistlen; i++) {
+		    if(all_ttys[i])
+			free(all_ttys[i]);
+		    free(all_ttys);
 		}
 	    }
+	    return DELIVER_OK;
+	}
+	if((ufd = open(_PATH_UTMP, O_RDONLY)) < 0) {
+	    if(ttylistlen < 1)
+		return DELIVER_USER_NOT_IN;
+	    else
+		return DELIVER_OK;
+	}
+	if(deliver_all_ttys()) {
+	    while(read(ufd, (char *) &u, sizeof(u)) == sizeof(u)) {
+		if(strncmp(user, u.ut_name, sizeof(u.ut_name)) == 0) {
+		    char *hlp;
+
+		    nloggedttys++;
+		    strcpy(atty, "/dev/");
+		    strncat(atty, u.ut_line, UT_LINESIZE);
+		    atty[strlen("/dev/") + UT_LINESIZE] = '\000';
+		    if(term_chk(atty, uid, &msgsok, &atime))
+			continue; /* bad term? skip */
+		    if(!msgsok)
+			continue; /* skip ttys with msgs off */
+		    nttys++;
+		    if(!(hlp = malloc(strlen(atty) + 1))) {
+			RWRITE_FATAL("Out of memory.");
+		    }
+		    strcpy(hlp, atty);
+		    if(!(add_to_list(&all_ttys,
+				     &all_ttys_size,
+				     hlp))) {
+			RWRITE_FATAL("Out of memory.");
+		    }
+		    ttylistlen++;
+		}
+	    }
+        } else {
+	    char best_tty[MAXPATHLEN];
+
+	    best_tty[0] = 0;
+	    bestatime = 0;
+	    no_timecomp = 0;
+	    while(read(ufd, (char *) &u, sizeof(u)) == sizeof(u)) {
+		if(strncmp(user, u.ut_name, sizeof(u.ut_name)) == 0) {
+		    nloggedttys++;
+		    strcpy(atty, "/dev/");
+		    strncat(atty, u.ut_line, UT_LINESIZE);
+		    atty[strlen("/dev/") + UT_LINESIZE] = '\000';
+		    if(term_chk(atty, uid, &msgsok, &atime))
+			continue;	/* bad term? skip */
+		    if(!msgsok)
+			continue;	/* skip ttys with msgs off */
+		    if(HAS_TTY_FORCE()) {
+			if(!(strcmp(atty, tty_force))) {
+			    strcpy(best_tty, atty);
+			    no_timecomp = 1;
+			    nttys++;
+			}
+			continue;
+		    }
+		    nttys++;
+		    if(HAS_TTY_HINT() && (!(strcmp(atty, tty_hint)))) {
+			strcpy(best_tty, atty);
+			no_timecomp = 1;
+			continue;
+		    }
+		    if(!(no_timecomp) && (atime > bestatime)) {
+			bestatime = atime;
+			strcpy(best_tty, atty);
+		    }
+		}
+	    }
+	    if(best_tty[0]) {
+		char *hlp;
+
+		if(!(hlp = malloc(strlen(best_tty) + 1))) {
+		    RWRITE_FATAL("Out of memory.");
+		}
+		strcpy(hlp, best_tty);
+		if(!(add_to_list(&all_ttys,
+				 &all_ttys_size,
+				 hlp))) {
+		    RWRITE_FATAL("Out of memory.");
+		}
+	    }
+	}
 	close(ufd);
 	if (nloggedttys == 0)
 	    return DELIVER_USER_NOT_IN;
-	if(nttys >= 1)
+	if(nttys >= 1) {
+	    if(ttylist) {
+		*ttylist = all_ttys;
+	    } else {
+		int i;
+		for(i = 0; i < ttylistlen; i++) {
+		    if(all_ttys[i])
+			free(all_ttys[i]);
+		    free(all_ttys);
+		}
+	    }
 	    return DELIVER_OK;
+	}
 	return DELIVER_PERMISSION_DENIED;
 }
 /********* END OF STUFF FROM Berkeley Unix's write(1) **********/
-
-/*
- * Check if user has either denied of allowed access for
- * specified remote user.
- */
-int is_allowed(char *homedir, char *fromuser, char *fromhost)
-{
-    FILE *f;
-    char *line;
-    char rcfile[MAXPATHLEN], sender[256];
-
-    sprintf(sender, "%s@%s", fromuser, fromhost);
-    sprintf(rcfile, "%s/%s", homedir, RWRITE_FILE_ALLOW);
-    if(f = fopen(rcfile, "r")) {
-	while(line = read_line(f)) {
-	    if(!(StrMatch(sender, line))) {
-		free(line);
-		fclose(f);
-		return 1;
-	    }
-	    free(line);
-	}
-	fclose(f);
-	return 0;
-    } else {
-	sprintf(rcfile, "%s/%s", homedir, RWRITE_FILE_DENY);
-	if(f = fopen(rcfile, "r")) {
-	    while(line = read_line(f)) {
-		if(!(StrMatch(sender, line))) {
-		    free(line);
-		    fclose(f);
-		    return 0;
-		}
-		free(line);
-	    }
-	    fclose(f);
-	}
-    }
-    return 1;
-}
 
 int writeto(char *tty,
 	    char **msg,
@@ -602,7 +589,7 @@ int writeto(char *tty,
     int i;
     FILE *f;
 
-    if(!(f = fopen(tty, "w")))
+    if(!(f = fopen(tty, "a")))
 	return 0;
     fputc('\007', f);
     if(strcmp(remotehost, fromhost))
@@ -642,12 +629,11 @@ int deliver(char *user,
 	    char *via, 
 	    char **msg)
 {
-    char tty[MAXPATHLEN];
+    char rcfilename[MAXPATHLEN];
     int d_status;
     time_t now;
     char *nowstr;
     struct passwd *pwd;
-    int multittyp;
     char **all_ttys;
     int succeeded;
 
@@ -658,17 +644,28 @@ int deliver(char *user,
     if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
 	return DELIVER_NO_SUCH_USER;
     }
-    if(!(is_allowed(pwd->pw_dir, from, fromhost))) {
+    if(!(rc_read_p())) {
+	sprintf(rcfilename, "%s/%s", pwd->pw_dir, RWRITE_CONFIG_FILE);
+	read_rc(RWRITE_GLOBAL_CONFIG);
+	read_rc(rcfilename);
+    }
+#ifdef DEBUG
+    print_configuration();
+#endif
+    if(!(is_allowed(from, fromhost))) {
 	return DELIVER_PERMISSION_DENIED;
     }
-    if((d_status = search_utmp(user, pwd->pw_uid, tty, 
-			       pwd->pw_dir, &all_ttys, &multittyp)) != 
+    if((d_status = search_utmp(user, pwd->pw_uid,
+			       pwd->pw_dir, &all_ttys)) != 
        DELIVER_OK)
 	return(d_status);
-    if(multittyp && all_ttys) {
-	char **ttys;
-	for(ttys = all_ttys; *ttys; ttys++) {
-	    succeeded = (writeto(*ttys,
+    if(all_ttys) {
+	int i;
+	for(i = 0; all_ttys[i]; i++) {
+#ifdef DEBUG
+	    fprintf(stdout, "%03d Writeto \"%s\".\n", RWRITE_DEBUG, all_ttys[i]);
+#endif
+	    succeeded = (writeto(all_ttys[i],
 				 msg,
 				 from, 
 				 fromhost,
@@ -676,23 +673,38 @@ int deliver(char *user,
 				 remotehost,
 				 nowstr) ||
 			 succeeded);
-	    free(*ttys);
+	    free(all_ttys[i]);
 	}
 	free(all_ttys);
-    } else {
-	succeeded = writeto(tty,
-			    msg,
-			    from, 
-			    fromhost,
-			    via,
-			    remotehost,
-			    nowstr);
-	if(all_ttys) { /* Free them anyway.  Not very important though. */
-	    char **ttys;
-	    for(ttys = all_ttys; *ttys; ttys++)
-		free(*ttys);
-	    free(all_ttys);
+    }
+    if(succeeded) {
+	/* See if there is a autoreply file */
+	FILE *f;
+	char *line;
+
+	sprintf(rcfilename, "%s/%s", pwd->pw_dir, RWRITE_AUTOREPLY_FILE);
+	if(f = fopen(rcfilename, "r")) {
+	    int l;
+	    
+	    l = 0;
+	    while((line = read_line(f)) && (l < 24)) {
+		char *hlp;
+	    
+		hlp = quote_str(line);
+		free(line);
+		line = hlp;
+		l++;
+		fprintf(stdout, "%03d |%s\n", RWRITE_AUTOREPLY, line);
+		free(line);
+	    }
+	    fclose(f);
 	}
+#ifdef DEBUG
+	else {
+	    fprintf(stdout, "%03d Can't open \"%s\".\n", 
+		    RWRITE_DEBUG, rcfilename);
+	}
+#endif
     }
     return(succeeded ? DELIVER_OK : DELIVER_PERMISSION_DENIED);
 }
@@ -705,13 +717,18 @@ int can_deliver(char *user, char *from, char *fromhost)
     if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
 	return DELIVER_NO_SUCH_USER;
     }
+    if(!(rc_read_p())) {
+	sprintf(tty, "%s/%s", pwd->pw_dir, RWRITE_CONFIG_FILE);
+	read_rc(RWRITE_GLOBAL_CONFIG);
+	read_rc(tty);
+    }
     /*
      * Check user's allow and deny file only if remote user has
      * already told who he is.
      */
-    if(from && fromhost && (!(is_allowed(pwd->pw_dir, from, fromhost))))
+    if(from && fromhost && (!(is_allowed(from, fromhost))))
 	return DELIVER_PERMISSION_DENIED;
-    return(search_utmp(user, pwd->pw_uid, tty, pwd->pw_dir, NULL, NULL));
+    return(search_utmp(user, pwd->pw_uid, pwd->pw_dir, NULL));
 }
 
 int main(int argc, char **argv)
@@ -818,6 +835,7 @@ int main(int argc, char **argv)
 		char *tty_to;
 		int len;
 
+		reset_rc();
 		to_user[0] = '\000';
 		tty_hint[0] = '\000';
 		tty_force[0] = '\000';

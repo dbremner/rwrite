@@ -6,15 +6,19 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Thu Oct  6 20:31:06 1994 tri
+ * Last modified: Sun Nov 20 02:05:42 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.9 $
+ * $Revision: 1.10 $
  * $State: Exp $
- * $Date: 1994/10/06 18:32:37 $
+ * $Date: 1994/11/20 00:47:18 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.9  1994/10/06 18:32:37  tri
+ * Revision 1.10  1994/11/20 00:47:18  tri
+ * Completed autoreply and quotation stuff.
+ * We are almost there now.
+ *
+ * Revision 1.9  1994/10/06  18:32:37  tri
  * Hacked multitty option.
  *
  * Revision 1.8  1994/10/04  20:50:22  tri
@@ -78,19 +82,23 @@
 /* #define NO_GETEGID 1 */
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.02b"		/* Server version   */
-#define RWRITE_VERSION_NUMBER	"1.01b"		/* Client version   */
+#define RWRITED_VERSION_NUMBER	"1.1a"		/* Server version   */
+#define RWRITE_VERSION_NUMBER	"1.1a"		/* Client version   */
 /*
  * User definitions are in the following files.
  */
-#define RWRITE_FILE_DENY	".rwrite-deny"
-#define RWRITE_FILE_ALLOW	".rwrite-allow"
-#define RWRITE_FILE_TARGET	".rwrite-tty"
-#define RWRITE_FILE_FORWARD	".rwrite-forward"	/* Not implemented */
-#define RWRITE_FILE_AGENT	".rwrite-agent"		/* Not implemented */
+#define RWRITE_CONFIG_FILE	".rwriterc"
+#define RWRITE_GLOBAL_CONFIG	"/etc/rwrite.conf"
+#define RWRITE_AUTOREPLY_FILE	".rwrite-autoreply"
 
 #define PATH_SEPARATOR          ((int)'!')  /* Separator char in delivery path */
 #define ADDRESS_TTY_SEPARATOR	((int)':')
+
+/*
+ * Allocation step in line buffer allocation. 
+ * Has to be at least 4.  No need to modify this anyway.
+ */
+#define BUF_ALLOC_STEP	128
 
 /*************************************************/
 /*************************************************/
@@ -98,6 +106,23 @@
 /*************************************************/
 /*************************************************/
 
+/*
+ * Prototypes of the resource functions
+ */
+int rc_read_p(void);
+int add_to_list(char ***list, int *list_sz, char *str);
+int add_list_to_list(char ***tgt, int *tgt_sz, char **list);
+int is_in_list(char **list, char *str);
+void reset_rc(void);
+void read_rc(char *fn);
+int is_allowed(char *name, char *host);
+int deliver_all_ttys(void);
+int no_tty_delivery(void);
+char *quote_str(char *s);
+char *dequote_str(char *s);
+#ifndef __RWRITERC_C__
+extern char **rc_tty_list;
+#endif
 /*
  * #
  * # Entry to enable rwrite service in /etc/services.
@@ -131,6 +156,12 @@
  */
 #define RWRITE_GETMSG		200
 /*
+ * Autoreply
+ */
+#define RWRITE_AUTOREPLY	555 /* To be 300 */
+/* Older RWP clients barf with 300 but ignore 555 so let it be 555 for now. */
+#define RWRITE_AUTOREPLY_AS_COMMENT	556
+/*
  * Informational responses.
  */
 #define RWRITE_HELO		500
@@ -138,6 +169,7 @@
 #define RWRITE_PROT		502
 #define RWRITE_HELP		510
 #define RWRITE_INFO		511 /* Stuff for client to ignore. */
+#define RWRITE_DEBUG		512 /* Stuff for client to ignore. */
 /*
  * Error codes.
  */

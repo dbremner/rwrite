@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Fri Dec  9 12:16:56 1994 tri
+ * Last modified: Fri Dec  9 12:27:15 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.18 $
+ * $Revision: 1.19 $
  * $State: Exp $
- * $Date: 1994/12/09 10:17:26 $
+ * $Date: 1994/12/09 10:28:56 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.18  1994/12/09 10:17:26  tri
+ * Revision 1.19  1994/12/09 10:28:56  tri
+ * Fixed a return value of dequote_and_send().
+ *
+ * Revision 1.18  1994/12/09  10:17:26  tri
  * Fixed Camillo's violent debug output.
  *
  * Revision 1.17  1994/12/08  22:56:45  tri
@@ -97,7 +100,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.18 1994/12/09 10:17:26 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.19 1994/12/09 10:28:56 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -707,8 +710,6 @@ int writeto(char *tty,
 	fprintf(f, "Message from %s@%s at %s", from, fromhost, 
 		(nowstr ? nowstr : "xxx"));
     return(dequote_and_write(f, msg, max_lines_in(), max_chars_in(), ttyp));
-
-    return 1;
 }
 /*
  * This is a function that should be developed radically.

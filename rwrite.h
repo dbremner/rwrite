@@ -6,15 +6,18 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Tue Sep 20 22:08:30 1994 tri
+ * Last modified: Tue Oct  4 22:32:21 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.7 $
+ * $Revision: 1.8 $
  * $State: Exp $
- * $Date: 1994/09/20 19:08:57 $
+ * $Date: 1994/10/04 20:50:22 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.7  1994/09/20 19:08:57  tri
+ * Revision 1.8  1994/10/04 20:50:22  tri
+ * Conforms now the current RWP protocol.
+ *
+ * Revision 1.7  1994/09/20  19:08:57  tri
  * Added a configuration option for rwrited ran
  * without tty setgid.
  *
@@ -66,22 +69,25 @@
  */
 /* #define DO_NOT_TELL_USERS 1 */
 /*
- * If rwrited program is not going to be ran as a tty-group setgid
- * process you should define NO_TERMINAL_SGID to ensure that VRFY
- * command works about right.
+ * Everyone should have following but...
  */
-/* #define NO_TERMINAL_SGID 1 */
+/* #define NO_GETEUID 1 */
+/* #define NO_GETEGID 1 */
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.0b"		/* Server version   */
-#define RWRITE_VERSION_NUMBER	"1.0b"		/* Client version   */
+#define RWRITED_VERSION_NUMBER	"1.01b"		/* Server version   */
+#define RWRITE_VERSION_NUMBER	"1.01b"		/* Client version   */
 /*
  * User definitions are in the following files.
  */
 #define RWRITE_FILE_DENY	".rwrite-deny"
 #define RWRITE_FILE_ALLOW	".rwrite-allow"
+#define RWRITE_FILE_TARGET	".rwrite-tty"
 #define RWRITE_FILE_FORWARD	".rwrite-forward"	/* Not implemented */
 #define RWRITE_FILE_AGENT	".rwrite-agent"		/* Not implemented */
+
+#define PATH_SEPARATOR          ((int)'!')  /* Separator char in delivery path */
+#define ADDRESS_TTY_SEPARATOR	((int)':')
 
 /*************************************************/
 /*************************************************/

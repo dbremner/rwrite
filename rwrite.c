@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Tue Sep 20 21:52:34 1994 tri
+ * Last modified: Tue Oct  4 22:17:14 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.6 $
+ * $Revision: 1.7 $
  * $State: Exp $
- * $Date: 1994/09/20 18:52:51 $
+ * $Date: 1994/10/04 20:50:22 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.6  1994/09/20 18:52:51  tri
+ * Revision 1.7  1994/10/04 20:50:22  tri
+ * Conforms now the current RWP protocol.
+ *
+ * Revision 1.6  1994/09/20  18:52:51  tri
  * Fixed few minor warnings.
  *
  * Revision 1.5  1994/09/19  22:43:38  tri
@@ -54,7 +57,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.6 1994/09/20 18:52:51 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.7 1994/10/04 20:50:22 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -307,7 +310,12 @@ int write_string(int fd, char *s)
 #define DIALOG_DATA  6
 #define DIALOG_SEND  7
 
-int rwp_dialog(int s, char *to, char *from, char **msg, int writehist)
+int rwp_dialog(int s, 
+	       char *to,
+	       char *tty,
+	       char *from,
+	       char **msg,
+	       int writehist)
 {
     int code;
     char *resp, *line;
@@ -344,6 +352,10 @@ int rwp_dialog(int s, char *to, char *from, char **msg, int writehist)
 		    fprintf(stderr, ">>>>TO %s\n", to);
 		WRITE_STRING(s, "TO ");
 		WRITE_STRING(s, to);
+		if(tty) {
+		    WRITE_STRING(s, " ");
+		    WRITE_STRING(s, tty);
+		}
 		WRITE_STRING(s, "\012");
 		goto redo_dialog_loop;
 	    case RWRITE_RCPT_OK:
@@ -683,9 +695,7 @@ int rwp_dialog(int s, char *to, char *from, char **msg, int writehist)
 /********************* Modifications by tri *********************/
 int open_to(char *name)
 {
-    extern int lflag;
-    FILE *fp;
-    int c, lastc, defport;
+    int defport;
     struct in_addr defaddr;
     struct hostent *hp, def;
     struct servent *sp;
@@ -745,10 +755,46 @@ int open_to(char *name)
 
 /********* END OF STUFF FROM Berkeley Unix's finger(1) **********/
 
+int blow_target_addr(char *str, char **to, char **tty)
+{
+    char *hlp;
+
+    if((!str))
+	return 0;
+    *to = hlp = str;
+    while((*hlp) && (*hlp != ADDRESS_TTY_SEPARATOR))
+	hlp++;
+    if(*hlp) {
+	*hlp = '\000';
+	*hlp++;
+    }
+    if(*hlp) {
+	*tty = hlp;
+	return 2;
+    } else {
+	*tty = NULL;
+    }
+    return 1;
+}
+
+int fix_tty_quote(char *str)
+{
+    if(str && *str) {
+	int len = strlen(str);
+	if((str[0] == '/') &&
+	   (str[len - 1] == '/')) {
+	    str[0] = '[';
+	    str[len - 1] = ']';
+	}
+	return 1;
+    }
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     int ch, s, ret;
-    char *to, *from;
+    char *to, *from, *tty;
     char **msg;
     extern char *optarg;
     extern int optind, optopt;
@@ -763,7 +809,7 @@ int main(int argc, char **argv)
 	    break;
 	case 'f':
 	    fwds = atoi(optarg);
-	    if(fwds < 1) {
+	    if((fwds < 1) && (fwds != (-1))) {
 		fprintf(stderr, "rwrite: -f needs an argument > 0.\n");
 		exit(1);
 	    }
@@ -786,7 +832,6 @@ int main(int argc, char **argv)
 	    exit(1);
 	}
     }
-
     /*
      * Dig the sender information.
      */
@@ -803,46 +848,43 @@ int main(int argc, char **argv)
 	}
 	strcpy(from, tmp);
     }	
-    if((argc - optind) == 1) {
-	if(backround && (!resend)) {
-	    msg = read_user_message();
-	    if(!msg) {
-		fprintf(stderr, "rwrite: Empty message.\n");
-		exit(4);
-	    }
-	} else {
-	    msg = NULL;
-	}
-	if(backround) {
-	    switch(fork()) {
-	    case 0:
-		break; /* Child continues */
-	    case -1:
-		fprintf(stderr, "rwrite: Unable to fork.\n");
-		exit(5);
-	    default:
-		exit(0);
-	    }
-	}
+    if(((argc - optind) == 1) && (!resend) && (!backround)) {
 	if(!(to = (char *)malloc(strlen(argv[optind]) + 1))) {
 	    exit(2);
 	}
 	strcpy(to, argv[optind]);
+	blow_target_addr(to, &to, &tty);
+	fix_tty_quote(tty);
 	if(0 > (s = open_to(to))) {
 	    exit(3);
 	}
-	ret = rwp_dialog(s, to, from, msg, 1);
+	ret = rwp_dialog(s, to, tty, from, NULL, 1);
 	close(s);
 	exit(ret ? 0 : (4));
-    } else if((argc - optind) > 1) {
+    } else if((argc - optind) >= 1) {
 	int i;
 	if(resend) {
 	    msg = NULL;
 	} else {
-	    msg = read_user_message();
-	    if(!msg) {
+	    FILE *f;
+		
+	    if(!(msg = read_user_message())) {
 		fprintf(stderr, "rwrite: Empty message.\n");
 		exit(4);
+	    }
+	    /* Writes history file. */
+	    if(!(f = open_history_write())) {
+		if(!quiet)
+		    fprintf(stderr, "rwrite: Warning, can't open history file.\n");
+	    } else {
+		int i;
+		char *line;
+		
+		for((i = 0, line = msg[i]); line; line = msg[++i])
+		    fprintf(f, "%s\n", line);
+		if((!(close_history_write(f))))
+		    if(!quiet)
+			fprintf(stderr, "rwrite: Warning, can't close history file.\n");
 	    }
 	}
 	if(backround) {
@@ -861,12 +903,13 @@ int main(int argc, char **argv)
 		exit(2);
 	    }
 	    strcpy(to, argv[i]);
+	    blow_target_addr(to, &to, &tty);
+	    fix_tty_quote(tty);
 	    if(0 > (s = open_to(to))) {
 		if(!quiet)
 		    fprintf(stderr, "rwrite: Skipped %s.\n", argv[i]);
 	    } else {
-		/* Writes history file every time. XXX */
-		ret = rwp_dialog(s, to, from, msg, 1);
+		ret = rwp_dialog(s, to, tty, from, msg, 0);
 		close(s);
 		if(!ret) {
 		    if(!quiet)
@@ -877,7 +920,7 @@ int main(int argc, char **argv)
 	}
 	/* Message array msg could be freed here but... XXX */
     } else {
-	fprintf(stderr, "USAGE: rwrite [-f #] [-r] [-v] [-b] user[@host]...\n");
+	fprintf(stderr, "USAGE: rwrite [-f #] [-r] [-v] [-b] user[@host] ...\n");
 	exit(1);
     }
     /*NOTREACHED*/

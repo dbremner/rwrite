@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Tue Sep 27 01:12:59 1994 tri
+ * Last modified: Tue Oct  4 22:30:02 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.8 $
+ * $Revision: 1.9 $
  * $State: Exp $
- * $Date: 1994/09/26 23:14:14 $
+ * $Date: 1994/10/04 20:50:22 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.8  1994/09/26 23:14:14  tri
+ * Revision 1.9  1994/10/04 20:50:22  tri
+ * Conforms now the current RWP protocol.
+ *
+ * Revision 1.8  1994/09/26  23:14:14  tri
  * Fixed a minor feature that made helo resopnse
  * look a bit weird before fhst command.
  *
@@ -61,7 +64,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.8 1994/09/26 23:14:14 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.9 1994/10/04 20:50:22 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -88,6 +91,8 @@ static char *RCS_id = "$Id: rwrited.c,v 1.8 1994/09/26 23:14:14 tri Exp $";
 #ifndef UT_LINESIZE
 #  define UT_LINESIZE 32
 #endif
+
+
 
 #ifndef _PATH_UTMP
 #  ifdef PATH_UTMP
@@ -132,12 +137,29 @@ static char *RCS_id = "$Id: rwrited.c,v 1.8 1994/09/26 23:14:14 tri Exp $";
 /*
  * Globals.  Eh... Urp... Well... Who cares...
  */
-char from_host[128];
-char remote_host[128];
-char from_user[64];
-char to_user[64];
-char my_host[128];
-int fwd_count = 0;
+char from_host[128];        /* Host message originates to */
+char remote_host[128];      /* Host that is connected to server */
+char *from_path = NULL;     /* Path from original host to remote host */
+char from_user[128];	    /* Sender's login uid */
+char identd_from_user[128]; /* Sender's login uid from identd */
+char to_user[128];          /* Recipient's login id */
+char my_host[128];          /* My hostname */
+char tty_hint[MAXPATHLEN];  /* Remote end has given tty as a hint */
+char tty_force[MAXPATHLEN]; /* Remote end has given tty to deliver a message */
+int fwd_count = 0;          /* Hop count. -1 if all forwarding is forbidden */
+int fake_user = 0;	    /* 0=ok, 1=nonconfirmed, 2=fake */
+
+#define HAS_TTY_HINT()  (tty_hint[0] != '\000')
+#define HAS_TTY_FORCE() (tty_force[0] != '\000')
+
+int server_euid = -1;
+int server_egid = -1;
+int cmd_line    = 0;        /* Is rwrited invoked from the command line */
+
+int identify_remote_by_identd(char *buf, int bufsize)
+{
+    return 0;    /* We could dig remote user with identd here. XXX */
+}
 
 char *read_line(FILE *f)
 {
@@ -145,8 +167,9 @@ char *read_line(FILE *f)
     int buflen;
     int c, i;
 
-    if(!(buf = ((char *)malloc(BUF_ALLOC_STEP))))
-	return NULL;
+    if(!(buf = ((char *)malloc(BUF_ALLOC_STEP)))) {
+	RWRITE_FATAL("Out of memory.");
+    }
     buflen = BUF_ALLOC_STEP;
     for(i = 0; (EOF != (c = (fgetc(f)))); i++) {
 	if((c == '\000') ||
@@ -160,8 +183,7 @@ char *read_line(FILE *f)
 	    char *newbuf;
 	    buflen += BUF_ALLOC_STEP;
 	    if(!(newbuf = (char *)malloc(buflen))) {
-		free(buf);
-		return NULL;
+		RWRITE_FATAL("Out of memory.");
 	    }
 	    memcpy(newbuf, buf, i);
 	    free(buf);
@@ -184,12 +206,14 @@ void set_hostnames(int get_remote)
     int remote_sock_len = sizeof(remote_sock);
     struct hostent *remote_hostent;
 
+    identd_from_user[0] = '\000';
     from_user[0] = '\000';
-    remote_host[0] = '\000';
-    from_host[0] = '\000';
     to_user[0] = '\000';
+    tty_hint[0] = '\000';
+    tty_force[0] = '\000';
     gethostname(my_host, sizeof(my_host));
     my_host[sizeof(my_host) - 1] = '\000';
+    fake_user = 0;
     if(get_remote) {
 	if(-1 == getpeername(0, 
 			     (struct sockaddr *)(&remote_sock),
@@ -202,10 +226,12 @@ void set_hostnames(int get_remote)
 	   (!(remote_hostent->h_name))) {
 	    RWRITE_FATAL("Gethostbyaddr failed.");
 	}
-	strncpy(from_host, remote_hostent->h_name, sizeof(from_host));
+	strncpy(remote_host, remote_hostent->h_name, sizeof(remote_host));
     } else {
-	strncpy(from_host, my_host, sizeof(from_host));
+	strncpy(remote_host, my_host, sizeof(remote_host));
     }
+    remote_host[sizeof(remote_host) - 1] = '\000';
+    strncpy(from_host, remote_host, sizeof(from_host));
     from_host[sizeof(from_host) - 1] = '\000';
 
     return; 
@@ -218,7 +244,7 @@ void rwrite_helo()
 { 
     fprintf(stdout, "%03d Hello %s.  This is %s speaking.\n",
 	    RWRITE_HELO, 
-	    (remote_host[0] ? remote_host : from_host), 
+	    (remote_host[0] ? remote_host : "UNKNOWN"),
 	    my_host); 
     fflush(stdout);
     return;
@@ -278,8 +304,9 @@ char **read_message()
 
     RWRITE_MSG(RWRITE_GETMSG, 
 	       "Enter message.  Single dot '.' on line terminates.");
-    if(!(buf = ((char **)malloc(BUF_ALLOC_STEP * sizeof(char *)))))
-	return NULL;
+    if(!(buf = ((char **)malloc(BUF_ALLOC_STEP * sizeof(char *))))) {
+	RWRITE_FATAL("Out of memory.");
+    }
     buflen = BUF_ALLOC_STEP;
     for(i = 0; /*NOTHING*/; i++) {
 	if(!(line = read_line(stdin))) {
@@ -298,8 +325,7 @@ char **read_message()
 	    char **newbuf;
 	    buflen += BUF_ALLOC_STEP;
 	    if(!(newbuf = (char **)malloc(buflen * sizeof(char *)))) {
-		free(buf);
-		return NULL;
+		RWRITE_FATAL("Out of memory.");
 	    }
 	    memcpy(newbuf, buf, i * sizeof(char *));
 	    free(buf);
@@ -342,19 +368,29 @@ char *get_user_name(char *cmd)
  * term_chk - check that a terminal exists, and get the message bit
  *     and the access time
  */
-int term_chk(char *tty, int *msgsokP, time_t *atimeP)
+int term_chk(char *tty, int uid, int *msgsokP, time_t *atimeP)
 {
 	struct stat s;
-	char path[MAXPATHLEN];
 
-	(void)sprintf(path, "/dev/%s", tty);
-	if (stat(path, &s) < 0)
+	if (stat(tty, &s) < 0)
 		return 1;
-#ifdef NO_TERMINAL_SGID
-	*msgsokP = (s.st_mode & (S_IWRITE >> 6)) != 0;	/* all write bit */
-#else
-	*msgsokP = (s.st_mode & (S_IWRITE >> 3)) != 0;	/* group write bit */
-#endif
+	if(s.st_uid == server_euid) {
+	    /* own write bit */
+	    *msgsokP = !(!((((unsigned int)s.st_mode) &
+			    ((unsigned int)(S_IWRITE)))));
+	} else if(s.st_gid == server_egid) {
+	    /* grp write bit */
+	    *msgsokP = !(!((((unsigned int)s.st_mode) &
+			    ((unsigned int)(S_IWRITE >> 3)))));
+	} else {
+	    /* all write bit */
+	    *msgsokP = !(!((((unsigned int)s.st_mode) &
+			    ((unsigned int)(S_IWRITE >> 6)))));
+	}
+	if(*msgsokP && (uid >= 0)) {
+	    /* Check also the ownership */
+	    *msgsokP = (s.st_uid == uid);
+	}
 	*atimeP = s.st_atime;
 	return 0;
 }
@@ -369,42 +405,85 @@ int term_chk(char *tty, int *msgsokP, time_t *atimeP)
  * Special case for writing to yourself - ignore the terminal you're
  * writing from, unless that's the only terminal with messages enabled.
  */
-int search_utmp(char *user, char *tty)
+int search_utmp(char *user, int uid, char *tty, char *userhome)
 {
 	struct utmp u;
 	time_t bestatime, atime;
-	int ufd, nloggedttys, nttys, msgsok, user_is_me;
-	char atty[UT_LINESIZE + 1];
+	int ufd, nloggedttys, nttys, msgsok, no_timecomp;
+	char atty[MAXPATHLEN];
+	
+	if(userhome && (*userhome)) {
+	    /* 
+	     * We check first if user has RWRITE_FILE_TARGET file in 
+	     * his home dir.
+	     */
+	    FILE *f;
 
+	    strcpy(atty, userhome);
+	    strcat(atty, "/");
+	    strcat(atty, RWRITE_FILE_TARGET);
+	    if(f = fopen(atty, "r")) {
+		if(fgets(atty, sizeof(atty), f)) {
+		    int len = strlen(atty);
+		    fclose(f); /* We can do it here, so we can forget it. */
+		    if(len) {
+			if(atty[len - 1] == '\n') {
+			    atty[--len] = '\000';
+			}
+			if((!(term_chk(atty, uid, &msgsok, &atime))) && msgsok) {
+			    if(HAS_TTY_FORCE() && (strcmp(atty, tty_force))) {
+				/* Cannot force over the user force tty. */
+				return DELIVER_PERMISSION_DENIED;
+			    }
+			    strcpy(tty, atty);
+			    return DELIVER_OK;
+			}
+		    }
+		}
+		fclose(f); /* Read failed but file is still open. */
+	    }
+	    /* No success this far.  Slip through. */
+	}
 	if((ufd = open(_PATH_UTMP, O_RDONLY)) < 0) {
 	    return DELIVER_USER_NOT_IN;
 	}
 	nloggedttys = nttys = 0;
 	bestatime = 0;
-	user_is_me = 0;
+	no_timecomp = 0;
 	while (read(ufd, (char *) &u, sizeof(u)) == sizeof(u))
 	    if (strncmp(user, u.ut_name, sizeof(u.ut_name)) == 0) {
-		++nloggedttys;
-		(void)strncpy(atty, u.ut_line, UT_LINESIZE);
-		atty[UT_LINESIZE] = '\0';
-		if (term_chk(atty, &msgsok, &atime))
+		nloggedttys++;
+		strcpy(atty, "/dev/");
+		strncat(atty, u.ut_line, UT_LINESIZE);
+		atty[strlen("/dev/") + UT_LINESIZE] = '\000';
+		if(term_chk(atty, uid, &msgsok, &atime))
 		    continue;	/* bad term? skip */
-		if (!msgsok)
+		if(!msgsok)
 		    continue;	/* skip ttys with msgs off */
-		++nttys;
-		if (atime > bestatime) {
+		if(HAS_TTY_FORCE()) {
+		    if(!(strcmp(atty, tty_force))) {
+			strcpy(tty, atty);
+			nttys++;
+		    }
+		    no_timecomp = 1;
+		    continue;
+		}
+		nttys++;
+		if(HAS_TTY_HINT() && (!(strcmp(atty, tty_hint)))) {
+		    strcpy(tty, atty);
+		    no_timecomp = 1;
+		    continue;
+		}
+		if(!(no_timecomp) && (atime > bestatime)) {
 		    bestatime = atime;
-		    sprintf(tty, "/dev/%s", atty);
+		    strcpy(tty, atty);
 		}
 	    }
-
-	(void)close(ufd);
-	if (nloggedttys == 0) {
+	close(ufd);
+	if (nloggedttys == 0)
 	    return DELIVER_USER_NOT_IN;
-	}
-	if(nttys >= 1) {
+	if(nttys >= 1)
 	    return DELIVER_OK;
-	}
 	return DELIVER_PERMISSION_DENIED;
 }
 /********* END OF STUFF FROM Berkeley Unix's write(1) **********/
@@ -460,36 +539,46 @@ int deliver(char *user,
 	    char *from, 
 	    char *fromhost, 
 	    char *remotehost, 
+	    char *via, 
 	    char **msg)
 {
     FILE *f;
     int i;
     char tty[MAXPATHLEN];
-    char userhome[MAXPATHLEN];
     int d_status;
     time_t now;
     char *nowstr;
+    struct passwd *pwd;
 
     now = time(NULL);
     nowstr = ctime(&now);
-    {
-	struct passwd *pwd;
 
-	if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
-	    return DELIVER_NO_SUCH_USER;
-	}
-	if(!(is_allowed(pwd->pw_dir, from, fromhost)))
-	    return DELIVER_PERMISSION_DENIED;
+    if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
+	return DELIVER_NO_SUCH_USER;
     }
-    
-    if((d_status = search_utmp(user, tty)) != DELIVER_OK)
+    if(!(is_allowed(pwd->pw_dir, from, fromhost))) {
+	return DELIVER_PERMISSION_DENIED;
+    }
+    if((d_status = search_utmp(user, pwd->pw_uid, tty, pwd->pw_dir)) != 
+       DELIVER_OK)
 	return(d_status);
     if(!(f = fopen(tty, "w")))
 	return DELIVER_PERMISSION_DENIED;
     fputc('\007', f);
-    if(remotehost && (*remotehost))
-	fprintf(f, "\nMessage from %s@%s (via %s) at %s\n", from, fromhost, 
-		remotehost, (nowstr ? nowstr : "xxx"));
+    if(strcmp(remotehost, fromhost))
+	if(via) {
+	    fprintf(f, 
+		    "\nMessage from %s@%s (via %s%c%s) at %s\n", 
+		    from, 
+		    fromhost, 
+		    via,
+		    PATH_SEPARATOR,
+		    remotehost, 
+		    (nowstr ? nowstr : "xxx"));
+	} else {
+	    fprintf(f, "\nMessage from %s@%s (via %s) at %s\n", from, fromhost, 
+		    remotehost, (nowstr ? nowstr : "xxx"));
+	}
     else
 	fprintf(f, "\nMessage from %s@%s at %s\n", from, fromhost, 
 		(nowstr ? nowstr : "xxx"));
@@ -503,21 +592,18 @@ int deliver(char *user,
 int can_deliver(char *user, char *from, char *fromhost)
 {
     char tty[MAXPATHLEN];
-
-    {
-	struct passwd *pwd;
-
-	if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
-	    return DELIVER_NO_SUCH_USER;
-	}
-	/*
-	 * Check user's allow and deny file only if remote user has
-	 * already told who he is.
-	 */
-	if(from && fromhost && (!(is_allowed(pwd->pw_dir, from, fromhost))))
-	    return DELIVER_PERMISSION_DENIED;
+    struct passwd *pwd;
+    
+    if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
+	return DELIVER_NO_SUCH_USER;
     }
-    return(search_utmp(user, tty));
+    /*
+     * Check user's allow and deny file only if remote user has
+     * already told who he is.
+     */
+    if(from && fromhost && (!(is_allowed(pwd->pw_dir, from, fromhost))))
+	return DELIVER_PERMISSION_DENIED;
+    return(search_utmp(user, pwd->pw_uid, tty, pwd->pw_dir));
 }
 
 int main(int argc, char **argv)
@@ -525,20 +611,34 @@ int main(int argc, char **argv)
     char *cmd;
     char **message;
 
+#ifdef NO_GETEUID
+    server_euid = getuid();
+#else
+    server_euid = geteuid();
+#endif
+#ifdef NO_GETEGID
+    server_egid = getgid();
+#else
+    server_egid = getegid();
+#endif
     if((argc == 2) && (argv[1][0] == '-') && (argv[1][1] == '\000')) {
 	/*
 	 * We can run this on cmd-line using flag -.
 	 */
+	cmd_line = 1;
 	set_hostnames(0);
     } else {
 	/*
 	 * Otherwise we presume we are running through a socket.
 	 */
+	cmd_line = 0;
 	set_hostnames(1);
     }
     rwrite_helo();
     rwrite_ver();
     rwrite_prot();
+    if(!(identify_remote_by_identd(identd_from_user, sizeof(identd_from_user))))
+	identd_from_user[0] = '\000';
     for((message = NULL), (rwrite_ready(), (cmd = read_line(stdin)));
 	cmd;
 	(rwrite_ready(), (cmd = read_line(stdin)))) {
@@ -556,13 +656,9 @@ int main(int argc, char **argv)
 	    } else if((!(strcmp(cmd, "prot"))) || (!(strcmp(cmd, "PROT")))) {
 		rwrite_prot();
 	    } else if((!(strcmp(cmd, "rset"))) || (!(strcmp(cmd, "RSET")))) {
-		from_user[0] = '\000';
-		to_user[0] = '\000';
-		fwd_count = 0;
-		if(remote_host[0]) {
-		    strncpy(from_host, remote_host, sizeof(from_host));
-		    from_host[sizeof(from_host) - 1] = '\000';
-		    remote_host[0] = '\000';
+		if(from_path) {
+		    free(from_path);
+		    from_path = NULL;
 		}
 		if(message) {
 		    int i;
@@ -571,6 +667,7 @@ int main(int argc, char **argv)
 		    free(message);
 		    message = NULL;
 		}
+		set_hostnames((!cmd_line) ? 1 : 0);
 		RWRITE_MSG(RWRITE_RSET_OK, "RSET ok.");
 	    } else if((!(strcmp(cmd, "from"))) || 
 		      (!(strcmp(cmd, "FROM"))) ||
@@ -581,46 +678,137 @@ int main(int argc, char **argv)
 		from_user[0] = '\000';
 		if((!user_from) || 
 		   (!(strlen(user_from))) || 
-		   (strlen(user_from) >= sizeof(from_user))) {
+		   ((strlen(user_from) + 2) >= sizeof(from_user))) {
 		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FROM userid");
 		    goto out_of_parse;
 		}
 		strcpy(from_user, user_from);
+#ifdef NO_IDENTD
 		RWRITE_MSG(RWRITE_SENDER_OK, "Sender ok.");
+#else
+		if(!(identd_from_user[0])) {
+		    /* Identd failed so no-one knows. */
+		    fake_user = 1;
+		    RWRITE_MSG(RWRITE_SENDER_OK, 
+			       "Sender ok but nonconfirmed.");
+		} else if(strcmp(from_user, identd_from_user)) {
+		    /* It's a fake. */
+		    fake_user = 2;
+		    RWRITE_MSG(RWRITE_SENDER_OK, 
+			       "Sender ok but doesn't match with identd.");
+		} else {
+		    /* It's confirmed by identd. */
+		    fake_user = 0;
+		    RWRITE_MSG(RWRITE_SENDER_OK, "Sender ok.");
+		}
+#endif /* NO_IDENTD */
 	    } else if((!(strcmp(cmd, "to"))) ||
 		      (!(strcmp(cmd, "TO"))) ||
 		      (!(strncmp(cmd, "to ", 3))) || 
 		      (!(strncmp(cmd, "TO ", 3)))) {
 		char *user_to = get_user_name(cmd);
-		
+		char *tty_to;
+		int len;
+
 		to_user[0] = '\000';
+		tty_hint[0] = '\000';
+		tty_force[0] = '\000';
 		if((!user_to) || 
-		   (!(strlen(user_to))) || 
-		   (strlen(user_to) >= sizeof(to_user))) {
-		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: TO userid");
+		   (!(len = strlen(user_to))) || 
+		   (len >= sizeof(to_user))) {
+		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: TO userid [tty]");
 		    goto out_of_parse;
 		}
 		strcpy(to_user, user_to);
+		tty_to = get_user_name(user_to); /* Possible tty */
+		user_to = to_user;
+		while(*user_to) {
+		    if(isspace(*user_to)) {
+			*user_to = '\000';
+			break;
+		    }
+		    user_to++;
+		}
+		if(tty_to && (len = strlen(tty_to))) {
+		    if((len + 6) >= sizeof(tty_hint)) {
+			RWRITE_MSG(RWRITE_ERR_SYNTAX, 
+				   "Syntax: TO userid [tty]");
+			goto out_of_parse;
+		    }
+		    if((tty_to[0] == '[') && (tty_to[len - 1] == ']')) {
+			/* It's a hint */
+			tty_to[len - 1] = '\000';
+			tty_to++;
+			if(!(strlen(tty_to))) {
+			    RWRITE_MSG(RWRITE_ERR_SYNTAX, 
+				       "Syntax: TO userid [tty]");
+			    goto out_of_parse;
+			}
+			strcpy(tty_hint, "/dev/");
+			strcat(tty_hint, tty_to);
+		    } else {
+			/* It's a demand */
+			strcpy(tty_force, "/dev/");
+			strcat(tty_force, tty_to);
+		    }
+		}
 		RWRITE_MSG(RWRITE_RCPT_OK, "Recipient ok.");
 	    } else if((!(strcmp(cmd, "fhst"))) ||
 		      (!(strcmp(cmd, "FHST"))) ||
 		      (!(strncmp(cmd, "fhst ", 5))) || 
 		      (!(strncmp(cmd, "fhst ", 5)))) {
+		char *hlp1;
 		char *frm = get_user_name(cmd);
-
 		if((!frm) ||
 		   (!(strlen(frm)))) {
-		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FHST remote.host");
+		    RWRITE_MSG(RWRITE_ERR_SYNTAX, 
+			       "Syntax: FHST remote.host ...");
 		    goto out_of_parse;
 		}
-		if(strcmp(frm, from_host)) {
-		    if(!(remote_host[0])) {
-			strncpy(remote_host, from_host, sizeof(remote_host));
-			remote_host[sizeof(remote_host) - 1] = '\000';
-		    }
-		    strncpy(from_host, frm, sizeof(from_host));
-		    from_host[sizeof(from_host) - 1] = '\000';
+		if(!(strcmp(frm, remote_host))) {
+		    RWRITE_MSG(RWRITE_FHST_OK, "Original sender host ok.");
+		    goto out_of_parse;
 		}
+		hlp1 = frm;
+		while((*hlp1) && (!(isspace(*hlp1))))
+		    hlp1++;
+		if(from_path) {
+		    free(from_path);
+		    from_path = NULL;
+		}
+		if(*hlp1) {
+		    int len;
+		    char *tail, *hlp2;
+		    /*
+		     * The tail will be the path.
+		     */
+		    tail = hlp2 = hlp1;
+		    while(*hlp1) {
+			while((*hlp1) && (isspace(*hlp1)))
+			    hlp1++;
+			if(*hlp1) {
+			    while((*hlp1) && (!(isspace(*hlp1)))) {
+				*hlp2 = *hlp1;
+				hlp1++;
+				hlp2++;
+			    }
+			    if(*hlp1) {
+				*hlp2 = PATH_SEPARATOR;
+				hlp2++;
+			    }
+			}
+		    }
+		    *hlp2 = '\000';
+		    if(len = strlen(tail)) {
+			if(!(from_path = ((char *)malloc(len + 1)))) {
+			    RWRITE_FATAL("Out of memory.");
+			}
+			strcpy(from_path, tail);
+		    }
+		    *tail = '\000';
+		}
+		strncpy(from_host, frm, sizeof(from_host));
+		from_host[sizeof(from_host) - 1] = '\000';
 		RWRITE_MSG(RWRITE_FHST_OK, "Original sender host ok.");
 	    } else if((!(strcmp(cmd, "fwds"))) ||
 		      (!(strcmp(cmd, "FWDS"))) ||
@@ -635,23 +823,27 @@ int main(int argc, char **argv)
 		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FWDS number");
 		    goto out_of_parse;
 		}
-		for(hlp = n_str; *hlp; hlp++) {
+		hlp = n_str;
+		if(*hlp == '-')
+		    hlp++;
+		for(/*NOTHING*/; *hlp; hlp++) {
 		    if(!(isdigit(*hlp))) {
 			RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FWDS number");
 			goto out_of_parse;
 		    }
 		}
-		if((n = atoi(n_str)) < 0) {
+		if((n = atoi(n_str)) < -1) {
 		    RWRITE_MSG(RWRITE_ERR_SYNTAX, 
-			       "Number of forwards less than 0.");
+			       "Number of forwards less than -1.");
 		    goto out_of_parse;
 		}
-		if(n <= RWRITE_FWD_LIMIT) {
+		if((n != -1) && (n <= RWRITE_FWD_LIMIT)) {
 		    RWRITE_MSG(RWRITE_RCPT_OK_TO_FWD, "Ok to forward.");
 		} else {
 		    RWRITE_MSG(RWRITE_ERR_FWD_LIMIT_EXCEEDED,
 			       "Forward limit exceeded.");
 		}
+		fwd_count = n;
 	    } else if((!(strcmp(cmd, "vrfy"))) || (!(strcmp(cmd, "VRFY")))) {
 		int d_status;
 
@@ -717,6 +909,7 @@ int main(int argc, char **argv)
 				       from_user, 
 				       from_host,
 				       remote_host,
+				       from_path,
 				       message)) != DELIVER_OK) {
 		    switch(d_status) {
 		    case DELIVER_NO_SUCH_USER:
@@ -740,6 +933,12 @@ int main(int argc, char **argv)
 		      (!(strcmp(cmd, "QUOTE"))) ||
 		      (!(strncmp(cmd, "quote ", 6))) || 
 		      (!(strncmp(cmd, "QUOTE ", 6)))) {
+		char *qcmd =  get_user_name(cmd);
+		if((!qcmd) && (!(*qcmd))) {
+		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: QUOTE cmd ...");
+		    goto out_of_parse;
+		}
+		/* Here we should deal with commands like CHARSET. XXX */
                 RWRITE_MSG(RWRITE_ERR_QUOTE_CMD_UNKNOWN, 
 			   "Unknown QUOTE command.");
 	    } else {

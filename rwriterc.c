@@ -5,15 +5,18 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Tue Dec 13 00:06:27 1994 tri
+ * Last modified: Fri Sep 29 21:19:10 1995 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.16 $
+ * $Revision: 1.17 $
  * $State: Exp $
- * $Date: 1994/12/14 00:46:16 $
+ * $Date: 1995/09/29 19:30:06 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.16  1994/12/14 00:46:16  tri
+ * Revision 1.17  1995/09/29 19:30:06  tri
+ * Just cleaning a bit.
+ *
+ * Revision 1.16  1994/12/14  00:46:16  tri
  * Fixed for configure system.
  *
  * Revision 1.15  1994/12/12  22:09:03  tri
@@ -93,7 +96,7 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.16 1994/12/14 00:46:16 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.17 1995/09/29 19:30:06 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -192,7 +195,8 @@ int add_to_list(char ***list, int *list_sz, char *str)
 				       sizeof(char *))))
 	    return 0;
 	memcpy(newlist, *list, (*list_sz) * sizeof(char *));
-	free(*list);
+	if(*list)
+	    free(*list);
 	(*list_sz) += BUF_ALLOC_STEP;
 	*list = newlist;
     }

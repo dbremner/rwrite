@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Fri Dec  9 22:43:21 1994 tri
+ * Last modified: Fri Dec  9 23:02:08 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.14 $
+ * $Revision: 1.15 $
  * $State: Exp $
- * $Date: 1994/12/09 20:44:05 $
+ * $Date: 1994/12/09 21:08:12 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.14  1994/12/09 20:44:05  tri
+ * Revision 1.15  1994/12/09 21:08:12  tri
+ * Added flush_stdin().
+ *
+ * Revision 1.14  1994/12/09  20:44:05  tri
  * Nuked the global resend variable.
  *
  * Revision 1.13  1994/12/08  22:56:45  tri
@@ -82,7 +85,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.14 1994/12/09 20:44:05 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.15 1994/12/09 21:08:12 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -98,6 +101,10 @@ static char *RCS_id = "$Id: rwrite.c,v 1.14 1994/12/09 20:44:05 tri Exp $";
 #include <pwd.h>
 
 #include "rwrite.h"
+
+#ifndef DONT_FLUSH_INPUT_IN_FAILURE
+#include <sys/ioctl.h>
+#endif
 
 int verbose = 0;
 int quiet = 0;
@@ -985,6 +992,22 @@ int spit_autoreply(char *user)
     return 0;
 }
 
+void flush_stdin()
+{
+#ifndef DONT_FLUSH_INPUT_IN_FAILURE
+    int a, r;
+    char buf[1024];
+    ioctl(0, FIONREAD, &a);
+    while (a > 0) {
+	r = read(0, buf, 1024);
+	if(r <= 0)
+	    break;
+	a -= r;
+    }
+#endif
+    return;
+}
+
 int main(int argc, char **argv)
 {
     int ch, s, ret;
@@ -1060,11 +1083,14 @@ int main(int argc, char **argv)
 	blow_target_addr(to, &to, &tty);
 	fix_tty_quote(tty);
 	if(0 > (s = open_to(to))) {
+	    flush_stdin();
 	    exit(3);
 	}
 	ret = rwp_dialog(s, to, tty, from, NULL, 1);
 	close(s);
 	spit_autoreply(argv[optind]);
+	if(!ret)
+	    flush_stdin();
 	exit(ret ? 0 : (4));
     } else if((argc - optind) >= 1) {
 	int i;

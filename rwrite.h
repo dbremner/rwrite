@@ -6,15 +6,18 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Fri Dec  9 12:28:38 1994 tri
+ * Last modified: Fri Dec  9 23:07:54 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.16 $
+ * $Revision: 1.17 $
  * $State: Exp $
- * $Date: 1994/12/09 10:28:56 $
+ * $Date: 1994/12/09 21:08:12 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.16  1994/12/09 10:28:56  tri
+ * Revision 1.17  1994/12/09 21:08:12  tri
+ * Added flush_stdin().
+ *
+ * Revision 1.16  1994/12/09  10:28:56  tri
  * Fixed a return value of dequote_and_send().
  *
  * Revision 1.15  1994/12/08  23:38:11  tri
@@ -98,6 +101,14 @@
  * instead of "no such user".
  */
 /* #define DO_NOT_TELL_USERS 1 */
+
+/*
+ * We try to flush stdin after the failed message.
+ * But if you don't want this to be done, define
+ * DONT_FLUSH_INPUT_IN_FAILURE
+ */
+/* #define DONT_FLUSH_INPUT_IN_FAILURE */
+
 /*
  * Everyone should have following but...
  */
@@ -106,7 +117,7 @@
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
 #define RWRITED_VERSION_NUMBER	"1.1b5"		/* Server version   */
-#define RWRITE_VERSION_NUMBER	"1.1b5"		/* Client version   */
+#define RWRITE_VERSION_NUMBER	"1.1b6"		/* Client version   */
 /*
  * User definitions are in the following files.
  */

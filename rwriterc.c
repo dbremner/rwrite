@@ -7,13 +7,16 @@
  * Created      : Fri Oct 07 00:27:30 1994 tri
  * Last modified: Tue Dec 13 00:06:27 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.15 $
+ * $Revision: 1.16 $
  * $State: Exp $
- * $Date: 1994/12/12 22:09:03 $
+ * $Date: 1994/12/14 00:46:16 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.15  1994/12/12 22:09:03  tri
+ * Revision 1.16  1994/12/14 00:46:16  tri
+ * Fixed for configure system.
+ *
+ * Revision 1.15  1994/12/12  22:09:03  tri
  * Fixed the annoying quotation bug.
  *
  * Revision 1.14  1994/12/12  15:58:41  tri
@@ -90,13 +93,13 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.15 1994/12/12 22:09:03 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.16 1994/12/14 00:46:16 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
 
-#ifndef NO_STDLIB_H
+#ifdef STDC_HEADERS
 #include <stdlib.h>
 #endif
 

@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Tue Dec 13 21:58:19 1994 tri
+ * Last modified: 01:24 Dec 14 1994 kivinen
  * ----------------------------------------------------------------------
- * $Revision: 1.31 $
+ * $Revision: 1.32 $
  * $State: Exp $
- * $Date: 1994/12/13 20:28:57 $
+ * $Date: 1994/12/14 00:46:16 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.31  1994/12/13 20:28:57  tri
+ * Revision 1.32  1994/12/14 00:46:16  tri
+ * Fixed for configure system.
+ *
+ * Revision 1.31  1994/12/13  20:28:57  tri
  * Preparation for autoconfig and tcp-port change.
  *
  * Revision 1.30  1994/12/13  16:20:22  tri
@@ -142,7 +145,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.31 1994/12/13 20:28:57 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.32 1994/12/14 00:46:16 tri Exp $";
 #endif /* not lint */
 
 #define RWRITED_VERSION_NUMBER	"1.1b22"	/* Server version   */
@@ -151,23 +154,29 @@ static char *RCS_id = "$Id: rwrited.c,v 1.31 1994/12/13 20:28:57 tri Exp $";
 #include <string.h>
 #include <ctype.h>
 
-#ifndef NO_STDLIB_H
+#ifdef STDC_HEADERS
 #include <stdlib.h>
 #endif
 
-#ifndef NO_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
 #include <pwd.h>
 #include <stdio.h>
+#ifdef HAVE_LIMITS_H
 #include <limits.h>
+#endif
 
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#ifdef HAVE_SYS_FILE_H
 #include <sys/file.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include <sys/stat.h>
 #include <sys/socket.h>
 
@@ -422,7 +431,7 @@ char **GetMsg (FILE *pf, int line_limit, int char_limit)
 	if(((*p_buffer[pos] == '.') &&
 	    (*(p_buffer[pos]+1) == '\0')) ||
 	   ((*p_buffer[pos] == '.') &&
-	    (*(p_buffer[pos]+1) == '\015') ||
+	    (*(p_buffer[pos]+1) == '\015') &&
 	    (*(p_buffer[pos]+2) == '\0'))) {
 	    eof = -1;
 	    p_buffer[pos] = NULL;
@@ -773,7 +782,7 @@ int writeto(char *tty,
     if(!(f = fopen(tty, "a")))
 	return 0;
     if((ttyp = isatty(fileno(f))) && ring_bell())
-	fputc('\a', f);
+	fputc('\007', f);
     fputc('\n', f);
     if(ttyp)
 	fputc('\r', f);
@@ -937,15 +946,15 @@ int main(int argc, char **argv)
     char *cmd;
     char **message;
 
-#ifdef NO_GETEUID
-    server_euid = getuid();
-#else
+#ifdef HAVE_GETEUID
     server_euid = geteuid();
-#endif
-#ifdef NO_GETEGID
-    server_egid = getgid();
 #else
+    server_euid = getuid();
+#endif
+#ifdef HAVE_GETEGID
     server_egid = getegid();
+#else
+    server_egid = getgid();
 #endif
     if((argc == 2) && (argv[1][0] == '-') && (argv[1][1] == '\000')) {
 	/*

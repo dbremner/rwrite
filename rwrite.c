@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Tue Dec 13 22:09:53 1994 tri
+ * Last modified: 02:31 Dec 14 1994 kivinen
  * ----------------------------------------------------------------------
- * $Revision: 1.31 $
+ * $Revision: 1.32 $
  * $State: Exp $
- * $Date: 1994/12/13 20:28:57 $
+ * $Date: 1994/12/14 00:46:16 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.31  1994/12/13 20:28:57  tri
+ * Revision 1.32  1994/12/14 00:46:16  tri
+ * Fixed for configure system.
+ *
+ * Revision 1.31  1994/12/13  20:28:57  tri
  * Preparation for autoconfig and tcp-port change.
  *
  * Revision 1.30  1994/12/12  22:09:03  tri
@@ -139,7 +142,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.31 1994/12/13 20:28:57 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.32 1994/12/14 00:46:16 tri Exp $";
 #endif /* not lint */
 
 #define RWRITE_VERSION_NUMBER	"1.1b22"	/* Client version   */
@@ -148,23 +151,28 @@ static char *RCS_id = "$Id: rwrite.c,v 1.31 1994/12/13 20:28:57 tri Exp $";
 #include <string.h>
 #include <ctype.h>
 
-#ifndef NO_STDLIB_H
+#ifdef STDC_HEADERS
 #include <stdlib.h>
 #endif
 
-#ifndef NO_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
 #include <pwd.h>
-#include <stdio.h>
+#ifdef HAVE_LIMITS_H
 #include <limits.h>
+#endif
 
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#ifdef HAVE_SYS_FILE_H
 #include <sys/file.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include <sys/stat.h>
 #include <sys/socket.h>
 
@@ -173,10 +181,14 @@ static char *RCS_id = "$Id: rwrite.c,v 1.31 1994/12/13 20:28:57 tri Exp $";
 #include <netinet/ip.h>
 
 #ifndef DONT_FLUSH_INPUT_IN_FAILURE
+#ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
+#ifdef HAVE_SYS_FILIO_H
+#include <sys/filio.h>
+#endif
+#endif
 
-#include <limits.h>
 #ifndef MAXPATHLEN
 #  define MAXPATHLEN PATH_MAX
 #endif
@@ -252,7 +264,7 @@ FILE *open_history_write()
     sprintf(path, "%s/%s#", home, RWRITE_LAST_SENT_MSG);
     f = fopen(path, "w");
     if(f)
-#ifndef NEITHER_FCHOWN_NOR_FCHMOD
+#ifdef HAVE_FCHMOD
 	fchmod(fileno(f), 0600);
 #else
 	chmod(path, 0600);
@@ -268,7 +280,7 @@ int close_history_write(FILE *f)
     int r;
 
     if((!(home = getenv("HOME"))) || !f) {
-	return NULL;
+	return 0;
     }
     fclose(f);
     sprintf(path1, "%s/%s#", home, RWRITE_LAST_SENT_MSG);
@@ -512,8 +524,8 @@ int write_string(int fd, char *s)
                            ((c) != RWRITE_AUTOREPLY) && \
                            ((c) != RWRITE_AUTOREPLY_AS_COMMENT))
 
-#define WRITE_STRING(f, str) {                                            \
-       if(!(write_string(s, str))) {                                      \
+#define WRITE_STRING(sock, str) {                                         \
+       if(!(write_string(sock, str))) {                                   \
 	   fprintf(stderr, "rwrite: Remote server closed connection.\n"); \
 	   return 0;                                                      \
        } }
@@ -1104,7 +1116,7 @@ int open_to(char *name)
 	defport = 0;
     }
     sin.sin_family = hp->h_addrtype;
-    bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
+    memcpy((char *)&sin.sin_addr, hp->h_addr, hp->h_length);
     sin.sin_port = (sp ? (sp->s_port) : htons(defport));
     if((s = socket(hp->h_addrtype, SOCK_STREAM, 0)) < 0) {
 	perror("rwrite: socket");
@@ -1187,6 +1199,7 @@ int spit_autoreply(char *user)
 void flush_stdin()
 {
 #ifndef DONT_FLUSH_INPUT_IN_FAILURE
+#ifdef FIONREAD
     int a, r;
     char buf[256];
 
@@ -1203,6 +1216,7 @@ void flush_stdin()
 	    a -= r;
 	}
     }
+#endif
 #endif
     return;
 }

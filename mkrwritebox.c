@@ -1,15 +1,18 @@
 /*
  * ----------------------------------------------------------------------
  * Created      : Sat Dec 10 17:27:21 1994 toka
- * Last modified: Tue Dec 13 21:55:05 1994 tri
+ * Last modified: 23:25 Dec 13 1994 kivinen
  * ----------------------------------------------------------------------
- * $Revision: 1.7 $
+ * $Revision: 1.8 $
  * $State: Exp $
- * $Date: 1994/12/13 20:28:57 $
+ * $Date: 1994/12/14 00:46:16 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: mkrwritebox.c,v $
- * Revision 1.7  1994/12/13 20:28:57  tri
+ * Revision 1.8  1994/12/14 00:46:16  tri
+ * Fixed for configure system.
+ *
+ * Revision 1.7  1994/12/13  20:28:57  tri
  * Preparation for autoconfig and tcp-port change.
  *
  * Revision 1.6  1994/12/12  15:58:41  tri
@@ -53,20 +56,22 @@
  */
 #define __MKRWRITEBOX_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: mkrwritebox.c,v 1.7 1994/12/13 20:28:57 tri Exp $";
+static char *RCS_id = "$Id: mkrwritebox.c,v 1.8 1994/12/14 00:46:16 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <fcntl.h>
 
-#ifndef NO_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
+#ifdef HAVE_LIMITS_H
 #include <limits.h>
+#endif
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -78,12 +83,14 @@ static char *RCS_id = "$Id: mkrwritebox.c,v 1.7 1994/12/13 20:28:57 tri Exp $";
 int main(int argc, char **argv) {
     struct passwd *pwd = NULL;
     struct group *grp = NULL;
-    char path[MAXPATHLEN + 1] = {NULL};
+    char path[MAXPATHLEN + 1];
     char *file = NULL;
     char *t = NULL;
     int f = -1;
     int uid = -1;
     int ttygid = -1;
+
+    *path = '\000';
 
     if(2 != argc) {
 	fprintf(stderr, "Usage: mkrwritebox filename\n");
@@ -121,7 +128,7 @@ int main(int argc, char **argv) {
 	perror("mkrwritebox");
 	return(3);
     }
-#ifndef NEITHER_FCHOWN_NOR_FCHMOD
+#ifdef HAVE_FCHOWN
     if(0 > (fchown(f, uid, ttygid)))
 #else
     /*

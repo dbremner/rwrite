@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Sun Nov 20 13:06:04 1994 tri
+ * Last modified: Sun Nov 20 13:44:07 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.13 $
+ * $Revision: 1.14 $
  * $State: Exp $
- * $Date: 1994/11/20 11:08:12 $
+ * $Date: 1994/11/20 11:45:01 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.13  1994/11/20 11:08:12  tri
+ * Revision 1.14  1994/11/20 11:45:01  tri
+ * Added a few minor lines to complete rwp.
+ *
+ * Revision 1.13  1994/11/20  11:08:12  tri
  * Fixed minor quotation bug in backround mode.
  *
  * Revision 1.12  1994/11/20  00:47:18  tri
@@ -77,7 +80,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.13 1994/11/20 11:08:12 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.14 1994/11/20 11:45:01 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1002,6 +1005,7 @@ int main(int argc, char **argv)
 			RWRITE_MSG(RWRITE_ERR_UNKNOWN, "Unknown error.");
 			break;
 		    }
+		    /* Possible autoreply could be given here */
 		    goto out_of_parse;
 		}
 		RWRITE_MSG(RWRITE_RCPT_OK_TO_SEND, "Recipient ok to send.");

@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Sun Nov 20 13:15:06 1994 tri
+ * Last modified: Sun Nov 20 13:40:54 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.10 $
+ * $Revision: 1.11 $
  * $State: Exp $
- * $Date: 1994/11/20 11:16:28 $
+ * $Date: 1994/11/20 11:45:01 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.10  1994/11/20 11:16:28  tri
+ * Revision 1.11  1994/11/20 11:45:01  tri
+ * Added a few minor lines to complete rwp.
+ *
+ * Revision 1.10  1994/11/20  11:16:28  tri
  * Autoreply header now contains a time stamp
  *
  * Revision 1.9  1994/11/20  11:08:12  tri
@@ -67,7 +70,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.10 1994/11/20 11:16:28 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.11 1994/11/20 11:45:01 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -334,7 +337,6 @@ int rwp_dialog(int s,
     int mode, modeattr;
     FILE *hist_file;
 
-    autoreply_lines = 0;
     if(!autoreply_sz) {
 	if(!(autoreply = (char **)calloc(BUF_ALLOC_STEP, sizeof(char *)))) {
 	    fprintf(stderr, "rwrite: Out of memory.\n");
@@ -349,7 +351,7 @@ int rwp_dialog(int s,
 	}
 	memset(autoreply, 0, sizeof(char *) * autoreply_sz);
     }
-
+    autoreply_lines = 0;
     mode = DIALOG_BEGIN;
     modeattr = 0;
     while(1) {
@@ -460,11 +462,56 @@ int rwp_dialog(int s,
 		    fprintf(stderr, ">>>>VRFY\n");
 		WRITE_STRING(s, "VRFY\012");
 		goto redo_dialog_loop;
+	    case RWRITE_AUTOREPLY:
+	    case RWRITE_AUTOREPLY_AS_COMMENT:
+		{
+		    char *hlp;
+		    if(modeattr != 1) {
+			fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+			return 0;
+		    }
+		    for(hlp = resp; (*hlp && (*hlp != '|')); hlp++)
+			/*NOTHING*/;
+		    /*
+		     * We got autoreply line.
+		     */
+		    if(*hlp == '|') {
+			hlp++;
+			if((autoreply_lines + 2) >= autoreply_sz) {
+			    char **newauto;
+			    if(!(newauto = (char **)calloc(BUF_ALLOC_STEP + autoreply_sz, sizeof(char *)))) {
+				fprintf(stderr, "rwrite: Out of memory.\n");
+				return 0;
+			    }
+			    memcpy(newauto, 
+				   autoreply, 
+				   autoreply_sz * sizeof(char *));
+			    free(autoreply);
+			    autoreply = newauto;
+			    autoreply_sz += BUF_ALLOC_STEP;
+			}
+			if(!(autoreply[autoreply_lines] = malloc(strlen(hlp) + 1))) {
+			    fprintf(stderr, "rwrite: Out of memory.\n");
+			    return 0;
+			}
+			strcpy(autoreply[autoreply_lines++], hlp);
+		    }
+		}
+		goto redo_dialog_loop;
 	    case RWRITE_RCPT_OK_TO_SEND:
 		if(modeattr != 1) {
 		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
 		    return 0;
 		}
+		/*
+		 * We nuke the possible autoreply here.
+		 */
+		if(autoreply_lines) {
+		    int i;
+		    for(i = 0; i < autoreply_lines; i++)
+			free(autoreply[i]);
+		}
+		memset(autoreply, 0, sizeof(char *) * autoreply_sz);
 		mode = DIALOG_VRFY;
 		modeattr = 0;
 		goto redo_dialog_loop;

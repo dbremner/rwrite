@@ -5,15 +5,19 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Sun Dec 11 15:25:26 1994 tri
+ * Last modified: Sun Dec 11 19:54:14 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.10 $
+ * $Revision: 1.11 $
  * $State: Exp $
- * $Date: 1994/12/11 13:29:29 $
+ * $Date: 1994/12/11 18:16:28 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.10  1994/12/11 13:29:29  tri
+ * Revision 1.11  1994/12/11 18:16:28  tri
+ * Some portability fixes and configuration stuff
+ * moved to Makefile.
+ *
+ * Revision 1.10  1994/12/11  13:29:29  tri
  * Background message sending can be defaulted in
  * rwriterc.  Explicit -b or -B flag overrides the
  * default.
@@ -73,12 +77,16 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.10 1994/12/11 13:29:29 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.11 1994/12/11 18:16:28 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
+
+#ifndef NO_STDLIB_H
 #include <stdlib.h>
+#endif
+
 #include <ctype.h>
 #include "rwrite.h"
 #include "match.h"

@@ -5,15 +5,19 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Sun Dec 11 16:54:12 1994 tri
+ * Last modified: Sun Dec 11 19:53:44 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.20 $
+ * $Revision: 1.21 $
  * $State: Exp $
- * $Date: 1994/12/11 14:56:13 $
+ * $Date: 1994/12/11 18:16:28 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.20  1994/12/11 14:56:13  tri
+ * Revision 1.21  1994/12/11 18:16:28  tri
+ * Some portability fixes and configuration stuff
+ * moved to Makefile.
+ *
+ * Revision 1.20  1994/12/11  14:56:13  tri
  * Minor fix.
  *
  * Revision 1.19  1994/12/11  13:29:29  tri
@@ -103,7 +107,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.20 1994/12/11 14:56:13 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.21 1994/12/11 18:16:28 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -113,8 +117,15 @@ static char *RCS_id = "$Id: rwrite.c,v 1.20 1994/12/11 14:56:13 tri Exp $";
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdio.h>
+
+#ifndef NO_STDLIB_H
 #include <stdlib.h>
+#endif
+
+#ifndef NO_UNISTD_H
 #include <unistd.h>
+#endif
+
 #include <ctype.h>
 #include <pwd.h>
 

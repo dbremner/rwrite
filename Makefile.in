@@ -7,13 +7,17 @@
 # Created      : Sun Dec 11 20:12:18 1994 tri
 # Last modified: Sun Dec 11 20:13:39 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $State: Exp $
-# $Date: 1994/12/11 18:14:27 $
+# $Date: 1994/12/11 18:16:28 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: Makefile.in,v $
-# Revision 1.1  1994/12/11 18:14:27  tri
+# Revision 1.2  1994/12/11 18:16:28  tri
+# Some portability fixes and configuration stuff
+# moved to Makefile.
+#
+# Revision 1.1  1994/12/11  18:14:27  tri
 # Initial revision
 #
 # ----------------------------------------------------------------------
@@ -39,7 +43,7 @@
 
 SHELL		= /bin/sh
 
-PACKET_VERSION	= 1.1b12
+PACKET_VERSION	= 1.1b13
 
 BINDIR		= /usr/local/bin
 MANDIR		= /usr/local/man

@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Sun Dec 11 16:55:06 1994 tri
+ * Last modified: Sun Dec 11 19:54:05 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.23 $
+ * $Revision: 1.24 $
  * $State: Exp $
- * $Date: 1994/12/11 15:41:19 $
+ * $Date: 1994/12/11 18:16:28 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.23  1994/12/11 15:41:19  tri
+ * Revision 1.24  1994/12/11 18:16:28  tri
+ * Some portability fixes and configuration stuff
+ * moved to Makefile.
+ *
+ * Revision 1.23  1994/12/11  15:41:19  tri
  * #include <fcntl.h> for Solaris.  Should not make any harm
  * for other systems.
  *
@@ -114,14 +118,21 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.23 1994/12/11 15:41:19 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.24 1994/12/11 18:16:28 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include <ctype.h>
+
+#ifndef NO_STDLIB_H
+#include <stdlib.h>
+#endif
+
+#ifndef NO_UNISTD_H
 #include <unistd.h>
+#endif
+
 #include <pwd.h>
 #include <stdio.h>
 #include <limits.h>
@@ -158,7 +169,6 @@ static char *RCS_id = "$Id: rwrited.c,v 1.23 1994/12/11 15:41:19 tri Exp $";
 #endif
 
 #include "rwrite.h"
-#include "match.h"
 
 #define RWRITE_FATAL(msg) { fprintf(stdout,                        \
 				     "%03d RWRITED FATAL: %s (%s:%d)\n",   \

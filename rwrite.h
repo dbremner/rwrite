@@ -6,15 +6,19 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Sun Dec 11 15:16:32 1994 tri
+ * Last modified: Sun Dec 11 20:03:13 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.22 $
+ * $Revision: 1.23 $
  * $State: Exp $
- * $Date: 1994/12/11 14:56:13 $
+ * $Date: 1994/12/11 18:16:28 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.22  1994/12/11 14:56:13  tri
+ * Revision 1.23  1994/12/11 18:16:28  tri
+ * Some portability fixes and configuration stuff
+ * moved to Makefile.
+ *
+ * Revision 1.22  1994/12/11  14:56:13  tri
  * Minor fix.
  *
  * Revision 1.21  1994/12/11  13:29:29  tri
@@ -116,28 +120,9 @@
 #ifndef __RWRITE_H__
 #define __RWRITE_H__ 1
 
-/*
- * If DO_NOT_TELL_USERS is defined, server gives "user not in" notification
- * instead of "no such user".
- */
-/* #define DO_NOT_TELL_USERS 1 */
-
-/*
- * We try to flush stdin after the failed message.
- * But if you don't want this to be done, define
- * DONT_FLUSH_INPUT_IN_FAILURE
- */
-/* #define DONT_FLUSH_INPUT_IN_FAILURE */
-
-/*
- * Everyone should have following but...
- */
-/* #define NO_GETEUID 1 */
-/* #define NO_GETEGID 1 */
-
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.1b11"	/* Server version   */
-#define RWRITE_VERSION_NUMBER	"1.1b11"	/* Client version   */
+#define RWRITED_VERSION_NUMBER	"1.1b13"	/* Server version   */
+#define RWRITE_VERSION_NUMBER	"1.1b13"	/* Client version   */
 /*
  * User definitions are in the following files.
  */

@@ -5,14 +5,17 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Fri Jan 26 15:04:06 1996 tri
+ * Last modified: Fri May 17 15:27:45 1996 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.42 $
+ * $Revision: 1.43 $
  * $State: Exp $
- * $Date: 1996/05/17 12:08:52 $
+ * $Date: 1996/05/17 12:31:28 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
+ * Revision 1.43  1996/05/17 12:31:28  tri
+ * SOCKS support from kivinen@iki.fi.
+ *
  * Revision 1.42  1996/05/17 12:08:52  tri
  * *** empty log message ***
  *
@@ -176,7 +179,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.42 1996/05/17 12:08:52 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.43 1996/05/17 12:31:28 tri Exp $";
 #endif /* not lint */
 
 #define RWRITE_VERSION_NUMBER	"1.1"	/* Client version   */
@@ -241,6 +244,7 @@ char **autoreply = NULL;
 int autoreply_lines = 0;
 int autoreply_sz = 0;
 char **last_msg = NULL;
+char my_host[MAXHOSTNAMELEN];
 
 int unquote_and_raw_write_str(FILE *f, char *str)
 {
@@ -619,11 +623,12 @@ int is_str_whitespace(char *str)
 
 #define DIALOG_BEGIN 1
 #define DIALOG_TO    2
-#define DIALOG_FROM  3
-#define DIALOG_VRFY  4
-#define DIALOG_FWDS  5
-#define DIALOG_DATA  6
-#define DIALOG_SEND  7
+#define DIALOG_FHST  3
+#define DIALOG_FROM  4
+#define DIALOG_VRFY  5
+#define DIALOG_FWDS  6
+#define DIALOG_DATA  7
+#define DIALOG_SEND  8
 
 int rwp_dialog(int s, 
 	       char *to,
@@ -710,7 +715,11 @@ int rwp_dialog(int s,
 			    code);
 		    return 0;
 		}
+#ifdef SEND_FHST
+		mode = DIALOG_FHST;
+#else
 		mode = DIALOG_TO;
+#endif
 		modeattr = 0;
 		goto redo_dialog_loop;
 	    case RWRITE_ERR_PERMISSION_DENIED:
@@ -742,6 +751,55 @@ int rwp_dialog(int s,
 		}
 		fprintf(stderr, "rwrite: User not in.\n");
 		return 0;
+	    default:
+		fprintf(stderr, 
+			"rwrite: Unexpected RWP response code (%03d).\n", 
+			code);
+		return 0;
+	    }
+	case DIALOG_FHST:
+	    switch(code) {
+	    case RWRITE_READY:
+		if(modeattr != 0 && modeattr != 2) {
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
+		    return 0;
+		}
+		if (modeattr == 2) {
+		    if(verbose > 1)
+		        fprintf(stderr, ">>>>fhst %s\n", my_host);
+		    WRITE_STRING(s, "fhst ");
+		} else {
+		    if(verbose > 1)
+		        fprintf(stderr, ">>>>FHST %s\n", my_host);
+		    WRITE_STRING(s, "FHST ");
+		}
+		WRITE_STRING(s, my_host);
+		WRITE_STRING(s, "\012");
+		modeattr = 1;
+		goto redo_dialog_loop;
+	    case RWRITE_FHST_OK:
+		if(modeattr != 1 && modeattr != 2) {
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n",
+			    code);
+		    return 0;
+		}
+		mode = DIALOG_TO;
+		modeattr = 0;
+		goto redo_dialog_loop;
+#ifdef RWRITE_1_1_COMPAT
+	    case RWRITE_ERR_SYNTAX:
+		if(modeattr != 1) {
+		    fprintf(stderr, 
+			    "rwrite: Unexpected RWP response code (%03d).\n", 
+			    code);
+		    return 0;
+		}
+		modeattr = 2;
+		goto redo_dialog_loop;
+#endif
 	    default:
 		fprintf(stderr, 
 			"rwrite: Unexpected RWP response code (%03d).\n", 
@@ -1439,9 +1497,13 @@ int main(int argc, char **argv)
     int resend = 0, explicit_bg = 0, background = 0, udp = 0;
     char *userhome;
 
+    if (0 < gethostname(my_host, sizeof(my_host)))
+	strncpy(my_host, "localhost", sizeof(my_host));
+
 #ifdef HAVE_LIBREADLINE
     rl_readline_name = "rwrite";
 #endif
+
     if((argc == 2) && (!(strcmp("-version", argv[1])))) {
 	fprintf(stderr, "Rwrite version %s.\n", RWRITE_VERSION_NUMBER);
 	exit(0);

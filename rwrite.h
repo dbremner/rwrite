@@ -8,12 +8,15 @@
  * Created      : Tue Sep 13 15:27:58 1994 tri
  * Last modified: Tue Nov 14 08:29:35 1995 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.37 $
+ * $Revision: 1.38 $
  * $State: Exp $
- * $Date: 1995/11/14 06:35:54 $
+ * $Date: 1996/05/17 12:31:28 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
+ * Revision 1.38  1996/05/17 12:31:28  tri
+ * SOCKS support from kivinen@iki.fi.
+ *
  * Revision 1.37  1995/11/14 06:35:54  tri
  * Readline library can be disabled in rc-file.
  *
@@ -136,6 +139,8 @@
 #define __RWRITE_H__ 1
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
+
+#define RWRITE_1_1_COMPAT		   /* Enable rwrite 1.1.1 compat */
 
 /*
  * User definitions are in the following files.
@@ -278,6 +283,16 @@ extern char *rc_prompt;
 #define RWRITE_ERR_QUOTE_CMD_UNKNOWN	679
 #define RWRITE_ERR_INTERNAL	698
 #define RWRITE_ERR_UNKNOWN	699
+
+#ifdef SOCKS
+#  define connect Rconnect
+#  define getsockname Rgetsockname
+#  define bind Rbind
+#  define accept Raccept
+#  define listen Rlisten
+#  define select Rselect
+#define SEND_FHST 1
+#endif
 
 #endif /* not __RWRITE_H__ */
 /* EOF (rwrite.h) */

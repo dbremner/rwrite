@@ -7,12 +7,15 @@
  * Created      : Tue Sep 13 15:27:46 1994 tri
  * Last modified: Fri Sep 29 21:28:08 1995 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.42 $
+ * $Revision: 1.43 $
  * $State: Exp $
- * $Date: 1995/09/29 19:29:31 $
+ * $Date: 1996/05/17 12:31:28 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
+ * Revision 1.43  1996/05/17 12:31:28  tri
+ * SOCKS support from kivinen@iki.fi.
+ *
  * Revision 1.42  1995/09/29 19:29:31  tri
  * Commented one hostile free() away.
  * There's still bug in search_utmp.
@@ -182,7 +185,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.42 1995/09/29 19:29:31 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.43 1996/05/17 12:31:28 tri Exp $";
 #endif /* not lint */
 
 #define RWRITED_VERSION_NUMBER	"1.1"	/* Server version   */
@@ -1303,7 +1306,7 @@ int main(int argc, char **argv)
 	    } else if((!(strcmp(cmd, "fhst"))) ||
 		      (!(strcmp(cmd, "FHST"))) ||
 		      (!(strncmp(cmd, "fhst ", 5))) || 
-		      (!(strncmp(cmd, "fhst ", 5)))) {
+		      (!(strncmp(cmd, "FHST ", 5)))) {
 		char *hlp1;
 		char *frm = get_user_name(cmd);
 		if((!frm) ||

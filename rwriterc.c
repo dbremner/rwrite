@@ -5,15 +5,19 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Sun Nov 20 02:29:35 1994 tri
+ * Last modified: Tue Nov 22 22:28:30 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.2 $
+ * $Revision: 1.3 $
  * $State: Exp $
- * $Date: 1994/11/20 13:17:39 $
+ * $Date: 1994/11/22 20:49:13 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.2  1994/11/20 13:17:39  tri
+ * Revision 1.3  1994/11/22 20:49:13  tri
+ * Added configurable parameter to limit the number
+ * of lines in the incoming message.
+ *
+ * Revision 1.2  1994/11/20  13:17:39  tri
  * Included ctype.h.
  *
  * Revision 1.1  1994/11/20  00:47:18  tri
@@ -40,7 +44,7 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.2 1994/11/20 13:17:39 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.3 1994/11/22 20:49:13 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -64,6 +68,7 @@ int deny_user_sz    = 0;
 int allow_user_sz   = 0;
 int rc_tty_list_sz  = 0;
 int rc_outlog_sz    = 0;
+int rc_incoming_max = DEFAULT_MAX_LINES_IN;
 
 #define KILL_C_TABLE(c) { char **_x = c; if(c) { while(*_x) {  \
                                                      free(*_x); *_x = NULL; }}}
@@ -72,6 +77,11 @@ static char hex_char[] = { '0', '1', '2', '3', '4', '5', '6', '7',
 			   '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
 static char quote_list[256] = { '\000' };
+
+int max_lines_in()
+{
+    return(rc_read ? rc_incoming_max : DEFAULT_MAX_LINES_IN);
+}
 
 int deliver_all_ttys()
 {
@@ -154,6 +164,8 @@ void reset_rc()
     rc_read = 0;
     all_ttys = 0;
     show_quoted = 0;
+    rc_incoming_max = DEFAULT_MAX_LINES_IN;
+    return;
 }
 
 static void split_line(char *line, char **s1, char **s2)
@@ -264,6 +276,15 @@ void read_rc(char *fn)
 #ifdef DEBUG
 			fprintf(stdout, "%03d ok > %s %s\n", 
 				RWRITE_DEBUG, tag, value);
+#endif
+		    } else if((!(strcmp(tag, "maxlinesin"))) && value) {
+			int x;
+			
+			if((x = atoi(value)) > 0)
+			    rc_incoming_max = x;
+#ifdef DEBUG
+			fprintf(stdout, "%03d ok > %s %d\n", 
+				RWRITE_DEBUG, tag, x);
 #endif
 		    } else if((!(strcmp(tag, "quote"))) && value) {
 			int b, e;

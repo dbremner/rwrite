@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Sun Nov 20 13:44:07 1994 tri
+ * Last modified: Tue Nov 22 22:42:46 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.14 $
+ * $Revision: 1.15 $
  * $State: Exp $
- * $Date: 1994/11/20 11:45:01 $
+ * $Date: 1994/11/22 20:49:13 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.14  1994/11/20 11:45:01  tri
+ * Revision 1.15  1994/11/22 20:49:13  tri
+ * Added configurable parameter to limit the number
+ * of lines in the incoming message.
+ *
+ * Revision 1.14  1994/11/20  11:45:01  tri
  * Added a few minor lines to complete rwp.
  *
  * Revision 1.13  1994/11/20  11:08:12  tri
@@ -80,7 +84,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.14 1994/11/20 11:45:01 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.15 1994/11/22 20:49:13 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -333,6 +337,10 @@ char **read_message()
 	    }
 	    buf[i] = NULL;
 	    return buf;
+	}
+	if(i >= max_lines_in()) {
+	    free(line);
+	    continue;
 	}
 	hlp = dequote_str(line);
 	free(line);

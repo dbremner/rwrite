@@ -1,15 +1,18 @@
 /*
  * ----------------------------------------------------------------------
  * Created      : Sat Dec 10 17:27:21 1994 toka
- * Last modified: 23:25 Dec 13 1994 kivinen
+ * Last modified: Wed Dec 14 05:35:33 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.8 $
+ * $Revision: 1.9 $
  * $State: Exp $
- * $Date: 1994/12/14 00:46:16 $
+ * $Date: 1994/12/14 03:36:38 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: mkrwritebox.c,v $
- * Revision 1.8  1994/12/14 00:46:16  tri
+ * Revision 1.9  1994/12/14 03:36:38  tri
+ * Added -version flag and version number :).
+ *
+ * Revision 1.8  1994/12/14  00:46:16  tri
  * Fixed for configure system.
  *
  * Revision 1.7  1994/12/13  20:28:57  tri
@@ -56,8 +59,10 @@
  */
 #define __MKRWRITEBOX_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: mkrwritebox.c,v 1.8 1994/12/14 00:46:16 tri Exp $";
+static char *RCS_id = "$Id: mkrwritebox.c,v 1.9 1994/12/14 03:36:38 tri Exp $";
 #endif /* not lint */
+
+#define MKRWRITEBOX_VERSION_NUMBER	"1.0"	/* Program version   */
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -92,15 +97,20 @@ int main(int argc, char **argv) {
 
     *path = '\000';
 
+    if((argc == 2) && (!(strcmp("-version", argv[1])))) {
+	fprintf(stderr, "Mkrwritebox version %s.\n", 
+		MKRWRITEBOX_VERSION_NUMBER);
+	exit(0);
+    }
     if(2 != argc) {
 	fprintf(stderr, "Usage: mkrwritebox filename\n");
-	return(1);
+	exit(1);
     }
     file = argv[1];
 
 #define BADFNAMEXIT()                                       \
     fputs("mkrwritebox: Bad filename. Exiting.\n", stderr); \
-    return(7);
+    exit(2);
 
     if(!(*file) || !(strcmp("..", file)) || !(strcmp(".", file))) {
 	BADFNAMEXIT();
@@ -116,17 +126,16 @@ int main(int argc, char **argv) {
     grp = getgrnam(TTY_GROUP_NAME);
     if(!pwd || !grp) {
 	fputs("mkrwritebox: Cannot get user or group.\n", stderr);
-	return(2);
+	exit(3);
     }
     ttygid = grp->gr_gid;
     strcpy(path, pwd->pw_dir);
     strcat(path, "/");
     strcat(path, file);
-    puts(path);
     (void)umask(0);
     if(0 > (f = open(path, O_CREAT | O_EXCL, 0620))) {
 	perror("mkrwritebox");
-	return(3);
+	exit(4);
     }
 #ifdef HAVE_FCHOWN
     if(0 > (fchown(f, uid, ttygid)))
@@ -140,9 +149,10 @@ int main(int argc, char **argv) {
 	{
 	    perror("mkrwritebox");
 	    (void)unlink(path);
-	    return(4);
+	    exit(5);
 	}
     (void)close(f);
+    fprintf(stdout, "Created \"%s\".\n", path);
     return(0);
 }
 

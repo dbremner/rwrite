@@ -2,18 +2,21 @@
  *
  * $RCSfile: match.h,v $
  * ----------------------------------------------------------------------
- * <Description of this file and its contents>
+ * Public header for wildcard string matcher by tri.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 20 10:34:43 1994 tri
- * Last modified: Tue Sep 20 10:35:50 1994 tri
+ * Last modified: Tue Sep 20 11:26:16 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.1 $
+ * $Revision: 1.2 $
  * $State: Exp $
- * $Date: 1994/09/20 08:24:13 $
+ * $Date: 1994/09/20 08:26:36 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: match.h,v $
- * Revision 1.1  1994/09/20 08:24:13  tri
+ * Revision 1.2  1994/09/20 08:26:36  tri
+ * Minor fix.
+ *
+ * Revision 1.1  1994/09/20  08:24:13  tri
  * Initial revision
  *
  * ----------------------------------------------------------------------

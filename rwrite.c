@@ -5,15 +5,20 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Sat Dec 10 13:11:14 1994 tri
+ * Last modified: Sun Dec 11 15:27:54 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.18 $
+ * $Revision: 1.19 $
  * $State: Exp $
- * $Date: 1994/12/10 23:35:52 $
+ * $Date: 1994/12/11 13:29:29 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.18  1994/12/10 23:35:52  tri
+ * Revision 1.19  1994/12/11 13:29:29  tri
+ * Background message sending can be defaulted in
+ * rwriterc.  Explicit -b or -B flag overrides the
+ * default.
+ *
+ * Revision 1.18  1994/12/10  23:35:52  tri
  * Variable resend was not properly initialized.
  *
  * Revision 1.17  1994/12/10  11:28:38  tri
@@ -45,7 +50,7 @@
  * Autoreply header now contains a time stamp
  *
  * Revision 1.9  1994/11/20  11:08:12  tri
- * Fixed minor quotation bug in backround mode.
+ * Fixed minor quotation bug in background mode.
  *
  * Revision 1.8  1994/11/20  00:47:18  tri
  * Completed autoreply and quotation stuff.
@@ -95,7 +100,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.18 1994/12/10 23:35:52 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.19 1994/12/11 13:29:29 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -119,7 +124,6 @@ static char *RCS_id = "$Id: rwrite.c,v 1.18 1994/12/10 23:35:52 tri Exp $";
 int verbose = 0;
 int quiet = 0;
 int fwds = 0;
-int backround = 0;
 char **autoreply = NULL;
 int autoreply_lines = 0;
 int autoreply_sz = 0;
@@ -1086,10 +1090,10 @@ int main(int argc, char **argv)
     char **msg;
     extern char *optarg;
     extern int optind, optopt;
-    int resend = 0;
+    int resend = 0, explicit_bg = 0, background = 0;
     char *userhome;
     
-    while ((ch = getopt(argc, argv, ":vrf:bq")) != -1) {
+    while ((ch = getopt(argc, argv, ":vrf:bBq")) != -1) {
 	switch(ch) {
 	case 'v':	
 	    verbose++;
@@ -1105,7 +1109,12 @@ int main(int argc, char **argv)
 	    }
 	    break;
 	case 'b':
-	    backround = 1;
+	    background = 1;
+	    explicit_bg = 1;
+	    break;
+	case 'B':
+	    background = 0;
+	    explicit_bg = 1;
 	    break;
 	case 'q':
 	    quiet = 1;
@@ -1150,7 +1159,9 @@ int main(int argc, char **argv)
 	}
 	strcpy(from, tmp);
     }	
-    if(((argc - optind) == 1) && (!resend) && (!backround)) {
+    if(!explicit_bg)
+	background = default_bg();
+    if(((argc - optind) == 1) && (!resend) && (!background)) {
 	if(!(to = (char *)malloc(strlen(argv[optind]) + 1))) {
 	    exit(2);
 	}
@@ -1205,7 +1216,7 @@ int main(int argc, char **argv)
 				"rwrite: Warning, can't close history file.\n");
 	    }
 	}
-	if(backround) {
+	if(background) {
 	    switch(fork()) {
 	    case 0:
 		break; /* Child continues */
@@ -1241,7 +1252,7 @@ int main(int argc, char **argv)
 	/* Message array msg could be freed here but... XXX */
     } else {
 	fprintf(stderr, 
-		"USAGE: rwrite [-f #] [-r] [-v] [-b] user[@host][:tty] ...\n");
+		"USAGE: rwrite [-r] [-b|B] [-v[v]] user[@host][:tty] ...\n");
 	exit(1);
     }
     /*NOTREACHED*/

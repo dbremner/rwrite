@@ -6,15 +6,20 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Sun Dec 11 14:51:36 1994 tri
+ * Last modified: Sun Dec 11 15:16:32 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.20 $
+ * $Revision: 1.21 $
  * $State: Exp $
- * $Date: 1994/12/11 12:58:17 $
+ * $Date: 1994/12/11 13:29:29 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.20  1994/12/11 12:58:17  tri
+ * Revision 1.21  1994/12/11 13:29:29  tri
+ * Background message sending can be defaulted in
+ * rwriterc.  Explicit -b or -B flag overrides the
+ * default.
+ *
+ * Revision 1.20  1994/12/11  12:58:17  tri
  * Fixed the allow-deny -heuristics to be
  * more powerful.
  * Also added the cleardefs command to the rc-file syntax.
@@ -177,6 +182,7 @@
 int rc_read_p(void);
 int ring_bell(void);
 int max_lines_in(void);
+int default_bg(void);
 int add_to_list(char ***list, int *list_sz, char *str);
 int add_list_to_list(char ***tgt, int *tgt_sz, char **list);
 int is_in_list(char **list, char *str);

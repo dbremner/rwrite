@@ -5,15 +5,20 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Sun Dec 11 14:53:36 1994 tri
+ * Last modified: Sun Dec 11 15:25:26 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.9 $
+ * $Revision: 1.10 $
  * $State: Exp $
- * $Date: 1994/12/11 12:58:17 $
+ * $Date: 1994/12/11 13:29:29 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.9  1994/12/11 12:58:17  tri
+ * Revision 1.10  1994/12/11 13:29:29  tri
+ * Background message sending can be defaulted in
+ * rwriterc.  Explicit -b or -B flag overrides the
+ * default.
+ *
+ * Revision 1.9  1994/12/11  12:58:17  tri
  * Fixed the allow-deny -heuristics to be
  * more powerful.
  * Also added the cleardefs command to the rc-file syntax.
@@ -68,7 +73,7 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.9 1994/12/11 12:58:17 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.10 1994/12/11 13:29:29 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -95,6 +100,7 @@ int rc_outlog_sz    = 0;
 int rc_incoming_max    = DEFAULT_MAX_LINES_IN;
 int rc_ch_incoming_max = DEFAULT_MAX_CHARS_IN;
 int no_bell = 0;
+int bg_default = 0;
 
 #define KILL_C_TABLE(c) { char **_x = c; if(c) { while(*_x) {   \
                                                      free(*_x); \
@@ -128,6 +134,11 @@ int deliver_all_ttys()
 int no_tty_delivery()
 {
     return((rc_read && no_tty) ? 1 : 0);
+}
+
+int default_bg()
+{
+    return((rc_read && bg_default) ? 1 : 0);
 }
 
 int rc_read_p()
@@ -202,6 +213,7 @@ void reset_rc()
     rc_read = 0;
     all_ttys = 0;
     show_quoted = 0;
+    bg_default = 0;
     rc_incoming_max = DEFAULT_MAX_LINES_IN;
     rc_ch_incoming_max = DEFAULT_MAX_CHARS_IN;
     memset(quote_list, 0, sizeof(quote_list));
@@ -441,6 +453,20 @@ void read_rc(char *fn)
 			    free(value);
 #ifdef DEBUG
 			fprintf(stdout, "%03d ok cleardefs\n", RWRITE_DEBUG);
+#endif
+		    } else if(!(strcmp(tag, "sendbackground"))) {
+			bg_default = 1;
+			if(value)
+			    free(value);
+#ifdef DEBUG
+			fprintf(stdout, "%03d ok bell\n", RWRITE_DEBUG);
+#endif
+		    } else if(!(strcmp(tag, "sendforeground"))) {
+			bg_default = 0;
+			if(value)
+			    free(value);
+#ifdef DEBUG
+			fprintf(stdout, "%03d ok bell\n", RWRITE_DEBUG);
 #endif
 		    } else {
 #ifdef DEBUG

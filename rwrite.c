@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Sun Nov 20 12:58:34 1994 tri
+ * Last modified: Sun Nov 20 13:15:06 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.9 $
+ * $Revision: 1.10 $
  * $State: Exp $
- * $Date: 1994/11/20 11:08:12 $
+ * $Date: 1994/11/20 11:16:28 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.9  1994/11/20 11:08:12  tri
+ * Revision 1.10  1994/11/20 11:16:28  tri
+ * Autoreply header now contains a time stamp
+ *
+ * Revision 1.9  1994/11/20  11:08:12  tri
  * Fixed minor quotation bug in backround mode.
  *
  * Revision 1.8  1994/11/20  00:47:18  tri
@@ -64,7 +67,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.9 1994/11/20 11:08:12 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.10 1994/11/20 11:16:28 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -860,9 +863,15 @@ int spit_autoreply(char *user)
 {
     int j;
     char *hlp;
-	
+    time_t now;
+    char *nowstr;
+
+    now = time(NULL);
+    nowstr = ctime(&now);
+
     if(autoreply_lines) {
-	fprintf(stdout, "Automatic reply from %s\n\n", user);
+	fprintf(stdout, "Automatic reply from %s at %s\n", 
+		user, nowstr ? nowstr : "xxx");
 	for(j = 0; j < autoreply_lines; j++) {
 	    
 	    hlp = dequote_str(autoreply[j]);

@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Mon Dec 12 13:25:48 1994 tri
+ * Last modified: Mon Dec 12 13:30:42 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.25 $
+ * $Revision: 1.26 $
  * $State: Exp $
- * $Date: 1994/12/12 11:25:57 $
+ * $Date: 1994/12/12 11:30:54 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.25  1994/12/12 11:25:57  tri
+ * Revision 1.26  1994/12/12 11:30:54  tri
+ * Another one.
+ *
+ * Revision 1.25  1994/12/12  11:25:57  tri
  * Glitch.
  *
  * Revision 1.24  1994/12/12  11:08:14  tri
@@ -120,7 +123,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.25 1994/12/12 11:25:57 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.26 1994/12/12 11:30:54 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -204,8 +207,8 @@ int close_history_write(FILE *f)
     if(!(home = getenv("HOME"))) {
 	return NULL;
     }
-    sprintf(path1, "%s/#", home, RWRITE_LAST_SENT_MSG);
-    sprintf(path2, "%s/", home, RWRITE_LAST_SENT_MSG);
+    sprintf(path1, "%s/%s#", home, RWRITE_LAST_SENT_MSG);
+    sprintf(path2, "%s/%s", home, RWRITE_LAST_SENT_MSG);
     r = rename(path1, path2);
     chmod(path2, 0600);
     return(r ? 0 : 1);

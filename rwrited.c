@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Thu Dec 15 00:18:55 1994 tri
+ * Last modified: Thu Dec 15 06:56:59 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.37 $
+ * $Revision: 1.38 $
  * $State: Exp $
- * $Date: 1994/12/14 22:22:38 $
+ * $Date: 1994/12/15 04:58:28 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.37  1994/12/14 22:22:38  tri
+ * Revision 1.38  1994/12/15 04:58:28  tri
+ * Fixed udp-support.
+ *
+ * Revision 1.37  1994/12/14  22:22:38  tri
  * Removed a few warnings with better casting.
  *
  * Revision 1.36  1994/12/14  22:02:58  tri
@@ -164,10 +167,10 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.37 1994/12/14 22:22:38 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.38 1994/12/15 04:58:28 tri Exp $";
 #endif /* not lint */
 
-#define RWRITED_VERSION_NUMBER	"1.1b28"	/* Server version   */
+#define RWRITED_VERSION_NUMBER	"1.1b30"	/* Server version   */
 
 #include <stdio.h>
 #include <string.h>
@@ -322,7 +325,7 @@ char *read_line(FILE *f)
     return(buf);
 }
 
-void set_hostnames(int get_remote)
+void set_hostnames(int get_remote, struct sockaddr_in *sa)
 {
     struct sockaddr_in remote_sock;
     int remote_sock_len = sizeof(remote_sock);
@@ -337,18 +340,28 @@ void set_hostnames(int get_remote)
     my_host[sizeof(my_host) - 1] = '\000';
     fake_user = 0;
     if(get_remote) {
-	if(-1 == getpeername(0, 
-			     (struct sockaddr *)(&remote_sock),
-			     &remote_sock_len)) {
-	    RWRITE_FATAL("Getpeername failed.");
+	if(!sa) {
+	    if(-1 == getpeername(0, 
+				 (struct sockaddr *)(&remote_sock),
+				 &remote_sock_len)) {
+		RWRITE_FATAL("Getpeername failed.");
+	    }
+	    if((!(remote_hostent = gethostbyaddr((char *)&remote_sock.sin_addr,
+						 sizeof(struct in_addr),
+						 remote_sock.sin_family))) ||
+	       (!(remote_hostent->h_name))) {
+		RWRITE_FATAL("Gethostbyaddr failed.");
+	    }
+	    strncpy(remote_host, remote_hostent->h_name, sizeof(remote_host));
+	} else {
+	    if((!(remote_hostent = gethostbyaddr((char *)&sa->sin_addr,
+						 sizeof(struct in_addr),
+						 sa->sin_family))) ||
+	       (!(remote_hostent->h_name))) {
+		RWRITE_FATAL("Gethostbyaddr failed.");
+	    }
+	    strncpy(remote_host, remote_hostent->h_name, sizeof(remote_host));
 	}
-	if((!(remote_hostent = gethostbyaddr((char *)&remote_sock.sin_addr, 
-					     sizeof(struct in_addr),
-					     remote_sock.sin_family))) ||
-	   (!(remote_hostent->h_name))) {
-	    RWRITE_FATAL("Gethostbyaddr failed.");
-	}
-	strncpy(remote_host, remote_hostent->h_name, sizeof(remote_host));
     } else {
 	strncpy(remote_host, my_host, sizeof(remote_host));
     }
@@ -1030,6 +1043,7 @@ int main(int argc, char **argv)
     int cmdeofp;
     int udp = 0;
     char *udpbuf;
+    char *udpbufsav = NULL;
     int udpbuflen;
 
     if((argc > 1) && (!(strcmp("-version", argv[1])))) {
@@ -1051,35 +1065,52 @@ int main(int argc, char **argv)
 	 * We can run this on cmd-line using flag -.
 	 */
 	cmd_line = 1;
-	set_hostnames(0);
+	set_hostnames(0, NULL);
 	udp = 0; /* commad line is reliable :) */
     } else {
 	/*
 	 * Otherwise we presume we are running through a socket.
 	 */
 	cmd_line = 0;
-	udp = ((argc > 1) && (!(strcmp(argv[1], "udp"))));
-	set_hostnames(1);
+	if(!(udp = ((argc > 1) && (!(strcmp(argv[1], "udp"))))))
+	    set_hostnames(1, NULL);
     }
+ read_another_udp:
     if(udp) {
-	if(!(udpbuf = 
-	     (char *)malloc((UDP_DIALOG_LEN_MAX + 1) * sizeof(char)))) {
-	    /* Out of memory */
-	    exit(1);
+	struct sockaddr_in sin;
+	int sin_len = sizeof(sin);
+
+	if(!udpbufsav) {
+	    if(!(udpbufsav = 
+		 (udpbuf = 
+		  (char *)malloc((UDP_DIALOG_LEN_MAX + 1) * sizeof(char))))) {
+		/* Out of memory */
+		exit(1);
+	    }
+	} else {
+	    udpbuf = udpbufsav;
 	}
 	if(0 >= 
-	   (udpbuflen = recv(0, udpbuf, UDP_DIALOG_LEN_MAX, 0))) {
+	   (udpbuflen = recvfrom(0, 
+				 udpbuf, 
+				 UDP_DIALOG_LEN_MAX, 
+				 0,
+				 (struct sockaddr *)(&sin),
+				 &sin_len))) {
 	    /* Failed */
 	    exit(1);
 	}
-	udpbuflen = 0;
+	set_hostnames(1, &sin);
+	udpbuf[udpbuflen] = '\000';
     }
     rwrite_helo(udp);
     rwrite_ver(udp);
     rwrite_prot(udp);
-    if(!(identify_remote_by_identd(identd_from_user, 
-				   sizeof(identd_from_user))))
-	identd_from_user[0] = '\000';
+    if(!udp) {
+	if(!(identify_remote_by_identd(identd_from_user, 
+				       sizeof(identd_from_user))))
+	    identd_from_user[0] = '\000';
+    }
     message = NULL;
     do {
 	rwrite_ready(udp);
@@ -1098,7 +1129,7 @@ int main(int argc, char **argv)
 		}
 	    } else {
 		cmd = NULL;
-		cmdeofp = 0;
+		cmdeofp = 1;
 	    }
 	} else {
 	    int len;
@@ -1112,6 +1143,8 @@ int main(int argc, char **argv)
 	    if((!(strcmp(cmd, "bye")) || (!(strcmp(cmd, "BYE"))))) {
 		rwrite_bye(udp);
 	    } else if((!(strcmp(cmd, "quit"))) || (!(strcmp(cmd, "QUIT")))) {
+		if(udp)
+		    goto leave_parse_loop;
 		rwrite_quit(udp);
 	    } else if((!(strcmp(cmd, "help"))) || (!(strcmp(cmd, "HELP")))) {
 		rwrite_help(udp);
@@ -1133,9 +1166,10 @@ int main(int argc, char **argv)
 		    free(message);
 		    message = NULL;
 		}
-		set_hostnames((!cmd_line) ? 1 : 0);
-		if(!udp)
+		if(!udp) {
+		    set_hostnames(((!cmd_line) ? 1 : 0), NULL);
 		    RWRITE_MSG(RWRITE_RSET_OK, "RSET ok.");
+		}
 	    } else if((!(strcmp(cmd, "from"))) || 
 		      (!(strcmp(cmd, "FROM"))) ||
 		      (!(strncmp(cmd, "from ", 5))) || 
@@ -1375,14 +1409,63 @@ int main(int argc, char **argv)
 			free(message[i]);
 		    free(message);
 		}
-		if(!(message =
-		     get_msg(stdin, DATA_MAXLINES, DATA_MAXCHARS, udp))) {
-		    if(!udp)
+		if(udp) {
+		    int msg_size;
+		    int msg_line;
+
+		    if(!(message = (char **)calloc(BUF_ALLOC_STEP,
+						   sizeof(char *)))) {
+			/* Out of memory. */
+			exit(1);
+		    }
+		    msg_size = BUF_ALLOC_STEP;
+		    msg_line = 0;
+		    do {
+			if((msg_line + 2) >= msg_size) {
+			    char **newmsg;
+
+			    if(!(newmsg = 
+				 (char **)calloc(BUF_ALLOC_STEP + msg_size, 
+						 sizeof(char *)))) {
+				/* Out of memory. */
+				exit(1);
+			    }
+			    memcpy(newmsg, message, msg_size * sizeof(char *));
+			    free(message);
+			    message = newmsg;
+			    msg_size += BUF_ALLOC_STEP;
+			}
+			if(*udpbuf) {
+			    cmd = udpbuf;
+			    while((*udpbuf) && (*udpbuf != '\012'))
+				udpbuf++;
+			    if(*udpbuf) {
+				*udpbuf = '\000';
+				udpbuf++;
+			    } else {
+				cmdeofp = 1;
+			    }
+			} else {
+			    cmd = NULL;
+			    cmdeofp = 1;
+			}
+			if((!cmd) || ((cmd[0] == '.') && (cmd[1] == '\000')))
+			    break;
+			if(!(message[msg_line] = 
+			     (char *)malloc(strlen(cmd) + 1))) {
+			    /* Out of memory. */
+			    exit(1);
+			}
+			strcpy(message[msg_line++], cmd);
+		    } while(!cmdeofp);
+		} else {
+		    if(!(message =
+			 get_msg(stdin, DATA_MAXLINES, DATA_MAXCHARS, udp))) {
 			RWRITE_MSG(RWRITE_ERR_NO_MESSAGE, "No message.");
-		    goto out_of_parse;
-		}
-		if(!udp)
+			goto out_of_parse;
+		    }
 		    RWRITE_MSG(RWRITE_MSG_OK, "Message ok.");
+		}
 	    } else if((!(strcmp(cmd, "send"))) || (!(strcmp(cmd, "SEND")))) {
 		int d_status;
 
@@ -1454,8 +1537,19 @@ int main(int argc, char **argv)
    	}
 	if(!udp)
 	    free(cmd);
-    out_of_parse:;
+    out_of_parse:
     } while(!cmdeofp);
+ leave_parse_loop:
+    if(udp) {
+	identd_from_user[0] = '\000';
+	from_user[0] = '\000';
+	to_user[0] = '\000';
+	tty_hint[0] = '\000';
+	tty_force[0] = '\000';
+	my_host[sizeof(my_host) - 1] = '\000';
+	fake_user = 0;
+	goto read_another_udp;
+    }
     rwrite_bye(udp);
     /*NOTREACHED*/
     return 0;

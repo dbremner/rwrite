@@ -5,14 +5,30 @@
 # away(1)  -  handle automagically ~/.rwrite-autoreply files.
 # ----------------------------------------------------------------------
 # Created      : Mon Dec 12 16:18:23 1994 tri
-# Last modified: Tue Dec 13 22:26:29 1994 tri
+# Last modified: Sat Apr 18 23:34:49 1998 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.5 $
+# Copyright © 1994-1998
+# Timo J. Rinne <tri@iki.fi>
+# All rights reserved.  See file COPYRIGHT for details.
+#
+# Address: Cirion oy, PO-BOX 250, 00121 Helsinki, Finland
+# ----------------------------------------------------------------------
+# Any express or implied warranties are disclaimed.  In no event
+# shall the author be liable for any damages caused (directly or
+# otherwise) by the use of this software.
+#
+# Please, send your patches to <tri@iki.fi>.
+# ----------------------------------------------------------------------
+# $Revision: 1.6 $
 # $State: Exp $
-# $Date: 1994/12/13 20:28:57 $
+# $Date: 1998/04/18 20:52:28 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: rwrite-away.sh,v $
+# Revision 1.6  1998/04/18 20:52:28  tri
+# New copyright in COPYRIGHT.
+# Renamed to rwrite-away.
+#
 # Revision 1.5  1994/12/13 20:28:57  tri
 # Preparation for autoconfig and tcp-port change.
 #
@@ -29,23 +45,6 @@
 # Revision 1.1  1994/12/12  14:43:46  tri
 # Initial revision
 #
-# ----------------------------------------------------------------------
-# Copyright 1994, Timo J. Rinne <tri@cirion.fi> and Cirion oy.
-# 
-# Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
-# 
-# Even though this code is copyrighted property of the author, it can
-# still be used for any purpose under following conditions:
-# 
-#     1) This copyright notice is not removed.
-#     2) Source code follows any distribution of the software
-#        if possible.
-#     3) Copyright notice above is found in the documentation
-#        of the distributed software.
-# 
-# Any express or implied warranties are disclaimed.  In no event
-# shall the author be liable for any damages caused (directly or
-# otherwise) by the use of this software.
 # ----------------------------------------------------------------------
 #
 

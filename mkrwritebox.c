@@ -1,15 +1,18 @@
 /*
  * ----------------------------------------------------------------------
  * Created      : Sat Dec 10 17:27:21 1994 toka
- * Last modified: Mon Dec 12 13:01:51 1994 tri
+ * Last modified: Tue Dec 13 21:55:05 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.6 $
+ * $Revision: 1.7 $
  * $State: Exp $
- * $Date: 1994/12/12 15:58:41 $
+ * $Date: 1994/12/13 20:28:57 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: mkrwritebox.c,v $
- * Revision 1.6  1994/12/12 15:58:41  tri
+ * Revision 1.7  1994/12/13 20:28:57  tri
+ * Preparation for autoconfig and tcp-port change.
+ *
+ * Revision 1.6  1994/12/12  15:58:41  tri
  * Copyright fixed a bit.
  *
  * Revision 1.5  1994/12/12  11:03:42  tri
@@ -50,7 +53,7 @@
  */
 #define __MKRWRITEBOX_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: mkrwritebox.c,v 1.6 1994/12/12 15:58:41 tri Exp $";
+static char *RCS_id = "$Id: mkrwritebox.c,v 1.7 1994/12/13 20:28:57 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -79,8 +82,8 @@ int main(int argc, char **argv) {
     char *file = NULL;
     char *t = NULL;
     int f = -1;
-    uid_t uid = -1;
-    gid_t ttygid = -1;
+    int uid = -1;
+    int ttygid = -1;
 
     if(2 != argc) {
 	fprintf(stderr, "Usage: mkrwritebox filename\n");

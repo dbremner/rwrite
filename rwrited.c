@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Tue Dec 13 18:16:49 1994 tri
+ * Last modified: Tue Dec 13 21:58:19 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.30 $
+ * $Revision: 1.31 $
  * $State: Exp $
- * $Date: 1994/12/13 16:20:22 $
+ * $Date: 1994/12/13 20:28:57 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.30  1994/12/13 16:20:22  tri
+ * Revision 1.31  1994/12/13 20:28:57  tri
+ * Preparation for autoconfig and tcp-port change.
+ *
+ * Revision 1.30  1994/12/13  16:20:22  tri
  * Direct rwp-dialogs should now work even with
  * over-intelligent telnet(1)s.
  *
@@ -139,8 +142,10 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.30 1994/12/13 16:20:22 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.31 1994/12/13 20:28:57 tri Exp $";
 #endif /* not lint */
+
+#define RWRITED_VERSION_NUMBER	"1.1b22"	/* Server version   */
 
 #include <stdio.h>
 #include <string.h>

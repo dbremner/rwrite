@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Tue Dec 13 00:06:36 1994 tri
+ * Last modified: Tue Dec 13 22:09:53 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.30 $
+ * $Revision: 1.31 $
  * $State: Exp $
- * $Date: 1994/12/12 22:09:03 $
+ * $Date: 1994/12/13 20:28:57 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.30  1994/12/12 22:09:03  tri
+ * Revision 1.31  1994/12/13 20:28:57  tri
+ * Preparation for autoconfig and tcp-port change.
+ *
+ * Revision 1.30  1994/12/12  22:09:03  tri
  * Fixed the annoying quotation bug.
  *
  * Revision 1.29  1994/12/12  21:17:55  tri
@@ -136,8 +139,10 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.30 1994/12/12 22:09:03 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.31 1994/12/13 20:28:57 tri Exp $";
 #endif /* not lint */
+
+#define RWRITE_VERSION_NUMBER	"1.1b22"	/* Client version   */
 
 #include <stdio.h>
 #include <string.h>
@@ -532,6 +537,19 @@ int rwp_dialog(int s,
     char *resp, *line;
     int mode, modeattr;
     FILE *hist_file;
+
+    if((!to) || (!(*to))) {
+	fprintf(stderr, "rwrite: Empty address.\n");
+	return 0;
+    } else {
+	char *hlp;
+	for(hlp = to; ((*hlp) && ((*hlp == ' ') || (*hlp == '\011'))); hlp++)
+	    /*NOTHING*/;
+	if(!(*hlp)) {
+	    fprintf(stderr, "rwrite: Empty address.\n");
+	    return 0;
+	}
+    }
 
     if(!autoreply_sz) {
 	if(!(autoreply = (char **)calloc(BUF_ALLOC_STEP, sizeof(char *)))) {

@@ -5,15 +5,18 @@
 # Make rules for rwrite.
 # ----------------------------------------------------------------------
 # Created      : Sun Dec 11 20:12:18 1994 tri
-# Last modified: Tue Dec 13 18:24:22 1994 tri
+# Last modified: Tue Dec 13 22:12:43 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 # $State: Exp $
-# $Date: 1994/12/13 16:25:06 $
+# $Date: 1994/12/13 20:28:57 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: Makefile.in,v $
-# Revision 1.16  1994/12/13 16:25:06  tri
+# Revision 1.17  1994/12/13 20:28:57  tri
+# Preparation for autoconfig and tcp-port change.
+#
+# Revision 1.16  1994/12/13  16:25:06  tri
 # Nothing.
 #
 # Revision 1.15  1994/12/12  22:11:28  tri
@@ -82,8 +85,6 @@
 
 SHELL		= /bin/sh
 
-PACKET_VERSION	= 1.1b21
-
 BINDIR		= /usr/local/bin
 MANDIR		= /usr/local/man
 BIN_OWNER	= bin
@@ -108,8 +109,6 @@ INSTALLMAN	= install -c
 #INSTALL	= install
 #INSTALLSCRIPT	= install
 #INSTALLMAN	= install
-TAR		= tar cvf
-COMPRESS	= gzip -9
 
 #LDADD		= -linet -lPW
 MYCFLAGS	= -O
@@ -176,16 +175,8 @@ rwrite.o:	rwrite.h
 match.o:	match.h
 rwriterc.o:	rwrite.h match.h
 
-# Use this if your machine has a sane install which can handle multiple
-# files on one invocation.
+# Use this if your machine has a bsd style install.
 install: commoninstall $(MAN1)
-	$(INSTALLMAN) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
-	  $(MAN1) $(MANDIR)/man1
-	@echo "Edit /etc/services and /etc/inetd.conf and"
-	@echo "create /etc/rwrite.conf. See *.add and sample*."
-
-# Use this if it doesn't. Or get the GNU install.
-install_please: commoninstall $(MAN1)
 	( for i in $(MAN1); do \
 	    $(INSTALLMAN) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
 	      $$i $(MANDIR)/man1; \
@@ -230,19 +221,4 @@ clean:
 
 clobber: clean
 	rm -f $(PROGS) *~
-
-TARFILES        = *.[ch18] Makefile *.txt *.ps *.add        \
-		rwrite_agent __rwrite_agent away            \
-		sample-etc-rwrite.conf sample-dot-rwriterc
-
-tar:
-	( $(TAR) rwrite-$(PACKET_VERSION)-private.tar $(TARFILES) RCS )
-
-pubtar:
-	( mkdir rwrite-$(PACKET_VERSION) &&                                 \
-	cp $(TARFILES) rwrite-$(PACKET_VERSION) &&                          \
-	chmod 644 rwrite-$(PACKET_VERSION)/* &&                             \
-	$(TAR) rwrite-$(PACKET_VERSION).tar ./rwrite-$(PACKET_VERSION)/* && \
-	$(COMPRESS) rwrite-$(PACKET_VERSION).tar ;                          \
-	rm -fr ./rwrite-$(PACKET_VERSION) )
 

@@ -5,15 +5,18 @@
 # away(1)  -  handle automagically ~/.rwrite-autoreply files.
 # ----------------------------------------------------------------------
 # Created      : Mon Dec 12 16:18:23 1994 tri
-# Last modified: Mon Dec 12 18:44:25 1994 tri
+# Last modified: Tue Dec 13 22:26:29 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $State: Exp $
-# $Date: 1994/12/12 16:44:58 $
+# $Date: 1994/12/13 20:28:57 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: rwrite-away.sh,v $
-# Revision 1.4  1994/12/12 16:44:58  tri
+# Revision 1.5  1994/12/13 20:28:57  tri
+# Preparation for autoconfig and tcp-port change.
+#
+# Revision 1.4  1994/12/12  16:44:58  tri
 # Added -q option.
 #
 # Revision 1.3  1994/12/12  15:58:41  tri
@@ -58,7 +61,7 @@ then
     RWRITE_AUTOREPLY_FILE="$HOME/.rwrite-autoreply"
 fi
 
-if [ -r "$RWRITE_AWAY_FILE" ]
+if [ -r "$RWRITE_AWAY_FILE" -o "x$1" = "x" -o "x$1" = "x-b" -o "x$1" = "x-q" ]
 then
     if [ "$1" = "-b" ]
     then

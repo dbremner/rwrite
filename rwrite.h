@@ -6,15 +6,18 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Tue Dec 13 18:24:52 1994 tri
+ * Last modified: Tue Dec 13 21:56:50 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.32 $
+ * $Revision: 1.33 $
  * $State: Exp $
- * $Date: 1994/12/13 16:25:06 $
+ * $Date: 1994/12/13 20:29:53 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.32  1994/12/13 16:25:06  tri
+ * Revision 1.33  1994/12/13 20:29:53  tri
+ * Preparation for autoconfig and tcp-port change.
+ *
+ * Revision 1.32  1994/12/13  16:25:06  tri
  * Nothing.
  *
  * Revision 1.31  1994/12/12  22:11:48  tri
@@ -150,8 +153,7 @@
 #define __RWRITE_H__ 1
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.1b21"	/* Server version   */
-#define RWRITE_VERSION_NUMBER	"1.1b21"	/* Client version   */
+
 /*
  * User definitions are in the following files.
  */
@@ -223,9 +225,9 @@ extern char **rc_outlog;
  * # Entry to enable rwrite service in /etc/services.
  * # The port number is about to change in near future.
  * #
- * rwrite		2801/tcp			# rwrite
+ * rwrite		18/tcp			# rwrite
  */
-#define RWRITE_DEFAULT_PORT	2801
+#define RWRITE_DEFAULT_PORT	18
 
 #define RWRITE_FWD_LIMIT	32
 /*

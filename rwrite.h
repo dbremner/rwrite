@@ -6,15 +6,20 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Sat Dec 10 13:16:31 1994 tri
+ * Last modified: Sun Dec 11 14:51:36 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.19 $
+ * $Revision: 1.20 $
  * $State: Exp $
- * $Date: 1994/12/10 11:28:38 $
+ * $Date: 1994/12/11 12:58:17 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.19  1994/12/10 11:28:38  tri
+ * Revision 1.20  1994/12/11 12:58:17  tri
+ * Fixed the allow-deny -heuristics to be
+ * more powerful.
+ * Also added the cleardefs command to the rc-file syntax.
+ *
+ * Revision 1.19  1994/12/10  11:28:38  tri
  * Last known method to send terminal control codes
  * through correctly configured rwrite is now diabled.
  *
@@ -123,8 +128,8 @@
 /* #define NO_GETEGID 1 */
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.1b7"		/* Server version   */
-#define RWRITE_VERSION_NUMBER	"1.1b7"		/* Client version   */
+#define RWRITED_VERSION_NUMBER	"1.1b10"	/* Server version   */
+#define RWRITE_VERSION_NUMBER	"1.1b10"	/* Client version   */
 /*
  * User definitions are in the following files.
  */

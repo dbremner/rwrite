@@ -5,15 +5,20 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Sat Dec 10 01:17:32 1994 tri
+ * Last modified: Sun Dec 11 14:53:36 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.8 $
+ * $Revision: 1.9 $
  * $State: Exp $
- * $Date: 1994/12/09 23:57:49 $
+ * $Date: 1994/12/11 12:58:17 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.8  1994/12/09 23:57:49  tri
+ * Revision 1.9  1994/12/11 12:58:17  tri
+ * Fixed the allow-deny -heuristics to be
+ * more powerful.
+ * Also added the cleardefs command to the rc-file syntax.
+ *
+ * Revision 1.8  1994/12/09  23:57:49  tri
  * Added a outbond message logging.
  *
  * Revision 1.7  1994/12/09  10:28:56  tri
@@ -63,7 +68,7 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.8 1994/12/09 23:57:49 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.9 1994/12/11 12:58:17 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -91,8 +96,9 @@ int rc_incoming_max    = DEFAULT_MAX_LINES_IN;
 int rc_ch_incoming_max = DEFAULT_MAX_CHARS_IN;
 int no_bell = 0;
 
-#define KILL_C_TABLE(c) { char **_x = c; if(c) { while(*_x) {  \
-                                                     free(*_x); *_x = NULL; }}}
+#define KILL_C_TABLE(c) { char **_x = c; if(c) { while(*_x) {   \
+                                                     free(*_x); \
+						     *_x++ = NULL; }}}
 
 static char hex_char[] = { '0', '1', '2', '3', '4', '5', '6', '7', 
 			   '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
@@ -428,9 +434,20 @@ void read_rc(char *fn)
 #ifdef DEBUG
 			fprintf(stdout, "%03d ok hidequoted\n", RWRITE_DEBUG);
 #endif
+		    } else if(!(strcmp(tag, "cleardefs"))) {
+			reset_rc();
+			rc_read = 1;
+			if(value)
+			    free(value);
+#ifdef DEBUG
+			fprintf(stdout, "%03d ok cleardefs\n", RWRITE_DEBUG);
+#endif
 		    } else {
 #ifdef DEBUG
-			fprintf(stdout, "%03d ??? \"%s\"\n", RWRITE_DEBUG, tag);
+			fprintf(stdout, 
+				"%03d ??? \"%s\"\n",
+				RWRITE_DEBUG, 
+				tag);
 #endif
 			if(value)
 			    free(value);
@@ -467,8 +484,8 @@ int is_allowed(char *name, char *host)
 	/* If one explicitely is denied it's too bad. */
 	if(is_in_list(deny_user, buf))
 	    return 0;
-	/* If someone is allowed then default is denied. */
-	if(allow_user)
+	/* If someone is allowed and no-one denied then default is denied. */
+	if(allow_user && !deny_user)
 	    return 0;
 	/* Otherwise it's ok. */
 	return 1;

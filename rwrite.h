@@ -6,15 +6,18 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Fri Dec  9 00:43:08 1994 tri
+ * Last modified: Fri Dec  9 01:35:31 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.14 $
+ * $Revision: 1.15 $
  * $State: Exp $
- * $Date: 1994/12/08 22:56:45 $
+ * $Date: 1994/12/08 23:38:11 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.14  1994/12/08 22:56:45  tri
+ * Revision 1.15  1994/12/08 23:38:11  tri
+ * Version strings update.
+ *
+ * Revision 1.14  1994/12/08  22:56:45  tri
  * Fixed the quotation system on message
  * delivery.  Same message can now be quoted
  * differently for the each receiver.
@@ -99,8 +102,8 @@
 /* #define NO_GETEGID 1 */
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.1b2"		/* Server version   */
-#define RWRITE_VERSION_NUMBER	"1.1b"		/* Client version   */
+#define RWRITED_VERSION_NUMBER	"1.1b3"		/* Server version   */
+#define RWRITE_VERSION_NUMBER	"1.1b3"		/* Client version   */
 /*
  * User definitions are in the following files.
  */

@@ -7,13 +7,16 @@
  * Created      : Tue Sep 13 15:27:58 1994 tri
  * Last modified: Tue Sep 13 20:18:27 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.2 $
+ * $Revision: 1.3 $
  * $State: Exp $
- * $Date: 1994/09/14 14:59:48 $
+ * $Date: 1994/09/14 16:04:50 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.2  1994/09/14 14:59:48  tri
+ * Revision 1.3  1994/09/14 16:04:50  tri
+ * Nothing really.
+ *
+ * Revision 1.2  1994/09/14  14:59:48  tri
  * Added a few codes.
  *
  * Revision 1.1  1994/09/13  12:32:13  tri
@@ -43,8 +46,8 @@
 #define __RWRITE_H__ 1
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"0.9.1a"	/* Server version   */
-#define RWRITE_VERSION_NUMBER	"0.0"		/* Client version   */
+#define RWRITED_VERSION_NUMBER	"1.0b"		/* Server version   */
+#define RWRITE_VERSION_NUMBER	"1.0b"		/* Client version   */
 
 #define RWRITE_READY		100
 #define RWRITE_BYE		101

@@ -5,15 +5,19 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Tue Sep 20 01:18:45 1994 tri
+ * Last modified: Tue Sep 20 01:43:12 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.4 $
+ * $Revision: 1.5 $
  * $State: Exp $
- * $Date: 1994/09/19 22:40:37 $
+ * $Date: 1994/09/19 22:43:38 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.4  1994/09/19 22:40:37  tri
+ * Revision 1.5  1994/09/19 22:43:38  tri
+ * Warning about defaulted tcp-port now comes only
+ * in verbose mode.
+ *
+ * Revision 1.4  1994/09/19  22:40:37  tri
  * TOOK replaced by VRFY and made some considerable
  * cleanup.
  *
@@ -47,7 +51,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.4 1994/09/19 22:40:37 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.5 1994/09/19 22:43:38 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -708,7 +712,7 @@ int open_to(char *name)
     }
     if(!(sp = getservbyname("rwrite", "tcp"))) {
 	if(RWRITE_DEFAULT_PORT > 0) {
-	    if(!quiet)
+	    if(verbose)
 		fprintf(stderr, "rwrite: Warning, tcp port defaulted to %d.  Update /etc/services.\n", RWRITE_DEFAULT_PORT);
 	    defport = RWRITE_DEFAULT_PORT;
 	} else {

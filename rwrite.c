@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Mon Dec 12 23:12:31 1994 tri
+ * Last modified: Tue Dec 13 00:06:36 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.29 $
+ * $Revision: 1.30 $
  * $State: Exp $
- * $Date: 1994/12/12 21:17:55 $
+ * $Date: 1994/12/12 22:09:03 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.29  1994/12/12 21:17:55  tri
+ * Revision 1.30  1994/12/12 22:09:03  tri
+ * Fixed the annoying quotation bug.
+ *
+ * Revision 1.29  1994/12/12  21:17:55  tri
  * Closed files more pedantically.
  * Fix by toka & tri.
  *
@@ -133,7 +136,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.29 1994/12/12 21:17:55 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.30 1994/12/12 22:09:03 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -182,6 +185,51 @@ char **autoreply = NULL;
 int autoreply_lines = 0;
 int autoreply_sz = 0;
 char **last_msg = NULL;
+
+
+int unquote_and_raw_write_str(FILE *f, char *str)
+{
+    unsigned char *s = (unsigned char *)str;
+    int c;
+
+    if(!s)
+	return 0;
+    while(*s) {
+        if(*s == '=') {
+            s++;
+            if(((*s >= '0') && (*s <= '9')) ||
+               ((*s >= 'a') && (*s <= 'f')) ||
+               ((*s >= 'A') && (*s <= 'F'))) {
+                c = ((*s >= '0') && (*s <= '9')) ? (*s - '0') :
+                    (((*s >= 'a') && (*s <= 'f')) ? (*s - 'a' + 10) :
+                     (((*s >= 'A') && (*s <= 'F')) ? (*s - 'A' + 10) : 0));
+                s++;
+		if(((*s >= '0') && (*s <= '9')) ||
+		   ((*s >= 'a') && (*s <= 'f')) ||
+		   ((*s >= 'A') && (*s <= 'F'))) {
+		    c = (c << 4) | 
+			(((*s >= '0') && (*s <= '9')) ? (*s - '0') :
+			 (((*s >= 'a') && (*s <= 'f')) ? (*s - 'a' + 10) :
+			  (((*s >= 'A') && (*s <= 'F')) ?
+			   (*s - 'A' + 10) : 0)));
+		} else {
+		    c = '=';
+		    s--;
+		    s--;
+		}
+            } else {
+		c = '=';
+		s--;
+	    }
+        } else {
+            c = (int)(*s);
+        }
+	fputc(c, f);
+	s++;
+    }
+    fputc('\n', f);
+    return 1;
+}
 
 /*
  * There is a possible race condition here if many messages are written
@@ -815,7 +863,7 @@ int rwp_dialog(int s,
 		    }
 		    for((i = 0, line = msg[i]); line; line = msg[++i]) {
 			if(hist_file)
-			    fprintf(hist_file, "%s\n", line);
+			    unquote_and_raw_write_str(hist_file, line);
 			if(verbose > 1)
 			    fprintf(stderr, ">>>>%s\n", line);
 			WRITE_STRING(s, line);
@@ -1184,11 +1232,11 @@ int main(int argc, char **argv)
 	    break;
 	case ':':
 	    fprintf(stderr, 
-		    "rwrite: Option -%c needs an option-argument\n.", optopt);
+		    "rwrite: Option -%c needs an option-argument.\n", optopt);
 	    USAGE();
 	    exit(1);
 	case '?':
-	    fprintf (stderr, "rwrite: Unrecognized option: -%c\n.", optopt);
+	    fprintf (stderr, "rwrite: Unrecognized option: -%c.\n", optopt);
 	    USAGE();
 	    exit(1);
 	default:
@@ -1273,7 +1321,7 @@ int main(int argc, char **argv)
 		char *line;
 		
 		for((i = 0, line = msg[i]); line; line = msg[++i])
-		    fprintf(f, "%s\n", line);
+		    unquote_and_raw_write_str(f, line);
 		if((!(close_history_write(f))))
 		    if(!quiet)
 			fprintf(stderr, 

@@ -5,15 +5,18 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Mon Dec 12 00:33:43 1994 tri
+ * Last modified: Tue Dec 13 00:06:27 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.14 $
+ * $Revision: 1.15 $
  * $State: Exp $
- * $Date: 1994/12/12 15:58:41 $
+ * $Date: 1994/12/12 22:09:03 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.14  1994/12/12 15:58:41  tri
+ * Revision 1.15  1994/12/12 22:09:03  tri
+ * Fixed the annoying quotation bug.
+ *
+ * Revision 1.14  1994/12/12  15:58:41  tri
  * Copyright fixed a bit.
  *
  * Revision 1.13  1994/12/11  22:34:22  tri
@@ -87,7 +90,7 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.14 1994/12/12 15:58:41 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.15 1994/12/12 22:09:03 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -634,27 +637,35 @@ char *dequote_str(char *str, int maxlen, int *len)
     if(!(r = (unsigned char *)malloc((strlen((char *)s) * 3) + 1)))
 	return NULL;
     for((*len = 0, hlp = r); ((*s) && (*len < maxlen)); s++) {
-	if(*s == '=') {
-	    s++;
-	    if(((*s >= '0') && (*s <= '9')) ||
-	       ((*s >= 'a') && (*s <= 'f')) ||
-	       ((*s >= 'A') && (*s <= 'F'))) {
-		c = ((*s >= '0') && (*s <= '9')) ? (*s - '0') :
-		    (((*s >= 'a') && (*s <= 'f')) ? (*s - 'a' + 10) :
-		     (((*s >= 'A') && (*s <= 'F')) ? (*s - 'A' + 10) : 0));
-		s++;
+        if(*s == '=') {
+            s++;
+            if(((*s >= '0') && (*s <= '9')) ||
+               ((*s >= 'a') && (*s <= 'f')) ||
+               ((*s >= 'A') && (*s <= 'F'))) {
+                c = ((*s >= '0') && (*s <= '9')) ? (*s - '0') :
+                    (((*s >= 'a') && (*s <= 'f')) ? (*s - 'a' + 10) :
+                     (((*s >= 'A') && (*s <= 'F')) ? (*s - 'A' + 10) : 0));
+                s++;
+		if(((*s >= '0') && (*s <= '9')) ||
+		   ((*s >= 'a') && (*s <= 'f')) ||
+		   ((*s >= 'A') && (*s <= 'F'))) {
+		    c = (c << 4) | 
+			(((*s >= '0') && (*s <= '9')) ? (*s - '0') :
+			 (((*s >= 'a') && (*s <= 'f')) ? (*s - 'a' + 10) :
+			  (((*s >= 'A') && (*s <= 'F')) ?
+			   (*s - 'A' + 10) : 0)));
+		} else {
+		    c = '=';
+		    s--;
+		    s--;
+		}
+            } else {
+		c = '=';
+		s--;
 	    }
-	    if(((*s >= '0') && (*s <= '9')) ||
-	       ((*s >= 'a') && (*s <= 'f')) ||
-	       ((*s >= 'A') && (*s <= 'F'))) {
-		c = (c << 4) | 
-		    (((*s >= '0') && (*s <= '9')) ? (*s - '0') :
-		     (((*s >= 'a') && (*s <= 'f')) ? (*s - 'a' + 10) :
-		      (((*s >= 'A') && (*s <= 'F')) ? (*s - 'A' + 10) : 0)));
-	    }
-	} else {
-	    c = (int)(*s);
-	}
+        } else {
+            c = (int)(*s);
+        }
 	if(QUOTE_ME(c)) {
 	    if(show_quoted) {
 		*hlp = '=';

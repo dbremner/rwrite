@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Tue Nov 22 22:42:46 1994 tri
+ * Last modified: Wed Dec  7 14:27:28 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.15 $
+ * $Revision: 1.16 $
  * $State: Exp $
- * $Date: 1994/11/22 20:49:13 $
+ * $Date: 1994/12/07 12:34:32 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.15  1994/11/22 20:49:13  tri
+ * Revision 1.16  1994/12/07 12:34:32  tri
+ * Removed read_message() and dropped in Camillo's GetMsg()
+ * instead.
+ *
+ * Revision 1.15  1994/11/22  20:49:13  tri
  * Added configurable parameter to limit the number
  * of lines in the incoming message.
  *
@@ -84,7 +88,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.15 1994/11/22 20:49:13 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.16 1994/12/07 12:34:32 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -93,6 +97,8 @@ static char *RCS_id = "$Id: rwrited.c,v 1.15 1994/11/22 20:49:13 tri Exp $";
 #include <ctype.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <stdio.h>
+#include <limits.h>
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -309,57 +315,114 @@ void rwrite_quit()
 }
 
 /*
- * Read message data.
+ * GetMsg() and gm_getline() are contributions from Mr. Camillo S{rs.
+ * Some modifications by tri.
+ *
+ * Copyright 1994, Camillo S{rs <Camillo.Sars@hut.fi>.
  */
-char **read_message()
+
+static char*
+gm_getline (FILE* pf, int* p_limit, int* p_EOF);
+
+char**
+GetMsg (FILE* pf, int line_limit, int char_limit)
 {
-    int buflen, i;
-    char **buf;
-    char *line;
+    int pos = 0;
+    int eof = 0;
+    int c = 0;
+    char* p_tmp;
+    char** p_buffer;
+
+    if (line_limit == INT_MAX) line_limit -= 1;
+
+    p_buffer = (char **) malloc ((line_limit+1) * sizeof (char*));
+
+    if (p_buffer == NULL) return NULL;
+
+    p_buffer[line_limit] = NULL;
 
     RWRITE_MSG(RWRITE_GETMSG, 
 	       "Enter message.  Single dot '.' on line terminates.");
-    if(!(buf = ((char **)malloc(BUF_ALLOC_STEP * sizeof(char *))))) {
-	RWRITE_FATAL("Out of memory.");
-    }
-    buflen = BUF_ALLOC_STEP;
-    for(i = 0; /*NOTHING*/; i++) {
-	char *hlp;
 
-	if(!(line = read_line(stdin))) {
-	    RWRITE_MSG(RWRITE_ERR_NO_MESSAGE, "No message.");
-	    rwrite_bye();
-	}
-	if(!(strcmp(".", line))) {
-	    if(!i) {
-		free(buf);
-		return NULL;
+    while (!eof && char_limit)
+      {
+	  if (pos == line_limit) { break;}
+	  p_buffer[pos] = gm_getline (pf, &char_limit, &eof);
+	  if (p_buffer[pos] == NULL) { break; }
+#ifdef DEBUG
+	  printf("<<<%s\n", p_buffer[pos]);
+#endif
+	  if (*p_buffer[pos] == '.' &&
+	      *(p_buffer[pos]+1) == '\0')
+	    {
+		eof = -1;
+		p_buffer[pos] = NULL;
+		break;
 	    }
-	    buf[i] = NULL;
-	    return buf;
-	}
-	if(i >= max_lines_in()) {
-	    free(line);
-	    continue;
-	}
-	hlp = dequote_str(line);
-	free(line);
-	line = hlp;
-	if((i + 1) >= buflen) {
-	    char **newbuf;
-	    buflen += BUF_ALLOC_STEP;
-	    if(!(newbuf = (char **)malloc(buflen * sizeof(char *)))) {
-		RWRITE_FATAL("Out of memory.");
+	  pos++;
+      }
+
+    if (! eof)
+      {
+#ifdef DEBUG
+	  printf ("Skipping input up to '.'\n");
+#endif
+	  while (1)
+	    {
+		c = fgetc(pf);
+		if (c == EOF) break;
+		if (c == '.')
+		  {
+		      c = fgetc(pf);
+		      if (c == EOF || c == '\n') break;
+		  }
+		while ((c = fgetc(pf)) != EOF && c != '\n') ;
 	    }
-	    memcpy(newbuf, buf, i * sizeof(char *));
-	    free(buf);
-	    buf = newbuf;
-	}
-	buf[i] = line;
-    }
-    /*NOTREACHED*/
+      }
+    return p_buffer;
 }
 
+#define GL_BUFFER_SIZE 256
+
+static char*
+gm_getline (FILE* pf, int* p_limit, int* p_EOF)
+{
+    int c;
+    int pos = 0;
+    int size = GL_BUFFER_SIZE;
+    char* p_tmp;
+
+    char* p_buffer = (char*) malloc (GL_BUFFER_SIZE * sizeof(char));
+    if (p_buffer == NULL) return NULL;
+
+    while ((c = fgetc (pf)) != '\n') {
+	if (c == EOF) {
+	    *p_EOF = EOF;
+	    break;
+	}
+	p_buffer[pos++] = (char) c;
+	if (pos == *p_limit) {
+	    while ((c = fgetc(pf)) != EOF && c != '\n') ;
+	    break;
+	}
+	if (pos == size) {
+	    if (size == INT_MAX)
+		break;
+	    /* size += GL_BUFFER_SIZE; */
+	    size = ((INT_MAX - GL_BUFFER_SIZE) < size) ? 
+		INT_MAX : (size + GL_BUFFER_SIZE);
+	    p_tmp = (char *)realloc (p_buffer, size * sizeof(char));
+	    if(!(p_tmp)) { 
+		free(p_buffer); 
+		RWRITE_FATAL("Out of memory.");
+	    }
+	    p_buffer = p_tmp;
+	}
+    }
+    p_buffer[pos] = '\0';
+    *p_limit -= pos;
+    return p_buffer;
+}
 /* 
  *  Skip first token in line.
  *  If there are white space in the tail of the command,
@@ -1024,7 +1087,7 @@ int main(int argc, char **argv)
 			free(message[i]);
 		    free(message);
 		}
-		if(!(message = read_message())) {
+		if(!(message = GetMsg(stdin, DATA_MAXLINES, DATA_MAXCHARS))) {
 		    RWRITE_MSG(RWRITE_ERR_NO_MESSAGE, "No message.");
 		    goto out_of_parse;
 		}

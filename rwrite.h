@@ -6,15 +6,19 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Tue Nov 22 22:47:36 1994 tri
+ * Last modified: Wed Dec  7 14:27:55 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.12 $
+ * $Revision: 1.13 $
  * $State: Exp $
- * $Date: 1994/11/22 20:49:13 $
+ * $Date: 1994/12/07 12:34:32 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.12  1994/11/22 20:49:13  tri
+ * Revision 1.13  1994/12/07 12:34:32  tri
+ * Removed read_message() and dropped in Camillo's GetMsg()
+ * instead.
+ *
+ * Revision 1.12  1994/11/22  20:49:13  tri
  * Added configurable parameter to limit the number
  * of lines in the incoming message.
  *
@@ -89,7 +93,7 @@
 /* #define NO_GETEGID 1 */
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.1b"		/* Server version   */
+#define RWRITED_VERSION_NUMBER	"1.1b2"		/* Server version   */
 #define RWRITE_VERSION_NUMBER	"1.1b"		/* Client version   */
 /*
  * User definitions are in the following files.
@@ -118,6 +122,10 @@
  * This can be overridden in user configuration file.
  */
 #define DEFAULT_MAX_LINES_IN 1024
+
+
+#define DATA_MAXCHARS (1024 * 8 * 64)
+#define DATA_MAXLINES (1024 * 8)
 
 /*************************************************/
 /*************************************************/

@@ -6,15 +6,18 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Sun Nov 20 02:05:42 1994 tri
+ * Last modified: Sun Nov 20 13:02:41 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.10 $
+ * $Revision: 1.11 $
  * $State: Exp $
- * $Date: 1994/11/20 00:47:18 $
+ * $Date: 1994/11/20 11:08:12 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.10  1994/11/20 00:47:18  tri
+ * Revision 1.11  1994/11/20 11:08:12  tri
+ * Fixed minor quotation bug in backround mode.
+ *
+ * Revision 1.10  1994/11/20  00:47:18  tri
  * Completed autoreply and quotation stuff.
  * We are almost there now.
  *
@@ -99,6 +102,12 @@
  * Has to be at least 4.  No need to modify this anyway.
  */
 #define BUF_ALLOC_STEP	128
+
+/*
+ * Daemon sends only first MAX_AUTOREPLY_LINES lines of autoreply.
+ * -1 means unlimited.
+ */
+#define MAX_AUTOREPLY_LINES 25
 
 /*************************************************/
 /*************************************************/

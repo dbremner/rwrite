@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Sun Nov 20 02:39:59 1994 tri
+ * Last modified: Sun Nov 20 13:06:04 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.12 $
+ * $Revision: 1.13 $
  * $State: Exp $
- * $Date: 1994/11/20 00:47:18 $
+ * $Date: 1994/11/20 11:08:12 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.12  1994/11/20 00:47:18  tri
+ * Revision 1.13  1994/11/20 11:08:12  tri
+ * Fixed minor quotation bug in backround mode.
+ *
+ * Revision 1.12  1994/11/20  00:47:18  tri
  * Completed autoreply and quotation stuff.
  * We are almost there now.
  *
@@ -74,7 +77,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.12 1994/11/20 00:47:18 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.13 1994/11/20 11:08:12 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -687,7 +690,8 @@ int deliver(char *user,
 	    int l;
 	    
 	    l = 0;
-	    while((line = read_line(f)) && (l < 24)) {
+	    while((line = read_line(f)) && 
+		  ((MAX_AUTOREPLY_LINES == -1) || (l < MAX_AUTOREPLY_LINES))) {
 		char *hlp;
 	    
 		hlp = quote_str(line);

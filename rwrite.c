@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Sun Nov 20 02:24:07 1994 tri
+ * Last modified: Sun Nov 20 12:58:34 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.8 $
+ * $Revision: 1.9 $
  * $State: Exp $
- * $Date: 1994/11/20 00:47:18 $
+ * $Date: 1994/11/20 11:08:12 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.8  1994/11/20 00:47:18  tri
+ * Revision 1.9  1994/11/20 11:08:12  tri
+ * Fixed minor quotation bug in backround mode.
+ *
+ * Revision 1.8  1994/11/20  00:47:18  tri
  * Completed autoreply and quotation stuff.
  * We are almost there now.
  *
@@ -61,7 +64,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.8 1994/11/20 00:47:18 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.9 1994/11/20 11:08:12 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -240,12 +243,9 @@ char **read_user_message()
 	return NULL;
     buflen = BUF_ALLOC_STEP;
     for(i = 0; /*NOTHING*/; i++) {
+	char *hlp;
+
 	if(!(line = read_line(stdin))) {
-	    char *hlp;
-	    
-	    hlp = quote_str(line);
-	    free(line);
-	    line = hlp;
 	    if(!i) {
 		free(buf);
 		return NULL;
@@ -253,6 +253,9 @@ char **read_user_message()
 	    buf[i] = NULL;
 	    return buf;
 	}
+	hlp = quote_str(line);
+	free(line);
+	line = hlp;
 	if((i + 1) >= buflen) {
 	    char **newbuf;
 	    buflen += BUF_ALLOC_STEP;

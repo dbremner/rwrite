@@ -6,12 +6,15 @@
 # Created      : Wed Dec 14 02:39:53 1994 tri
 # Last modified: Tue May 21 17:55:11 1996 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $State: Exp $
-# $Date: 1996/05/21 14:55:44 $
+# $Date: 1996/05/21 15:16:10 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: configure.in,v $
+# Revision 1.6  1996/05/21 15:16:10  tri
+# Fixed.
+#
 # Revision 1.5  1996/05/21 14:55:44  tri
 # Few system dependent definitions.
 #
@@ -51,6 +54,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(rwrite.c)
 
+AC_CANONICAL_HOST
 AC_SUBST(RWRITED_GROUP)
 AC_SUBST(RWRITED_MODE)
 AC_SUBST(BIN_OWNER)

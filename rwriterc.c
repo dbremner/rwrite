@@ -5,15 +5,19 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Sun Dec 11 23:10:38 1994 tri
+ * Last modified: Mon Dec 12 00:33:43 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.12 $
+ * $Revision: 1.13 $
  * $State: Exp $
- * $Date: 1994/12/11 21:25:30 $
+ * $Date: 1994/12/11 22:34:22 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.12  1994/12/11 21:25:30  tri
+ * Revision 1.13  1994/12/11 22:34:22  tri
+ * Fixed some portability problems that are problems
+ * only with braindamaged compilers.
+ *
+ * Revision 1.12  1994/12/11  21:25:30  tri
  * Cleaned up some warnings.  No functional changes.
  *
  * Revision 1.11  1994/12/11  18:16:28  tri
@@ -80,7 +84,7 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.12 1994/12/11 21:25:30 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.13 1994/12/11 22:34:22 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -584,11 +588,11 @@ char *quote_str(char *str)
 
     s = (unsigned char *)str;
     if(!s)
-	s = "";
+	s = (unsigned char *)"";
     for((quoted = 0, hlp = s); *hlp; hlp++)
 	if((*hlp < 32) || (*hlp > 126) || (*hlp == '=') || (*hlp == '.'))
 	    quoted++;
-    if(!(r = malloc(strlen(s) + (2 * quoted) + 1)))
+    if(!(r = (unsigned char *)malloc(strlen((char *)s) + (2 * quoted) + 1)))
 	return NULL;
     for(hlp = r; *s; s++) {
 	if((*s >= 32) && (*s < 127) && (*s != '=') && (*s != '.')) {
@@ -619,12 +623,12 @@ char *dequote_str(char *str, int maxlen, int *len)
     *len = 0;
     s = (unsigned char *)str;
     if(!s)
-	s = "";
+	s = (unsigned char *)"";
     if(maxlen < 1)
 	return NULL;
-    l = strlen(s) * 3;
+    l = strlen((char *)s) * 3;
     l = ((l > maxlen) ? maxlen : l) + 1;
-    if(!(r = malloc((strlen(s) * 3) + 1)))
+    if(!(r = (unsigned char *)malloc((strlen((char *)s) * 3) + 1)))
 	return NULL;
     for((*len = 0, hlp = r); ((*s) && (*len < maxlen)); s++) {
 	if(*s == '=') {

@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Sat Dec 10 01:50:38 1994 tri
+ * Last modified: Sat Dec 10 13:24:53 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.20 $
+ * $Revision: 1.21 $
  * $State: Exp $
- * $Date: 1994/12/09 23:57:49 $
+ * $Date: 1994/12/10 11:28:38 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.20  1994/12/09 23:57:49  tri
+ * Revision 1.21  1994/12/10 11:28:38  tri
+ * Last known method to send terminal control codes
+ * through correctly configured rwrite is now diabled.
+ *
+ * Revision 1.20  1994/12/09  23:57:49  tri
  * Added a outbond message logging.
  *
  * Revision 1.19  1994/12/09  10:28:56  tri
@@ -103,7 +107,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.20 1994/12/09 23:57:49 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.21 1994/12/10 11:28:38 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -693,6 +697,20 @@ int writeto(char *tty,
     fputc('\n', f);
     if(ttyp)
 	fputc('\r', f);
+
+    if(!(from = dequote_str(from, 1024, NULL))) {
+	RWRITE_FATAL("Out of memory.");
+    }
+    if(!(remotehost = dequote_str(remotehost, 1024, NULL))) {
+	RWRITE_FATAL("Out of memory.");
+    }
+    if(!(fromhost = dequote_str(fromhost, 1024, NULL))) {
+	RWRITE_FATAL("Out of memory.");
+    }
+    if(via)
+	if(!(via = dequote_str(via, 1024, NULL))) {
+	    RWRITE_FATAL("Out of memory.");
+	}
     if(strcmp(remotehost, fromhost))
 	if(via) {
 	    fprintf(f, 
@@ -710,6 +728,11 @@ int writeto(char *tty,
     else
 	fprintf(f, "Message from %s@%s at %s", from, fromhost, 
 		(nowstr ? nowstr : "xxx\n"));
+    free(from);
+    free(fromhost);
+    free(remotehost);
+    if(via)
+	free(via);
     return(dequote_and_write(f, msg, max_lines_in(), max_chars_in(), ttyp));
 }
 /*

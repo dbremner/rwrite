@@ -6,15 +6,19 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Sat Dec 10 01:43:09 1994 tri
+ * Last modified: Sat Dec 10 13:16:31 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.18 $
+ * $Revision: 1.19 $
  * $State: Exp $
- * $Date: 1994/12/09 23:57:49 $
+ * $Date: 1994/12/10 11:28:38 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.18  1994/12/09 23:57:49  tri
+ * Revision 1.19  1994/12/10 11:28:38  tri
+ * Last known method to send terminal control codes
+ * through correctly configured rwrite is now diabled.
+ *
+ * Revision 1.18  1994/12/09  23:57:49  tri
  * Added a outbond message logging.
  *
  * Revision 1.17  1994/12/09  21:08:12  tri
@@ -119,8 +123,8 @@
 /* #define NO_GETEGID 1 */
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.1b6"		/* Server version   */
-#define RWRITE_VERSION_NUMBER	"1.1b6"		/* Client version   */
+#define RWRITED_VERSION_NUMBER	"1.1b7"		/* Server version   */
+#define RWRITE_VERSION_NUMBER	"1.1b7"		/* Client version   */
 /*
  * User definitions are in the following files.
  */

@@ -5,15 +5,19 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Sat Dec 10 01:55:22 1994 tri
+ * Last modified: Sat Dec 10 13:11:14 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.16 $
+ * $Revision: 1.17 $
  * $State: Exp $
- * $Date: 1994/12/09 23:57:49 $
+ * $Date: 1994/12/10 11:28:38 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.16  1994/12/09 23:57:49  tri
+ * Revision 1.17  1994/12/10 11:28:38  tri
+ * Last known method to send terminal control codes
+ * through correctly configured rwrite is now diabled.
+ *
+ * Revision 1.16  1994/12/09  23:57:49  tri
  * Added a outbond message logging.
  *
  * Revision 1.15  1994/12/09  21:08:12  tri
@@ -88,7 +92,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.16 1994/12/09 23:57:49 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.17 1994/12/10 11:28:38 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -305,7 +309,7 @@ char **read_user_message(FILE *f)
 
 int dump_msg_to_outlogs(char **msg, char *addr, int failed, char *userhome)
 {
-    int i, j, n;
+    int i, n;
     FILE *f;
     time_t now;
     char *nowstr;
@@ -333,14 +337,16 @@ int dump_msg_to_outlogs(char **msg, char *addr, int failed, char *userhome)
 	    strcpy(logfile, rc_outlog[i]);
 	}
 	if(f = fopen(logfile, "a")) {
-	    fprintf(f, "\n%s%cessage to %s at %s\n", 
+	    fprintf(f, "\n%s%cessage to %s at %s", 
 		    (failed ? "Failed " : ""),
 		    (failed ? 'm' : 'M'),
 		    addr, 
 		    nowstr);
-	    for(j = 0; msg[j]; j++)
-		fprintf(f, "%s\n", msg[j]);
-	    fputc('\n', f);
+	    dequote_and_write(f,
+			      msg, 
+			      max_lines_in(), 
+			      max_chars_in(),
+			      0);
 	    fclose(f);
 	    n++;
 	} else {

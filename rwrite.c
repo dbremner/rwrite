@@ -7,13 +7,16 @@
  * Created      : Tue Sep 13 15:28:07 1994 tri
  * Last modified: Sun Nov 20 13:40:54 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.11 $
+ * $Revision: 1.12 $
  * $State: Exp $
- * $Date: 1994/11/20 11:45:01 $
+ * $Date: 1994/11/20 11:51:17 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.11  1994/11/20 11:45:01  tri
+ * Revision 1.12  1994/11/20 11:51:17  tri
+ * sys/time.h is included.
+ *
+ * Revision 1.11  1994/11/20  11:45:01  tri
  * Added a few minor lines to complete rwp.
  *
  * Revision 1.10  1994/11/20  11:16:28  tri
@@ -70,12 +73,13 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.11 1994/11/20 11:45:01 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.12 1994/11/20 11:51:17 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdio.h>

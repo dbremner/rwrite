@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Tue Oct  4 22:30:02 1994 tri
+ * Last modified: Thu Oct  6 20:26:15 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.9 $
+ * $Revision: 1.10 $
  * $State: Exp $
- * $Date: 1994/10/04 20:50:22 $
+ * $Date: 1994/10/06 18:32:37 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.9  1994/10/04 20:50:22  tri
+ * Revision 1.10  1994/10/06 18:32:37  tri
+ * Hacked multitty option.
+ *
+ * Revision 1.9  1994/10/04  20:50:22  tri
  * Conforms now the current RWP protocol.
  *
  * Revision 1.8  1994/09/26  23:14:14  tri
@@ -64,7 +67,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.9 1994/10/04 20:50:22 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.10 1994/10/06 18:32:37 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -405,13 +408,31 @@ int term_chk(char *tty, int uid, int *msgsokP, time_t *atimeP)
  * Special case for writing to yourself - ignore the terminal you're
  * writing from, unless that's the only terminal with messages enabled.
  */
-int search_utmp(char *user, int uid, char *tty, char *userhome)
+int search_utmp(char *user,
+		int uid, 
+		char *tty, 
+		char *userhome,
+		char ***ttylist,
+		int *multittyp)
 {
 	struct utmp u;
 	time_t bestatime, atime;
 	int ufd, nloggedttys, nttys, msgsok, no_timecomp;
 	char atty[MAXPATHLEN];
-	
+	char **all_ttys;
+	int all_ttys_size;
+	int ttylistlen;
+
+	if(ttylist) {
+	    if(!(all_ttys = (char **)calloc(BUF_ALLOC_STEP, sizeof(char *)))) {
+		RWRITE_FATAL("Out of memory.");
+	    }
+	    all_ttys_size = BUF_ALLOC_STEP;
+	    ttylistlen = 0;
+	}
+	if(multittyp) {
+	    *multittyp = 0;
+	}
 	if(userhome && (*userhome)) {
 	    /* 
 	     * We check first if user has RWRITE_FILE_TARGET file in 
@@ -430,12 +451,28 @@ int search_utmp(char *user, int uid, char *tty, char *userhome)
 			if(atty[len - 1] == '\n') {
 			    atty[--len] = '\000';
 			}
+			if(!(strcmp(atty, "all"))) {
+			    if(multittyp) {
+				*multittyp = 1;
+			    }
+			    goto continue_utmp_search;
+			}
 			if((!(term_chk(atty, uid, &msgsok, &atime))) && msgsok) {
 			    if(HAS_TTY_FORCE() && (strcmp(atty, tty_force))) {
 				/* Cannot force over the user force tty. */
 				return DELIVER_PERMISSION_DENIED;
 			    }
 			    strcpy(tty, atty);
+			    if(ttylist) {
+				/*
+				 * There's always room for one.
+				 */
+				if(!(all_ttys[0] = malloc(strlen(atty) + 1))) {
+				    RWRITE_FATAL("Out of memory.");
+				}
+				strcpy(all_ttys[0], atty);
+				*ttylist = all_ttys;
+			    }
 			    return DELIVER_OK;
 			}
 		    }
@@ -444,6 +481,7 @@ int search_utmp(char *user, int uid, char *tty, char *userhome)
 	    }
 	    /* No success this far.  Slip through. */
 	}
+    continue_utmp_search:;
 	if((ufd = open(_PATH_UTMP, O_RDONLY)) < 0) {
 	    return DELIVER_USER_NOT_IN;
 	}
@@ -460,6 +498,28 @@ int search_utmp(char *user, int uid, char *tty, char *userhome)
 		    continue;	/* bad term? skip */
 		if(!msgsok)
 		    continue;	/* skip ttys with msgs off */
+		if(ttylist) {
+		    if((ttylistlen + 2) >= all_ttys_size) {
+			char **new_all_ttys;
+			if(!(new_all_ttys = 
+			     (char **)calloc(BUF_ALLOC_STEP + all_ttys_size,
+					     sizeof(char *)))) {
+			    RWRITE_FATAL("Out of memory.");
+			}
+			memcpy(new_all_ttys, 
+			       all_ttys, 
+			       all_ttys_size * sizeof(char *));
+			all_ttys_size += BUF_ALLOC_STEP;
+			free(all_ttys);
+			all_ttys = new_all_ttys;
+		    }
+		    if(!(all_ttys[ttylistlen] = malloc(strlen(atty) + 1))) {
+			RWRITE_FATAL("Out of memory.");
+		    }
+		    strcpy(all_ttys[ttylistlen], atty);
+		    ttylistlen++;
+		    *ttylist = all_ttys; /* Not necessary every time but... */
+		}
 		if(HAS_TTY_FORCE()) {
 		    if(!(strcmp(atty, tty_force))) {
 			strcpy(tty, atty);
@@ -528,42 +588,19 @@ int is_allowed(char *homedir, char *fromuser, char *fromhost)
     return 1;
 }
 
-/*
- * This is a function that should be developed radically.
- * Users should be able to have resource file to modify
- * the delivery methods and to allow forwarding etc.
- * Also support for some kind of support for kinda 
- * message agent would be nice.
- */
-int deliver(char *user, 
+int writeto(char *tty,
+	    char **msg,
 	    char *from, 
-	    char *fromhost, 
-	    char *remotehost, 
-	    char *via, 
-	    char **msg)
+	    char *fromhost,
+	    char *via,
+	    char *remotehost,
+	    char *nowstr)
 {
-    FILE *f;
     int i;
-    char tty[MAXPATHLEN];
-    int d_status;
-    time_t now;
-    char *nowstr;
-    struct passwd *pwd;
+    FILE *f;
 
-    now = time(NULL);
-    nowstr = ctime(&now);
-
-    if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
-	return DELIVER_NO_SUCH_USER;
-    }
-    if(!(is_allowed(pwd->pw_dir, from, fromhost))) {
-	return DELIVER_PERMISSION_DENIED;
-    }
-    if((d_status = search_utmp(user, pwd->pw_uid, tty, pwd->pw_dir)) != 
-       DELIVER_OK)
-	return(d_status);
     if(!(f = fopen(tty, "w")))
-	return DELIVER_PERMISSION_DENIED;
+	return 0;
     fputc('\007', f);
     if(strcmp(remotehost, fromhost))
 	if(via) {
@@ -586,7 +623,75 @@ int deliver(char *user,
 	fprintf(f, "%s\n", msg[i]);
     fputc('\n', f);
     fclose(f);
-    return DELIVER_OK;
+    return 1;
+}
+/*
+ * This is a function that should be developed radically.
+ * Users should be able to have resource file to modify
+ * the delivery methods and to allow forwarding etc.
+ * Also support for some kind of support for kinda 
+ * message agent would be nice.
+ */
+int deliver(char *user, 
+	    char *from, 
+	    char *fromhost, 
+	    char *remotehost, 
+	    char *via, 
+	    char **msg)
+{
+    char tty[MAXPATHLEN];
+    int d_status;
+    time_t now;
+    char *nowstr;
+    struct passwd *pwd;
+    int multittyp;
+    char **all_ttys;
+    int succeeded;
+
+    now = time(NULL);
+    nowstr = ctime(&now);
+    succeeded = 0;
+
+    if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
+	return DELIVER_NO_SUCH_USER;
+    }
+    if(!(is_allowed(pwd->pw_dir, from, fromhost))) {
+	return DELIVER_PERMISSION_DENIED;
+    }
+    if((d_status = search_utmp(user, pwd->pw_uid, tty, 
+			       pwd->pw_dir, &all_ttys, &multittyp)) != 
+       DELIVER_OK)
+	return(d_status);
+    if(multittyp && all_ttys) {
+	char **ttys;
+	for(ttys = all_ttys; *ttys; ttys++) {
+	    succeeded = (writeto(*ttys,
+				 msg,
+				 from, 
+				 fromhost,
+				 via,
+				 remotehost,
+				 nowstr) ||
+			 succeeded);
+	    free(*ttys);
+	}
+	free(all_ttys);
+    } else {
+	succeeded = writeto(tty,
+			    msg,
+			    from, 
+			    fromhost,
+			    via,
+			    remotehost,
+			    nowstr);
+	if(all_ttys) { /* Free them anyway.  Not very important though. */
+	    char **ttys;
+	    for(ttys = all_ttys; *ttys; ttys++)
+		free(*ttys);
+	    free(all_ttys);
+	}
+    }
+    return(succeeded ? DELIVER_OK : DELIVER_PERMISSION_DENIED);
 }
 
 int can_deliver(char *user, char *from, char *fromhost)
@@ -603,7 +708,7 @@ int can_deliver(char *user, char *from, char *fromhost)
      */
     if(from && fromhost && (!(is_allowed(pwd->pw_dir, from, fromhost))))
 	return DELIVER_PERMISSION_DENIED;
-    return(search_utmp(user, pwd->pw_uid, tty, pwd->pw_dir));
+    return(search_utmp(user, pwd->pw_uid, tty, pwd->pw_dir, NULL, NULL));
 }
 
 int main(int argc, char **argv)

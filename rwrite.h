@@ -6,15 +6,18 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Tue Oct  4 22:32:21 1994 tri
+ * Last modified: Thu Oct  6 20:31:06 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.8 $
+ * $Revision: 1.9 $
  * $State: Exp $
- * $Date: 1994/10/04 20:50:22 $
+ * $Date: 1994/10/06 18:32:37 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.8  1994/10/04 20:50:22  tri
+ * Revision 1.9  1994/10/06 18:32:37  tri
+ * Hacked multitty option.
+ *
+ * Revision 1.8  1994/10/04  20:50:22  tri
  * Conforms now the current RWP protocol.
  *
  * Revision 1.7  1994/09/20  19:08:57  tri
@@ -75,7 +78,7 @@
 /* #define NO_GETEGID 1 */
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.01b"		/* Server version   */
+#define RWRITED_VERSION_NUMBER	"1.02b"		/* Server version   */
 #define RWRITE_VERSION_NUMBER	"1.01b"		/* Client version   */
 /*
  * User definitions are in the following files.

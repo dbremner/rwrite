@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Wed Sep 14 17:42:47 1994 tri
+ * Last modified: Wed Sep 14 18:10:03 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.2 $
+ * $Revision: 1.3 $
  * $State: Exp $
- * $Date: 1994/09/14 14:58:53 $
+ * $Date: 1994/09/14 15:10:18 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.2  1994/09/14 14:58:53  tri
+ * Revision 1.3  1994/09/14 15:10:18  tri
+ * Reports now also the protocol version on startup.
+ *
+ * Revision 1.2  1994/09/14  14:58:53  tri
  * Fixed a few bugs.
  *
  * Revision 1.1  1994/09/13  12:32:08  tri
@@ -40,7 +43,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.2 1994/09/14 14:58:53 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.3 1994/09/14 15:10:18 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -418,6 +421,7 @@ int main(int argc, char **argv)
     }
     rwrite_helo();
     rwrite_ver();
+    rwrite_prot();
     for((message = NULL), (rwrite_ready(), (cmd = read_line(stdin)));
 	cmd;
 	(rwrite_ready(), (cmd = read_line(stdin)))) {

@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Tue Sep 20 01:37:53 1994 tri
+ * Last modified: Tue Sep 20 11:20:05 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.5 $
+ * $Revision: 1.6 $
  * $State: Exp $
- * $Date: 1994/09/19 22:40:37 $
+ * $Date: 1994/09/20 08:24:13 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.5  1994/09/19 22:40:37  tri
+ * Revision 1.6  1994/09/20 08:24:13  tri
+ * Support for .rwrite-allow and .rwrite-deny files.
+ *
+ * Revision 1.5  1994/09/19  22:40:37  tri
  * TOOK replaced by VRFY and made some considerable
  * cleanup.
  *
@@ -50,7 +53,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.5 1994/09/19 22:40:37 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.6 1994/09/20 08:24:13 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -91,6 +94,7 @@ static char *RCS_id = "$Id: rwrited.c,v 1.5 1994/09/19 22:40:37 tri Exp $";
 #endif
 
 #include "rwrite.h"
+#include "match.h"
 
 #define RWRITE_FATAL(msg) { fprintf(stdout,                        \
 				     "%03d RWRITED FATAL: %s\n",   \
@@ -122,7 +126,7 @@ static char *RCS_id = "$Id: rwrited.c,v 1.5 1994/09/19 22:40:37 tri Exp $";
  */
 char from_host[128];
 char remote_host[128];
-char remote_user[64];
+char from_user[64];
 char to_user[64];
 char my_host[128];
 int fwd_count = 0;
@@ -172,7 +176,7 @@ void set_hostnames(int get_remote)
     int remote_sock_len = sizeof(remote_sock);
     struct hostent *remote_hostent;
 
-    remote_user[0] = '\000';
+    from_user[0] = '\000';
     remote_host[0] = '\000';
     from_host[0] = '\000';
     to_user[0] = '\000';
@@ -394,6 +398,46 @@ int search_utmp(char *user, char *tty)
 /********* END OF STUFF FROM Berkeley Unix's write(1) **********/
 
 /*
+ * Check if user has either denied of allowed access for
+ * specified remote user.
+ */
+int is_allowed(char *homedir, char *fromuser, char *fromhost)
+{
+    FILE *f;
+    char *line;
+    char rcfile[MAXPATHLEN], sender[256];
+
+    sprintf(sender, "%s@%s", fromuser, fromhost);
+    sprintf(rcfile, "%s/%s", homedir, RWRITE_FILE_ALLOW);
+    if(f = fopen(rcfile, "r")) {
+	while(line = read_line(f)) {
+	    if(!(StrMatch(sender, line))) {
+		free(line);
+		fclose(f);
+		return 1;
+	    }
+	    free(line);
+	}
+	fclose(f);
+	return 0;
+    } else {
+	sprintf(rcfile, "%s/%s", homedir, RWRITE_FILE_DENY);
+	if(f = fopen(rcfile, "r")) {
+	    while(line = read_line(f)) {
+		if(!(StrMatch(sender, line))) {
+		    free(line);
+		    fclose(f);
+		    return 0;
+		}
+		free(line);
+	    }
+	    fclose(f);
+	}
+    }
+    return 1;
+}
+
+/*
  * This is a function that should be developed radically.
  * Users should be able to have resource file to modify
  * the delivery methods and to allow forwarding etc.
@@ -422,7 +466,8 @@ int deliver(char *user,
 	if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
 	    return DELIVER_NO_SUCH_USER;
 	}
-	strcpy(userhome, pwd->pw_dir);
+	if(!(is_allowed(pwd->pw_dir, from, fromhost)))
+	    return DELIVER_PERMISSION_DENIED;
     }
     
     if((d_status = search_utmp(user, tty)) != DELIVER_OK)
@@ -443,7 +488,7 @@ int deliver(char *user,
     return DELIVER_OK;
 }
 
-int can_deliver(char *user)
+int can_deliver(char *user, char *from, char *fromhost)
 {
     char tty[MAXPATHLEN];
 
@@ -453,6 +498,12 @@ int can_deliver(char *user)
 	if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
 	    return DELIVER_NO_SUCH_USER;
 	}
+	/*
+	 * Check user's allow and deny file only if remote user has
+	 * already told who he is.
+	 */
+	if(from && fromhost && (!(is_allowed(pwd->pw_dir, from, fromhost))))
+	    return DELIVER_PERMISSION_DENIED;
     }
     return(search_utmp(user, tty));
 }
@@ -493,7 +544,7 @@ int main(int argc, char **argv)
 	    } else if((!(strcmp(cmd, "prot"))) || (!(strcmp(cmd, "PROT")))) {
 		rwrite_prot();
 	    } else if((!(strcmp(cmd, "rset"))) || (!(strcmp(cmd, "RSET")))) {
-		remote_user[0] = '\000';
+		from_user[0] = '\000';
 		to_user[0] = '\000';
 		fwd_count = 0;
 		if(remote_host[0]) {
@@ -515,14 +566,14 @@ int main(int argc, char **argv)
 		      (!(strncmp(cmd, "FROM ", 5)))) {
 		char *user_from = get_user_name(cmd);
 		
-		remote_user[0] = '\000';
+		from_user[0] = '\000';
 		if((!user_from) || 
 		   (!(strlen(user_from))) || 
-		   (strlen(user_from) >= sizeof(remote_user))) {
+		   (strlen(user_from) >= sizeof(from_user))) {
 		    RWRITE_MSG(RWRITE_ERR_SYNTAX, "Syntax: FROM userid");
 		    goto out_of_parse;
 		}
-		strcpy(remote_user, user_from);
+		strcpy(from_user, user_from);
 		RWRITE_MSG(RWRITE_SENDER_OK, "Sender ok.");
 	    } else if((!(strcmp(cmd, "to"))) ||
 		      (!(strcmp(cmd, "TO"))) ||
@@ -597,7 +648,9 @@ int main(int argc, char **argv)
 			       "Use TO before VRFY.");
 		    goto out_of_parse;
 		}
-		if((d_status = can_deliver(to_user)) != DELIVER_OK) {
+		if((d_status = can_deliver(to_user, 
+					   (from_user[0] ? from_user : NULL),
+					   from_host)) != DELIVER_OK) {
 		    switch(d_status) {
 		    case DELIVER_NO_SUCH_USER:
 #ifndef DO_NOT_TELL_USERS
@@ -633,7 +686,7 @@ int main(int argc, char **argv)
 	    } else if((!(strcmp(cmd, "send"))) || (!(strcmp(cmd, "SEND")))) {
 		int d_status;
 
-		if(!(remote_user[0])) {
+		if(!(from_user[0])) {
 		    RWRITE_MSG(RWRITE_ERR_NO_SENDER, 
 			       "Use FROM before SEND.");
 		    goto out_of_parse;
@@ -649,7 +702,7 @@ int main(int argc, char **argv)
 		    goto out_of_parse;
 		}
 		if((d_status = deliver(to_user, 
-				       remote_user, 
+				       from_user, 
 				       from_host,
 				       remote_host,
 				       message)) != DELIVER_OK) {

@@ -6,15 +6,18 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Tue Sep 20 01:08:55 1994 tri
+ * Last modified: Tue Sep 20 11:23:34 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.5 $
+ * $Revision: 1.6 $
  * $State: Exp $
- * $Date: 1994/09/19 22:40:37 $
+ * $Date: 1994/09/20 08:24:13 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.5  1994/09/19 22:40:37  tri
+ * Revision 1.6  1994/09/20 08:24:13  tri
+ * Support for .rwrite-allow and .rwrite-deny files.
+ *
+ * Revision 1.5  1994/09/19  22:40:37  tri
  * TOOK replaced by VRFY and made some considerable
  * cleanup.
  *
@@ -56,6 +59,13 @@
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
 #define RWRITED_VERSION_NUMBER	"1.0b"		/* Server version   */
 #define RWRITE_VERSION_NUMBER	"1.0b"		/* Client version   */
+/*
+ * User definitions are in the following files.
+ */
+#define RWRITE_FILE_DENY	".rwrite-deny"
+#define RWRITE_FILE_ALLOW	".rwrite-allow"
+#define RWRITE_FILE_FORWARD	".rwrite-forward"	/* Not implemented */
+#define RWRITE_FILE_AGENT	".rwrite-agent"		/* Not implemented */
 /*
  * If DO_NOT_TELL_USERS is defined, server gives "user not in" notification
  * instead of "no such user".

@@ -5,15 +5,18 @@
  * Simple client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Wed Sep 14 17:51:56 1994 tri
+ * Last modified: Wed Sep 14 19:00:17 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.1 $
+ * $Revision: 1.2 $
  * $State: Exp $
- * $Date: 1994/09/14 14:58:53 $
+ * $Date: 1994/09/14 16:04:50 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.1  1994/09/14 14:58:53  tri
+ * Revision 1.2  1994/09/14 16:04:50  tri
+ * Added -r option.
+ *
+ * Revision 1.1  1994/09/14  14:58:53  tri
  * Initial revision
  *
  * ----------------------------------------------------------------------
@@ -37,11 +40,12 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.1 1994/09/14 14:58:53 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.2 1994/09/14 16:04:50 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/param.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -59,6 +63,56 @@ static char *RCS_id = "$Id: rwrite.c,v 1.1 1994/09/14 14:58:53 tri Exp $";
 #define BUF_ALLOC_STEP	128
 
 int verbose = 0;
+int resend = 0;
+
+/*
+ * There is a possible race condition here if many messages are written
+ * simultaneously.
+ */
+FILE *open_history_write()
+{
+    char path[MAXPATHLEN];
+    char *home;
+    FILE *f;
+
+    if(!(home = getenv("HOME"))) {
+	return NULL;
+    }
+    sprintf(path, "%s/.lastrwrite#", home);
+    f = fopen(path, "w");
+    if(f)
+	chmod(path, 0600);
+    return(f);
+} 
+
+int close_history_write(FILE *f)
+{
+    char path1[MAXPATHLEN];
+    char path2[MAXPATHLEN];
+    char *home;
+    int r;
+
+    if(!(home = getenv("HOME"))) {
+	return NULL;
+    }
+    sprintf(path1, "%s/.lastrwrite#", home);
+    sprintf(path2, "%s/.lastrwrite", home);
+    r = rename(path1, path2);
+    chmod(path2, 0600);
+    return(r ? 0 : 1);
+} 
+
+FILE *open_history_read()
+{
+    char path[MAXPATHLEN];
+    char *home;
+
+    if(!(home = getenv("HOME"))) {
+	return NULL;
+    }
+    sprintf(path, "%s/.lastrwrite", home);
+    return(fopen(path, "r"));
+}
 
 int read_char(int fd)
 {
@@ -202,6 +256,7 @@ int rwp_dialog(int s, char *to, char *from)
     int code;
     char *resp, *line;
     int mode, modeattr;
+    FILE *hist_file;
 
     mode = DIALOG_BEGIN;
     modeattr = 0;
@@ -350,9 +405,33 @@ int rwp_dialog(int s, char *to, char *from)
 		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
 		    return 0;
 		}
-		while(line = read_line(stdin)) {
-		    WRITE_STRING(s, line);
-		    WRITE_STRING(s, "\012");
+		if(!resend) {
+		    /*
+		     * Read message from user input.
+		     */
+		    if(!(hist_file = open_history_write()))
+			fprintf(stderr, 
+				"rwrite: Warning, can't open history file.\n");
+		    while(line = read_line(stdin)) {
+			if(hist_file)
+			    fprintf(hist_file, "%s\n", line);
+			WRITE_STRING(s, line);
+			WRITE_STRING(s, "\012");
+		    }
+		    if(hist_file) {
+			if(!(close_history_write(hist_file)))
+			    fprintf(stderr, 
+				    "rwrite: Warning, can't close history file.\n");
+		    }
+		} else {
+		    if(!(hist_file = open_history_read())) {
+			fprintf(stderr, "rwrite: Can't open history file.\n");
+			return 0;
+		    }
+		    while(line = read_line(hist_file)) {
+			WRITE_STRING(s, line);
+			WRITE_STRING(s, "\012");
+		    }
 		}
 		WRITE_STRING(s, ".\012");
 		modeattr = 2;
@@ -413,6 +492,10 @@ int rwp_dialog(int s, char *to, char *from)
 		fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
 		return 0;
 	    }
+	    /*
+	     * We already have sent ok ack, so we can return 1
+	     * even if something woes for now on.
+	     */
 	case DIALOG_SEND:
 	    switch(code) {
 	    case RWRITE_READY:
@@ -431,6 +514,7 @@ int rwp_dialog(int s, char *to, char *from)
 		return 1;
 	    default:
 		fprintf(stderr, "rwrite: Internal error.\n");
+		return 1;
 	    }
 	}
     }
@@ -498,10 +582,29 @@ int open_to(char *name)
 
 int main(int argc, char **argv)
 {
-    int s, ret;
+    int ch, s, ret;
     char *to, *from;
+    extern char *optarg;
+    extern int optind, optopt;
     
-    if(argc == 2) {
+    while ((ch = getopt(argc, argv, "vr")) != -1) {
+	switch(ch) {
+	case 'v':	
+	    verbose = 1;
+	    break;
+	case 'r':
+	    resend = 1;
+	    break;
+	case '?':
+	    fprintf (stderr, "rwrite: Unrecognized option: -%c\n", optopt);
+	    exit(1);
+	default:
+	    fprintf(stderr, "rwrite: Internal error.\n");
+	    exit(1);
+	}
+    }
+
+    if((argc - optind) == 1) {
 	{
 	    struct passwd *pwd;
 	    char *tmp;
@@ -515,10 +618,10 @@ int main(int argc, char **argv)
 	    }
 	    strcpy(from, tmp);
 	}	
-	if(!(to = (char *)malloc(strlen(argv[1]) + 1))) {
+	if(!(to = (char *)malloc(strlen(argv[optind]) + 1))) {
 	    exit(1);
 	}
-	strcpy(to, argv[1]);
+	strcpy(to, argv[optind]);
 	if(0 > (s = open_to(to))) {
 	    exit(2);
 	}
@@ -526,7 +629,7 @@ int main(int argc, char **argv)
 	close(s);
 	exit(ret ? 0 : (-1));
     } else {
-	fprintf(stderr, "USAGE: rwrite user[@host]\n");
+	fprintf(stderr, "USAGE: rwrite [-r] [-v] user[@host]\n");
 	exit(3);
     }
     /*NOTREACHED*/

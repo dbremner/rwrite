@@ -4,14 +4,17 @@
 # Configuration rules for rwrite package
 # ----------------------------------------------------------------------
 # Created      : Wed Dec 14 02:39:53 1994 tri
-# Last modified: Tue Oct 24 23:22:45 1995 tri
+# Last modified: Tue May 21 17:55:11 1996 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $State: Exp $
-# $Date: 1996/05/17 12:31:28 $
+# $Date: 1996/05/21 14:55:44 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: configure.in,v $
+# Revision 1.5  1996/05/21 14:55:44  tri
+# Few system dependent definitions.
+#
 # Revision 1.4  1996/05/17 12:31:28  tri
 # SOCKS support from kivinen@iki.fi.
 #
@@ -75,6 +78,36 @@ AC_ARG_WITH(socks, [  --with-socks[=PATH]			compile with SOCKS support.], , with
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
+
+AC_DEFINE_UNQUOTED(HOSTTYPE, "$host")
+
+case "$host" in
+  *-sgi-irix5*)
+    # Irix stuff from snabb@niksula.hut.fi, tsurmacz@asic.ict.pwr.wroc.pl,
+    # C.Martin@sheffield.ac.uk, raistlin@uni-paderborn.de
+    no_libsocket=yes
+    no_libsun=yes
+    no_libnsl=yes
+    ;;
+  *-sgi-irix6*)
+    # from d-champion@uchicago.edu
+    no_libsocket=yes
+    no_libnsl=yes
+    no_libsun=yes
+    if test "`uname -s`" = "IRIX64"; then
+      CFLAGS="-32 $CFLAGS"
+      LDFLAGS="-32 $LDFLAGS"
+    fi
+    ;;
+  *-*-hpux*)
+    # HPUX flags from jgotts@engin.umich.edu
+    if test -z "$GCC"; then
+      CFLAGS="$CFLAGS -Aa -D_HPUX_SOURCE"
+    fi
+    ;;
+  *)
+    ;;
+esac
 
 dnl Check for socks
 AC_MSG_CHECKING(whether to support SOCKS)

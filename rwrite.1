@@ -1,0 +1,75 @@
+.\"  -*- nroff -*-
+.\"
+.\" $RCSfile: rwrite.1,v $
+.\" ----------------------------------------------------------------------
+.\" Rwrite(1) manual page.
+.\" ----------------------------------------------------------------------
+.\" Created      : Tue Sep 20 13:14:47 1994 tri
+.\" Last modified: Tue Sep 20 13:21:17 1994 tri
+.\" ----------------------------------------------------------------------
+.\" $Revision: 1.1 $
+.\" $State: Exp $
+.\" $Date: 1994/09/20 10:21:42 $
+.\" $Author: tri $
+.\" ----------------------------------------------------------------------
+.\" $Log: rwrite.1,v $
+.\" Revision 1.1  1994/09/20 10:21:42  tri
+.\" Initial revision
+.\"
+.\" ----------------------------------------------------------------------
+.\" Copyright 1994, Timo Rinne <tri@cirion.fi> and Cirion oy.
+.\" 
+.\" Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
+.\" 
+.\" Even though this code is copyrighted property of the author, it can
+.\" still be used for any purpose under following conditions:
+.\" 
+.\"     1) This copyright notice is not removed.
+.\"     2) Source code follows any distribution of the software
+.\"        if possible.
+.\"     3) Copyright notice above is found in the documentation
+.\"        of the distributed software.
+.\" 
+.\" Any express or implied warranties are disclaimed.  In no event
+.\" shall the author be liable for any damages caused (directly or
+.\" otherwise) by the use of this software.
+.\" ----------------------------------------------------------------------
+.\"
+.TH RWRITE 1 "Sep 20, 1994"
+
+.SH NAME
+.B rwrite
+\- remote write program
+
+.SH SYNOPSIS
+.B rwrite
+[\fI-f #\fP] [\fI-r\fP] [\fI-v\fP[\fIv\fP]] [\fI-b\fP] \fIuser[@host]\fP...
+.br
+
+.SH DESCRIPTION
+.B Rwrite
+writes a short message to the terminal of the specified user(s).
+
+.SH OPTIONS
+.B \-f #
+   sets the forward counter to #.
+.P
+.B \-v
+   makes rwrite verbose.
+.P
+.B \-vv
+   makes rwrite verbose and prints also the RWP-conversation.
+.P
+.B \-r
+   resends previous message.
+.P
+.B \-b
+   delivers the message as a backround process.
+
+.SH AUTHOR
+Timo J. Rinne <tri@cirion.fi>
+.SH BUGS
+Does not support message forwarding.
+
+.SH SEE ALSO
+rwrited(1), write(1)

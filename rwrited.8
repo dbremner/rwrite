@@ -1,0 +1,77 @@
+.\"  -*- nroff -*-
+.\"
+.\" $RCSfile: rwrited.8,v $
+.\" ----------------------------------------------------------------------
+.\" Rwrited(1) manual page.
+.\" ----------------------------------------------------------------------
+.\" Created      : Tue Sep 20 13:14:55 1994 tri
+.\" Last modified: Tue Sep 20 13:21:31 1994 tri
+.\" ----------------------------------------------------------------------
+.\" $Revision: 1.1 $
+.\" $State: Exp $
+.\" $Date: 1994/09/20 10:21:42 $
+.\" $Author: tri $
+.\" ----------------------------------------------------------------------
+.\" $Log: rwrited.8,v $
+.\" Revision 1.1  1994/09/20 10:21:42  tri
+.\" Initial revision
+.\"
+.\" ----------------------------------------------------------------------
+.\" Copyright 1994, Timo Rinne <tri@cirion.fi> and Cirion oy.
+.\" 
+.\" Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
+.\" 
+.\" Even though this code is copyrighted property of the author, it can
+.\" still be used for any purpose under following conditions:
+.\" 
+.\"     1) This copyright notice is not removed.
+.\"     2) Source code follows any distribution of the software
+.\"        if possible.
+.\"     3) Copyright notice above is found in the documentation
+.\"        of the distributed software.
+.\" 
+.\" Any express or implied warranties are disclaimed.  In no event
+.\" shall the author be liable for any damages caused (directly or
+.\" otherwise) by the use of this software.
+.\" ----------------------------------------------------------------------
+.\"
+.TH RWRITED 1 "Sep 20, 1994"
+
+.SH NAME
+.B rwrited
+\- remote write daemon
+
+.SH SYNOPSIS
+.B rwrited
+[\fI-\fP]
+.br
+
+.SH DESCRIPTION
+.B Rwrited
+is a daemon program for rwrite and is usually executed by inetd.
+Implements the RWP protocol.
+.P
+If target user has file .rwrite-allow in his home directory and
+sender can't be found in this file, message is not delivered.
+If target user has file .rwrite-deny in his home directory and
+sender can be found in this file, message is not delivered.
+Files .rwrite-allow and .rwrite-deny consist of lines of usernames
+like user@remote.host.  In these lines wildcards \fI*\fP and \fI?\fP
+can be used.  \fI*\fP can replace any string and \fI?\fP can replace
+any character in the sender address.
+
+.SH OPTIONS
+.B \-
+   allows rwrited to be executed from command line.
+
+.SH AUTHOR
+Timo J. Rinne <tri@cirion.fi>
+.SH FILES
+$HOME/.rwrite-allow
+.P
+$HOME/.rwrite-deny
+.SH BUGS
+Does not support message forwarding or message agent.
+
+.SH SEE ALSO
+rwrite(1)

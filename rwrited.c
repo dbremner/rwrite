@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: 01:24 Dec 14 1994 kivinen
+ * Last modified: Wed Dec 14 05:01:38 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.32 $
+ * $Revision: 1.33 $
  * $State: Exp $
- * $Date: 1994/12/14 00:46:16 $
+ * $Date: 1994/12/14 03:03:23 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.32  1994/12/14 00:46:16  tri
+ * Revision 1.33  1994/12/14 03:03:23  tri
+ * Fixed a few annoying features and added
+ * -version flag.
+ *
+ * Revision 1.32  1994/12/14  00:46:16  tri
  * Fixed for configure system.
  *
  * Revision 1.31  1994/12/13  20:28:57  tri
@@ -145,10 +149,10 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.32 1994/12/14 00:46:16 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.33 1994/12/14 03:03:23 tri Exp $";
 #endif /* not lint */
 
-#define RWRITED_VERSION_NUMBER	"1.1b22"	/* Server version   */
+#define RWRITED_VERSION_NUMBER	"1.1b25"	/* Server version   */
 
 #include <stdio.h>
 #include <string.h>
@@ -391,7 +395,7 @@ void rwrite_quit()
 }
 
 /*
- * GetMsg() and gm_getline() are contributions from Mr. Camillo S{rs.
+ * get_msg() and gm_getline() are contributions from Mr. Camillo S{rs.
  * Some modifications by tri.
  *
  * Copyright 1994, Camillo S{rs <Camillo.Sars@hut.fi>.
@@ -399,7 +403,7 @@ void rwrite_quit()
 
 static char *gm_getline (FILE *pf, int *p_limit, int *p_EOF);
 
-char **GetMsg (FILE *pf, int line_limit, int char_limit)
+char **get_msg (FILE *pf, int line_limit, int char_limit)
 {
     int pos = 0;
     int eof = 0;
@@ -471,14 +475,14 @@ char **GetMsg (FILE *pf, int line_limit, int char_limit)
 
 #define GL_BUFFER_SIZE 256
 
-static char *gm_getline (FILE *pf, int *p_limit, int *p_EOF)
+static char *gm_getline(FILE *pf, int *p_limit, int *p_EOF)
 {
     int c;
     int pos = 0;
     int size = GL_BUFFER_SIZE;
     char *p_tmp;
 
-    char *p_buffer = (char*)malloc (GL_BUFFER_SIZE * sizeof(char));
+    char *p_buffer = (char*)malloc(GL_BUFFER_SIZE * sizeof(char));
 
     if(!p_buffer)
 	return NULL;
@@ -490,12 +494,12 @@ static char *gm_getline (FILE *pf, int *p_limit, int *p_EOF)
 	}
 	p_buffer[pos++] = (char)c;
 	if(pos == *p_limit) {
-	    while((c = fgetc(pf)) != EOF && c != '\012') 
+	    while(((c = fgetc(pf)) != EOF) && (c != '\012'))
 		/*NOTHING*/;
 	    break;
 	}
-	if (pos == size) {
-	    if (size == INT_MAX)
+	if(pos == size) {
+	    if(size == INT_MAX)
 		break;
 	    /* size += GL_BUFFER_SIZE; */
 	    size = ((INT_MAX - GL_BUFFER_SIZE) < size) ? 
@@ -945,7 +949,13 @@ int main(int argc, char **argv)
 {
     char *cmd;
     char **message;
+    int cmdmaxlen;
+    int cmdeofp;
 
+    if((argc == 2) && (!(strcmp("-version", argv[1])))) {
+	fprintf(stderr, "Rwrited version %s.\n", RWRITED_VERSION_NUMBER);
+	exit(0);
+    }
 #ifdef HAVE_GETEUID
     server_euid = geteuid();
 #else
@@ -972,11 +982,17 @@ int main(int argc, char **argv)
     rwrite_helo();
     rwrite_ver();
     rwrite_prot();
-    if(!(identify_remote_by_identd(identd_from_user, sizeof(identd_from_user))))
+    if(!(identify_remote_by_identd(identd_from_user, 
+				   sizeof(identd_from_user))))
 	identd_from_user[0] = '\000';
-    for((message = NULL), (rwrite_ready(), (cmd = read_line(stdin)));
-	cmd;
-	(rwrite_ready(), (cmd = read_line(stdin)))) {
+    message = NULL;
+    do {
+	rwrite_ready();
+	cmdmaxlen = 1024;
+	cmdeofp = 0;
+	cmd = gm_getline(stdin, &cmdmaxlen, &cmdeofp);
+	if(!cmd)
+	    break;
 	if(strlen(cmd)) {
 	    if((!(strcmp(cmd, "bye")) || (!(strcmp(cmd, "BYE"))))) {
 		rwrite_bye();
@@ -1219,7 +1235,7 @@ int main(int argc, char **argv)
 			free(message[i]);
 		    free(message);
 		}
-		if(!(message = GetMsg(stdin, DATA_MAXLINES, DATA_MAXCHARS))) {
+		if(!(message = get_msg(stdin, DATA_MAXLINES, DATA_MAXCHARS))) {
 		    RWRITE_MSG(RWRITE_ERR_NO_MESSAGE, "No message.");
 		    goto out_of_parse;
 		}
@@ -1284,7 +1300,7 @@ int main(int argc, char **argv)
    	}
 	free(cmd);
     out_of_parse:;
-    }
+    } while(!cmdeofp);
     rwrite_bye();
     /*NOTREACHED*/
     return 0;

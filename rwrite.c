@@ -5,15 +5,19 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: 02:31 Dec 14 1994 kivinen
+ * Last modified: Wed Dec 14 05:02:07 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.32 $
+ * $Revision: 1.33 $
  * $State: Exp $
- * $Date: 1994/12/14 00:46:16 $
+ * $Date: 1994/12/14 03:03:23 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.32  1994/12/14 00:46:16  tri
+ * Revision 1.33  1994/12/14 03:03:23  tri
+ * Fixed a few annoying features and added
+ * -version flag.
+ *
+ * Revision 1.32  1994/12/14  00:46:16  tri
  * Fixed for configure system.
  *
  * Revision 1.31  1994/12/13  20:28:57  tri
@@ -142,10 +146,10 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.32 1994/12/14 00:46:16 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.33 1994/12/14 03:03:23 tri Exp $";
 #endif /* not lint */
 
-#define RWRITE_VERSION_NUMBER	"1.1b22"	/* Client version   */
+#define RWRITE_VERSION_NUMBER	"1.1b25"	/* Client version   */
 
 #include <stdio.h>
 #include <string.h>
@@ -1235,6 +1239,10 @@ int main(int argc, char **argv)
     int resend = 0, explicit_bg = 0, background = 0;
     char *userhome;
     
+    if((argc == 2) && (!(strcmp("-version", argv[1])))) {
+	fprintf(stderr, "Rwrite version %s.\n", RWRITE_VERSION_NUMBER);
+	exit(0);
+    }
     while ((ch = getopt(argc, argv, ":vrf:bBq")) != -1) {
 	switch(ch) {
 	case 'v':	

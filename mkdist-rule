@@ -1,0 +1,27 @@
+SHELL		= /bin/sh
+PACKET_VERSION	= UNKNOWN
+
+TAR		= tar cvf
+COMPRESS	= gzip -9
+
+EXEC_IN_TAR	= configure install-sh config.sub config.guess
+TARFILES        = $(EXEC_IN_TAR)                               	   	  \
+		COPYRIGHT						  \
+		*.[ch] *[a-z].[18] *.sh Makefile.in configure.in INSTALL  \
+		*.txt *.ps *.add sample-* 
+
+tar:
+	( $(TAR) rwrite-$(PACKET_VERSION)-private.tar $(TARFILES) RCS mkf \
+	dist_tar )
+
+pubtar:
+	( mkdir rwrite-$(PACKET_VERSION) &&          \
+	cp $(TARFILES) rwrite-$(PACKET_VERSION) &&   \
+	chmod 644 rwrite-$(PACKET_VERSION)/* &&      \
+	for i in $(EXEC_IN_TAR); do                  \
+	    chmod 755 rwrite-$(PACKET_VERSION)/$$i;  \
+	done ; 					     \
+	chmod 444 rwrite-$(PACKET_VERSION)/COPYRIGHT )
+	$(TAR) rwrite-$(PACKET_VERSION).tar ./rwrite-$(PACKET_VERSION)/* && \
+	$(COMPRESS) rwrite-$(PACKET_VERSION).tar ;                          \
+	rm -fr ./rwrite-$(PACKET_VERSION)

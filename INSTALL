@@ -1,0 +1,47 @@
+                 INSTALLATION GUIDE FOR RWRITE PACKET
+
+                                by
+
+                      Timo J. Rinne <tri@iki.fi>
+
+1. Background
+
+	Rwrite is a program package that allows users to send short
+	text messages to other users through the network.  Rwrite
+	conforms the RWP-message transfer protocol described in
+	RFC-1756.
+
+2. Requirements
+
+	Rwrite needs an UNIX-like system with ANSI-compatible
+	C-compiler and reasonably BSD-like network libraries.
+
+3. Installation procedure
+
+	- Unpack the software package.
+
+	- Configure with `./configure'.  If you don't have an user 
+	  group that owns all the logged tty devices, we suggest that
+	  you create a group `rwrite' to protect incoming message logs
+	  of the users and reconfigure.
+
+	- Compile with `make'.
+
+	- Install with `make install'.
+
+	- Update your /etc/services -file (see. services.add).
+
+	- Update your /etc/inetd.conf -file (see. inetd.conf.add).
+
+	- Make /etc/rwrite.conf -file for your system
+	  (see. sample-etc-rwrite.conf and sample-dot-rwriterc).
+
+	- Enjoy.
+
+4. Author
+
+	Timo J. Rinne
+	Cirion oy
+	PO-BOX 250
+	00121  HELSINKI
+	Finland

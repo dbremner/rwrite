@@ -1,0 +1,1261 @@
+%!PS-Adobe-3.0
+%%Title: foobar
+%%Creator: hut-enscript
+%%CreationDate: Mon Feb 13 18:13:43 1995
+
+%%Pages: (atend)
+%%DocumentFonts: Courier
+%%DocumentNeededResources: font Courier
+%%IncludeResource: font Courier
+% -*- postscript -*-
+%%BeginProcSet: hut-enscript 1.0 0
+%(%%BeginProcSet: hut-enscript 1.0 0) ==
+100 dict begin
+    /bdef { bind def } bind def
+    /Fontdict 30 dict def
+    /Encodings 30 dict def
+    Encodings /StandardEncoding dup load put
+    /NewNameCount 0 def
+    /NewName {
+	/NewNameCount dup load 1 add dup 3 1 roll def (......) cvs cvn
+    } bdef
+    /StartEncoding { % /EncName StartEncoding
+	StandardEncoding dup length array copy dup Encodings
+	4 2 roll put /Enc exch def
+    } bdef
+    /E { % charcode name Encode
+	Enc 3 1 roll put
+    } bdef
+    /Str 512 string def
+    /CopyFont {
+	dup length 1 add dict dup 3 2 roll
+	{ exch dup /FID eq
+	    { pop pop }
+	    { exch put dup }
+	    ifelse
+	} forall
+	pop
+    } bdef
+    /SF { % fontnum pointsize*1000 /Encname FontName SF
+	findfont CopyFont dup /Encoding 4 -1 roll Encodings exch get put
+	NewName exch definefont
+	exch 1000 div scalefont Fontdict 3 1 roll put
+    } bdef
+    /Sfont { % fontnum pointsize /Encname FontName Sfont
+	4 2 roll
+	1000 mul
+	4 2 roll
+	SF
+    } bdef
+    /F { % fontnum F
+	Fontdict exch get setfont
+    } bdef
+    /M {
+	exch 10 div
+	exch 10 div
+	moveto
+    } bdef
+    /S {
+	%  currentfile read pop pop
+	currentfile Str 0 4 -1 roll getinterval readstring pop
+	show
+    } bdef
+    /s /show load def
+    /HS {
+	%  currentfile read pop pop
+	currentfile Str 0 4 -1 roll getinterval readshextring pop
+	show
+    } bdef
+    /e1000def {
+	exch 1000 div def
+    } bdef
+    /Clip { %
+	/ClipRight e1000def
+	/ClipLeft e1000def
+	/Ury e1000def
+	/Urx e1000def
+	/Lly e1000def
+	/Llx e1000def
+    } bdef
+    /roundtogrid {
+	transform round 0.25 add exch round 0.25 add exch itransform
+    } bdef
+    /roundmove { roundtogrid moveto } bdef
+    /roundline { roundtogrid lineto } bdef
+    /Border {
+	/doborder exch def
+	doborder {
+	    /Separator true def
+	} if
+	Column 0 eq
+	{
+	    /Separator true def
+	    newpath
+	    Llx Lly roundmove
+	    Llx Ury roundline
+	    Urx Ury roundline
+	    Urx Lly roundline
+	    closepath clip
+	    doborder
+	    { 
+		0.1 setlinewidth stroke
+	    } {
+		newpath
+	    } ifelse
+	} if
+	newpath
+	ClipLeft Lly roundmove
+	ClipLeft Ury roundline
+	ClipRight Ury roundline
+	ClipRight Lly roundline
+	closepath clip
+	newpath
+	Separator Column 0 ne and {
+	    ClipLeft Lly roundmove
+	    ClipLeft Ury roundline
+	    0.1 setlinewidth stroke
+	} if
+    } bdef
+    /CShow {
+	dup stringwidth pop neg 2 div 0 rmoveto show
+    } bdef
+    /Header { % (file.c) (date etc.) pageno angle x y y-top Header
+	/h-top e1000def
+	/y0 e1000def
+	/x0 e1000def
+	/angle exch def
+	/pageno exch def
+	/file-info exch def
+	/file-name exch def
+	gsave x0 y0 moveto angle rotate 49 F
+	file-name show Urx y0 moveto pageno (..........) cvs
+	dup stringwidth pop neg 0 rmoveto
+	show
+	Urx Llx add 2 div y0 moveto
+	file-info CShow
+	grestore
+    } bdef
+    /GBox {
+	BoxW 0 rlineto 0 h-top y0 sub rlineto
+	BoxW neg 0 rlineto closepath fill
+    } bdef
+    /GHeader { % (file.c) (date etc.) pageno angle x y y-top Header
+	/Separator true def
+	/h-top e1000def
+	/y0 e1000def
+	/x0 e1000def
+	/angle exch def
+	/pageno exch def
+	/file-time exch def
+	/file-date exch def
+	/file-name exch def
+	/user-header exch def
+	/BoxW 72 def
+	/BoxH h-top y0 sub def
+	gsave
+	0.9 setgray
+	x0 y0 moveto Urx y0 lineto 0 h-top y0 sub 2 div rlineto
+	x0 Urx sub 0 rlineto
+	closepath fill
+	0.6 setgray
+	x0 y0 moveto GBox
+	Urx BoxW sub y0 moveto GBox
+	0 setgray
+	103 F
+	x0 BoxW 2 div add
+	y0 BoxH 0.55 mul add moveto
+	file-date gsave CShow grestore
+	0 BoxH -0.35 mul rmoveto
+	file-time CShow
+	104 F
+	x0 Urx add 2 div
+	y0 BoxH 0.1 mul add moveto
+	gsave file-name CShow grestore
+	0 BoxH 0.5 mul rmoveto
+	user-header CShow
+	1 setgray
+	105 F
+	Urx BoxW 2 div sub
+	y0 BoxW 10 div add moveto
+	pageno (.............) cvs CShow
+	grestore
+    } bdef
+    /Setcolumn {
+	dup /Column exch def
+	grestore
+	gsave
+	% Save restore
+	% /Save save def
+	Columnwidth 1000 div mul 0 translate
+    } bdef
+    /Startpage {
+	/Save save def
+	Landscape {
+	    0 0 moveto
+	    LandscapeDisp 0 translate
+	    90 rotate
+	} if
+	gsave
+    } bdef
+    /Endpage {
+	grestore
+	showpage
+	Save restore
+    } bdef
+    /Separator false def
+    currentdict
+end
+%(%%EndProcSet: hut-enscript 1.0 0) ==
+%%EndProcSet: hut-enscript 1.0 0
+/hut-enscript-dict exch def
+hut-enscript-dict begin
+/L1 StartEncoding
+   45 /minus E
+  144 /dotlessi E
+  145 /grave E
+  146 /acute E
+  147 /circumflex E
+  148 /tilde E
+  149 /macron E
+  150 /breve E
+  151 /dotaccent E
+  152 /dieresis E
+  154 /ring E
+  155 /cedilla E
+  157 /hungarumlaut E
+  158 /ogonek E
+  159 /caron E
+  160 /space E
+  164 /currency E
+  166 /brokenbar E
+  168 /dieresis E
+  169 /copyright E
+  170 /ordfeminine E
+  172 /logicalnot E
+  173 /hyphen E
+  174 /registered E
+  175 /macron E
+  176 /degree E
+  177 /plusminus E
+  178 /twosuperior E
+  179 /threesuperior E
+  180 /acute E
+  181 /mu E
+  183 /periodcentered E
+  184 /cedilla E
+  185 /onesuperior E
+  186 /ordmasculine E
+  188 /onequarter E
+  189 /onehalf E
+  190 /threequarters E
+  192 /Agrave E
+  193 /Aacute E
+  194 /Acircumflex E
+  195 /Atilde E
+  196 /Adieresis E
+  197 /Aring E
+  198 /AE E
+  199 /Ccedilla E
+  200 /Egrave E
+  201 /Eacute E
+  202 /Ecircumflex E
+  203 /Edieresis E
+  204 /Igrave E
+  205 /Iacute E
+  206 /Icircumflex E
+  207 /Idieresis E
+  208 /Eth E
+  209 /Ntilde E
+  210 /Ograve E
+  211 /Oacute E
+  212 /Ocircumflex E
+  213 /Otilde E
+  214 /Odieresis E
+  215 /multiply E
+  216 /Oslash E
+  217 /Ugrave E
+  218 /Uacute E
+  219 /Ucircumflex E
+  220 /Udieresis E
+  221 /Yacute E
+  222 /Thorn E
+  223 /germandbls E
+  224 /agrave E
+  225 /aacute E
+  226 /acircumflex E
+  227 /atilde E
+  228 /adieresis E
+  229 /aring E
+  230 /ae E
+  231 /ccedilla E
+  232 /egrave E
+  233 /eacute E
+  234 /ecircumflex E
+  235 /edieresis E
+  236 /igrave E
+  237 /iacute E
+  238 /icircumflex E
+  239 /idieresis E
+  240 /eth E
+  241 /ntilde E
+  242 /ograve E
+  243 /oacute E
+  244 /ocircumflex E
+  245 /otilde E
+  246 /odieresis E
+  247 /divide E
+  248 /oslash E
+  249 /ugrave E
+  250 /uacute E
+  251 /ucircumflex E
+  252 /udieresis E
+  253 /yacute E
+  254 /thorn E
+  255 /ydieresis E
+/roman8 StartEncoding
+  216 /Adieresis E
+  204 /adieresis E
+  218 /Odieresis E
+  206 /odieresis E
+  208 /Aring E
+  212 /aring E
+/scand StartEncoding
+   91 /Adieresis E
+  123 /adieresis E
+   92 /Odieresis E
+  124 /odieresis E
+   93 /Aring E
+  125 /aring E
+49 11000 /L1 /Courier SF
+48 11000 /L1 /Courier SF
+31453 17280 572400 804810 31453 569400 Clip
+/Columns 1 def
+/Columnwidth 540947 def
+/Landscape false def
+end
+%%EndProlog
+%%Page: ? 1
+hut-enscript-dict begin Startpage
+(rfc1756.txt)(Mon Feb 13 18:10:50 1995) 1 0 31453 810310 822960 Header
+0 Setcolumn
+false Border
+48 F
+374.53 7102.6 M
+(Network Working Group) s
+4532.53 7102.6 M
+(T. Rinne) s
+374.53 6976.1 M
+(Request for Comments: 1756) s
+4862.53 6976.1 M
+(HUT) s
+374.53 6849.6 M
+(Category: Experimental) s
+4268.53 6849.6 M
+(January 1995) s
+1562.53 6470.1 M
+(REMOTE WRITE PROTOCOL - VERSION 1.0) s
+374.53 6217.1 M
+(Status of this Memo) s
+572.53 5964.1 M
+(This memo defines an Experimental Protocol for the Internet) s
+572.53 5837.6 M
+(community.  This memo does not specify an Internet standard of any) s
+572.53 5711.1 M
+(kind.  Discussion and suggestions for improvement are requested.) s
+572.53 5584.6 M
+(Distribution of this memo is unlimited.) s
+374.53 5331.6 M
+(1. Background) s
+572.53 5078.6 M
+(It is often convenient to use electronic communication somewhat) s
+572.53 4952.1 M
+(lighter than electronic mail.  Sometimes even the use of the talk\(1\)) s
+572.53 4825.6 M
+(*\) program seems like overkill.  We like to offer to user something) s
+572.53 4699.1 M
+(like UNIX **\) command write\(1\) ***\) except that it can also pass) s
+572.53 4572.6 M
+(messages through the network instead of the single host.) s
+572.53 4319.6 M
+(There have been few programs offering this kind of service, but they) s
+572.53 4193.1 M
+(have either based on SUN-RPC protocol or used a strictly undocumented) s
+572.53 4066.6 M
+(protocol.) s
+572.53 3813.6 M
+(This document describes a simple Remote Write Protocol \(RWP\) that) s
+572.53 3687.1 M
+(should have been documented at least 10 years ago.  But late is) s
+572.53 3560.6 M
+(better than never.  Version number of the RWP protocol in this) s
+572.53 3434.1 M
+(document is 1.0.) s
+374.53 3181.1 M
+(2. Overview) s
+572.53 2928.1 M
+(RWP is a simple protocol that can be used to relay short messages) s
+572.53 2801.6 M
+(through the network to other users.  RWP looks pretty much like) s
+572.53 2675.1 M
+(Simple Mail Transfer Protocol \(SMTP\) ****\) though it is a bit more) s
+572.53 2548.6 M
+(complicated due to the interactive nature of the RWP session.) s
+572.53 2295.6 M
+(The idea behind the RWP session is that client program that is) s
+572.53 2169.1 M
+(relaying message to the host in which the target user is logged in) s
+572.53 2042.6 M
+(opens the tcp or udp connection to the server program running in the) s
+572.53 1916.1 M
+(target machine  Then the client gives the sender's and recipient's) s
+572.53 1789.6 M
+(identification \(usually login ids\), actual message body and tells the) s
+572.53 1663.1 M
+(server to deliver a message to the user.  On tcp-connection server) s
+572.53 1536.6 M
+(returns a status from each action taken.  On udp-connection no) s
+572.53 1410.1 M
+(responses are sent.  RWP sessions through udp are implemented to) s
+572.53 1283.6 M
+(support message broadcasting.) s
+374.53 651.1 M
+(Rinne) s
+4598.53 651.1 M
+([Page 1]) s
+Endpage end
+%%Page: ? 2
+hut-enscript-dict begin Startpage
+(rfc1756.txt)(Mon Feb 13 18:10:50 1995) 2 0 31453 810310 822960 Header
+0 Setcolumn
+false Border
+48 F
+374.53 7735.1 M
+(RFC 1756                 Remote Write Protocol) s
+4334.53 7735.1 M
+(January 1995) s
+572.53 7355.6 M
+(Message delivering methods are not defined within this document, but) s
+572.53 7229.1 M
+(the basic method could be a simple write to users terminal.  This is) s
+572.53 7102.6 M
+(basically what UNIX command write\(1\) does.  Depending on server) s
+572.53 6976.1 M
+(implementation, the delivery method could be configurable personally) s
+572.53 6849.6 M
+(by each user.) s
+374.53 6596.6 M
+(3. Description) s
+572.53 6343.6 M
+(Server program answers to each command submitted by a response.  All) s
+572.53 6217.1 M
+(responses have two parts: three number unique response code and a) s
+572.53 6090.6 M
+(short textual explanation of the response.  Also whenever the server) s
+572.53 5964.1 M
+(is ready to accept new commands a notification is submitted to the) s
+572.53 5837.6 M
+(client.) s
+572.53 5584.6 M
+(There are three kinds of commands in RWP.  The first group is for) s
+572.53 5458.1 M
+(querying a status of the server.  The second group is actual message) s
+572.53 5331.6 M
+(handling commands and the last set of commands are for RWP session) s
+572.53 5205.1 M
+(control.) s
+572.53 4952.1 M
+(When the server is ready to receive a command from the client, it) s
+572.53 4825.6 M
+(sends a message code 100 to the client.  This message is for example) s
+572.53 4699.1 M
+(as follows:) s
+1694.53 4446.1 M
+(100 Ready.) s
+638.53 4193.1 M
+(Server commands are as follows:) s
+638.53 3940.1 M
+(Status Query) s
+902.53 3687.1 M
+(HELP    Gives a short help message that contains legal) s
+1430.53 3560.6 M
+(RWP commands.  Help lines have code 510.  Example RWP) s
+1430.53 3434.1 M
+(implementation *****\) gives a following response to) s
+1430.53 3307.6 M
+(HELP command:) s
+1694.53 3054.6 M
+(510 Valid commands are:) s
+1694.53 2928.1 M
+(510     BYE,    DATA,   HELP,   HELO,) s
+1694.53 2801.6 M
+(510     RSET,   SEND,   PROT,   QUIT,) s
+1694.53 2675.1 M
+(510     VRFY,   VER) s
+1694.53 2548.6 M
+(510     FROM senderlogin) s
+1694.53 2422.1 M
+(510     FHST senderhost) s
+1694.53 2295.6 M
+(510     TO   recipentlogin [tty]) s
+1694.53 2169.1 M
+(510     FWDS current_hop_count) s
+902.53 1916.1 M
+(HELO    Says hello to the server.  Server response to HELO) s
+1430.53 1789.6 M
+(command has code 500.  For example:) s
+1694.53 1536.6 M
+(500 Hello remote.host.  This is local.host speaking.) s
+374.53 904.1 M
+(Rinne) s
+4598.53 904.1 M
+([Page 2]) s
+Endpage end
+%%Page: ? 3
+hut-enscript-dict begin Startpage
+(rfc1756.txt)(Mon Feb 13 18:10:50 1995) 3 0 31453 810310 822960 Header
+0 Setcolumn
+false Border
+48 F
+374.53 7735.1 M
+(RFC 1756                 Remote Write Protocol) s
+4334.53 7735.1 M
+(January 1995) s
+902.53 7355.6 M
+(PROT    Asks the RWP protocol version from the server.) s
+1430.53 7229.1 M
+(Response code to PROT command is 502.  Protocol) s
+1430.53 7102.6 M
+(version described in this document is RWP 1.0 and the) s
+1430.53 6976.1 M
+(response is as follows:) s
+1694.53 6723.1 M
+(502 RWP version 1.0.) s
+902.53 6470.1 M
+(VRFY    After the recipient of the message is set by to command) s
+1430.53 6343.6 M
+(described later, the possibility of message delivery) s
+1430.53 6217.1 M
+(can be queried by VRFY command.  If message can be) s
+1430.53 6090.6 M
+(delivered the response code is 108.  If message is) s
+1430.53 5964.1 M
+(about to be forwarded the response code is 110 and) s
+1430.53 5837.6 M
+(message is either form:) s
+1694.53 5584.6 M
+(110 Recipient ok to forward.) s
+1430.53 5331.6 M
+(or if the server can tell the destination of the) s
+1430.53 5205.1 M
+(forwarding:) s
+1694.53 4952.1 M
+(110 Recipient ok to forward <user@host.domain>.) s
+1430.53 4699.1 M
+(Other possible response codes are 669, 670, 671, 674) s
+1430.53 4572.6 M
+(and 677 and they all indicate that message delivery is) s
+1430.53 4446.1 M
+(by one way or another currently impossible.) s
+1430.53 4319.6 M
+(Description of the codes is later in this document.) s
+1430.53 4066.6 M
+(After the SEND command the server may also give) s
+1430.53 3940.1 M
+(autoreply from the remote user before the actual) s
+1430.53 3813.6 M
+(response code.  Autoreply lines are ones of code 300.) s
+902.53 3560.6 M
+(VER     Asks the version of the server program.  Response code) s
+1430.53 3434.1 M
+(to VER command is 501 and the textual part of the) s
+1430.53 3307.6 M
+(response is the name and the version number of the RWP) s
+1430.53 3181.1 M
+(server, for example:) s
+1694.53 2928.1 M
+(501 Rwrited version 1.0.) s
+638.53 2675.1 M
+(Message Handling:) s
+902.53 2422.1 M
+(FROM senderlogin) s
+1430.53 2295.6 M
+(Tells the server the identification information of the) s
+1430.53 2169.1 M
+(sender of the message.  Usually this id information is) s
+1430.53 2042.6 M
+(user's login id.  Response code to successful FROM) s
+1430.53 1916.1 M
+(command is 105, for example:) s
+1694.53 1663.1 M
+(105 Sender ok.) s
+374.53 904.1 M
+(Rinne) s
+4598.53 904.1 M
+([Page 3]) s
+Endpage end
+%%Page: ? 4
+hut-enscript-dict begin Startpage
+(rfc1756.txt)(Mon Feb 13 18:10:50 1995) 4 0 31453 810310 822960 Header
+0 Setcolumn
+false Border
+48 F
+374.53 7735.1 M
+(RFC 1756                 Remote Write Protocol) s
+4334.53 7735.1 M
+(January 1995) s
+902.53 7355.6 M
+(TO recipentlogin [tty]) s
+1430.53 7229.1 M
+(Tells the server the identification information of the) s
+1430.53 7102.6 M
+(intended recipient of the message.  Usually this id) s
+1430.53 6976.1 M
+(information is user's login id.  If tty is submitted,) s
+1430.53 6849.6 M
+(the message is delivered to that tty.  If tty is) s
+1430.53 6723.1 M
+(submitted between brackets '[]' the tty given is) s
+1430.53 6596.6 M
+(treated as a hint only.  Response code to successful) s
+1430.53 6470.1 M
+(TO command is 106.) s
+902.53 6217.1 M
+(FHST original.host [forwarder1.host forwarder2.host ...]) s
+1430.53 6090.6 M
+(Tells the server the host name that the message) s
+1430.53 5964.1 M
+(originates to and the path of the hosts that has) s
+1430.53 5837.6 M
+(forwarded the message.  The host name of the machine) s
+1430.53 5711.1 M
+(that is currently submitting the message to the server) s
+1430.53 5584.6 M
+(should not be in the path list.) s
+1430.53 5331.6 M
+(This information is relevant if message is forwarded) s
+1430.53 5205.1 M
+(and it is not originally coming from the host that is) s
+1430.53 5078.6 M
+(forwarding it.  Response code to successful FHST) s
+1430.53 4952.1 M
+(command is 111.) s
+902.53 4699.1 M
+(DATA    Tells the server to start receive the body of the) s
+1430.53 4572.6 M
+(message.  Response code to DATA command is 200, for) s
+1430.53 4446.1 M
+(example:) s
+1430.53 4193.1 M
+(200 Enter message.  Single dot '.' on line terminates.) s
+1430.53 3940.1 M
+(After response 200 the message lines are submitted to) s
+1430.53 3813.6 M
+(the server one after another.  Message is terminated) s
+1430.53 3687.1 M
+(by the line that contains a single dot '.'.  The) s
+1430.53 3560.6 M
+(termination of the message is acknowledged by the) s
+1430.53 3434.1 M
+(server with the response code 107.  Server does not) s
+1430.53 3307.6 M
+(notify client about receiving the single message) s
+1430.53 3181.1 M
+(lines.  If empty message is submitted \(i.e. single dot) s
+1430.53 3054.6 M
+(is on the first line\) the response code is 672 and) s
+1430.53 2928.1 M
+(DATA command only cancels possible previous DATA) s
+1430.53 2801.6 M
+(command.  Because of this all dots or at least dots) s
+1430.53 2675.1 M
+(that are standing alone in the line have to be quoted.) s
+902.53 2422.1 M
+(SEND    Sends the message.  If commands FROM, TO and DATA are) s
+1430.53 2295.6 M
+(successfully given before SEND command, the message is) s
+1430.53 2169.1 M
+(delivered to the target user.  If delivery is) s
+1430.53 2042.6 M
+(successful the response code is 103.  If message is) s
+1430.53 1916.1 M
+(not delivered directly to the target user but instead) s
+1430.53 1789.6 M
+(forwarded to another host the response code is 104.) s
+1430.53 1663.1 M
+(Response codes 669, 670 and 671, 677 indicate an error) s
+1430.53 1536.6 M
+(on message delivery and codes 673, 674, 675 indicate) s
+1430.53 1410.1 M
+(that either command FROM, TO or DATA has not been) s
+374.53 904.1 M
+(Rinne) s
+4598.53 904.1 M
+([Page 4]) s
+Endpage end
+%%Page: ? 5
+hut-enscript-dict begin Startpage
+(rfc1756.txt)(Mon Feb 13 18:10:50 1995) 5 0 31453 810310 822960 Header
+0 Setcolumn
+false Border
+48 F
+374.53 7735.1 M
+(RFC 1756                 Remote Write Protocol) s
+4334.53 7735.1 M
+(January 1995) s
+1430.53 7355.6 M
+(successfully given before SEND command.  After the) s
+1430.53 7229.1 M
+(SEND command the server may also give autoreply from) s
+1430.53 7102.6 M
+(the remote user before the actual response code.) s
+1430.53 6976.1 M
+(Autoreply lines are ones of code 300.) s
+902.53 6723.1 M
+(FWDS n  Tells the server that message has been forwarded n) s
+1430.53 6596.6 M
+(times.  If the server forwards the message to the) s
+1430.53 6470.1 M
+(another server, it increments the counter and tells) s
+1430.53 6343.6 M
+(the remote server the current count of forwards.) s
+1430.53 6217.1 M
+(Response code to the FWDS command is 110 if n is less) s
+1430.53 6090.6 M
+(than the server specific forward limit.  If this limit) s
+1430.53 5964.1 M
+(is exceeded the response code is 676.  If the response) s
+1430.53 5837.6 M
+(code is 676 the client can either quit the session and) s
+1430.53 5711.1 M
+(fail the message or it can give the message to the) s
+1430.53 5584.6 M
+(server despite the fact that the forward limit is) s
+1430.53 5458.1 M
+(exceeded.  If the message is given when forward limit) s
+1430.53 5331.6 M
+(is exceeded, the server tries to deliver it, but does) s
+1430.53 5205.1 M
+(not forward it to another server.  If forward count is) s
+1430.53 5078.6 M
+(given as -1, the message is considered as a autoreply) s
+1430.53 4952.1 M
+(and never forwarded.) s
+638.53 4699.1 M
+(Session Control:) s
+902.53 4446.1 M
+(RSET    Resets the RWP session.  FROM, TO and DATA -commands) s
+1430.53 4319.6 M
+(that are given before are canceled and they have to) s
+1430.53 4193.1 M
+(be given again before SEND command can be used.  Also) s
+1430.53 4066.6 M
+(possible FWDS and FHST commands are canceled.) s
+902.53 3813.6 M
+(BYE     Terminates the RWP session.  Server gives a response) s
+1430.53 3687.1 M
+(code 101 and closes the connection.) s
+902.53 3434.1 M
+(QUIT    Is the synonym to bye, but it's a lot more impolite.) s
+1430.53 3307.6 M
+(Response code is however 101 as in bye.) s
+638.53 3054.6 M
+(Server specific command:) s
+902.53 2801.6 M
+(QUOTE command) s
+1430.53 2548.6 M
+(Relay a command to the server.  If the QUOTE command) s
+1430.53 2422.1 M
+(is successfully completed response code 112 is) s
+1430.53 2295.6 M
+(returned.  If QUOTE command is failed the response) s
+1430.53 2169.1 M
+(code is 678.  If RWP server doesn't recognize the) s
+1430.53 2042.6 M
+(given QUOTE command the response code is 679.) s
+1430.53 1789.6 M
+(Currently reserved QUOTE commands are AGENT, CHARSET,) s
+1430.53 1663.1 M
+(IDENT, KEY and KEYID.) s
+374.53 904.1 M
+(Rinne) s
+4598.53 904.1 M
+([Page 5]) s
+Endpage end
+%%Page: ? 6
+hut-enscript-dict begin Startpage
+(rfc1756.txt)(Mon Feb 13 18:10:50 1995) 6 0 31453 810310 822960 Header
+0 Setcolumn
+false Border
+48 F
+374.53 7735.1 M
+(RFC 1756                 Remote Write Protocol) s
+4334.53 7735.1 M
+(January 1995) s
+374.53 7355.6 M
+(4. Response Codes) s
+572.53 7102.6 M
+(Here are all legal response codes of RWP server followed by short) s
+572.53 6976.1 M
+(textual explanation.  Only the numeral codes are important and texts) s
+572.53 6849.6 M
+(can contain practically anything, however in response code 110 there) s
+572.53 6723.1 M
+(is possibly useful information between '<' and '>' characters.  No) s
+572.53 6596.6 M
+(characters '<' or '>' should be present in other responses.  Also) s
+572.53 6470.1 M
+(response 502 has possibly interesting information about the RWP) s
+572.53 6343.6 M
+(protocol version the server supports.) s
+638.53 6090.6 M
+(100 Ready.) s
+902.53 5837.6 M
+(The RWP server is ready to accept next command.) s
+638.53 5584.6 M
+(101 Goodbye.) s
+902.53 5331.6 M
+(The RWP server is closing connection.) s
+638.53 5078.6 M
+(103 Message delivered.) s
+902.53 4825.6 M
+(The SEND command is successfully completed and the message is) s
+902.53 4699.1 M
+(delivered directly to its destination.) s
+638.53 4446.1 M
+(104 Message forwarded.) s
+902.53 4193.1 M
+(The SEND command is completed and message is forwarded to the) s
+902.53 4066.6 M
+(user.) s
+638.53 3813.6 M
+(105 Sender ok.) s
+902.53 3560.6 M
+(The FROM command successful.) s
+638.53 3307.6 M
+(106 Recipient ok.) s
+902.53 3054.6 M
+(The TO command successful.) s
+638.53 2801.6 M
+(107 Message ok.) s
+902.53 2548.6 M
+(The DATA command successful.) s
+638.53 2295.6 M
+(108 Recipient ok to send.) s
+902.53 2042.6 M
+(The VRFY command successful and direct message delivery is) s
+902.53 1916.1 M
+(possible.) s
+638.53 1663.1 M
+(109 RSET ok.) s
+902.53 1410.1 M
+(The RWP server has received the RSET command and reset itself.) s
+374.53 904.1 M
+(Rinne) s
+4598.53 904.1 M
+([Page 6]) s
+Endpage end
+%%Page: ? 7
+hut-enscript-dict begin Startpage
+(rfc1756.txt)(Mon Feb 13 18:10:50 1995) 7 0 31453 810310 822960 Header
+0 Setcolumn
+false Border
+48 F
+374.53 7735.1 M
+(RFC 1756                 Remote Write Protocol) s
+4334.53 7735.1 M
+(January 1995) s
+638.53 7355.6 M
+(110 Ok to forward.) s
+902.53 7102.6 M
+(or) s
+638.53 6849.6 M
+(110 Ok to forward <user@host.domain>.) s
+902.53 6596.6 M
+(The VRFY command successful and direct message delivery by) s
+902.53 6470.1 M
+(forwarding is possible.  If response has also forwarding) s
+902.53 6343.6 M
+(address the client can either forward the message itself or) s
+902.53 6217.1 M
+(give it to server for forwarding.) s
+638.53 5964.1 M
+(111 Original sender host ok.) s
+902.53 5711.1 M
+(The FHST command successful and original sender host is set as) s
+902.53 5584.6 M
+(given by the client.) s
+638.53 5331.6 M
+(200 Enter message.  Single dot '.' on line terminates.) s
+902.53 5078.6 M
+(The RWP server is ready to receive the message. Single dot on) s
+902.53 4952.1 M
+(message line terminates the message.) s
+638.53 4572.6 M
+(300 |I'm not in right now but I'll be back tomorrow) s
+638.53 4446.1 M
+(300 |at 8 o'clock a.m.) s
+902.53 4193.1 M
+(Automatical response to the delivered message.  Every line of) s
+902.53 4066.6 M
+(this user defined reply message is delivered in its own 300) s
+902.53 3940.1 M
+(line.  Response code 300 lines may appear only after SEND) s
+902.53 3813.6 M
+(command before response code 103 \(message delivered\).  Client) s
+902.53 3687.1 M
+(receiving autoreply 300 should show the text of the autoreply) s
+902.53 3560.6 M
+(to the user.  Actual autoreply line begins after the '|') s
+902.53 3434.1 M
+(-character in the line.) s
+638.53 3181.1 M
+(500 Hello remote.host.  This is local.host speaking.) s
+902.53 2928.1 M
+(Response to the HELO command.  This message can also occur in) s
+902.53 2801.6 M
+(the beginning of the conversation without the VER command and) s
+902.53 2675.1 M
+(it can be ignored.) s
+638.53 2422.1 M
+(501 Rwrited version X.X.) s
+902.53 2169.1 M
+(Response to the VER command.  This message can also occur in) s
+902.53 2042.6 M
+(the beginning of the conversation without the VER command and) s
+902.53 1916.1 M
+(it can be ignored.) s
+374.53 904.1 M
+(Rinne) s
+4598.53 904.1 M
+([Page 7]) s
+Endpage end
+%%Page: ? 8
+hut-enscript-dict begin Startpage
+(rfc1756.txt)(Mon Feb 13 18:10:50 1995) 8 0 31453 810310 822960 Header
+0 Setcolumn
+false Border
+48 F
+374.53 7735.1 M
+(RFC 1756                 Remote Write Protocol) s
+4334.53 7735.1 M
+(January 1995) s
+638.53 7355.6 M
+(502 RWP version 1.0.) s
+902.53 7102.6 M
+(Response to the VER command.  This message can also occur in) s
+902.53 6976.1 M
+(the beginning of the conversation without the VER command and) s
+902.53 6849.6 M
+(it can be ignored.) s
+638.53 6596.6 M
+(510 Valid commands are:) s
+638.53 6470.1 M
+(510     BYE,    DATA,   HELP,   HELO,) s
+638.53 6343.6 M
+(510     RSET,   SEND,   PROT,   QUIT,) s
+638.53 6217.1 M
+(510     VRFY,   VER) s
+638.53 6090.6 M
+(510     FROM senderlogin) s
+638.53 5964.1 M
+(510     FHST senderhost) s
+638.53 5837.6 M
+(510     TO   recipentlogin) s
+638.53 5711.1 M
+(510     FWDS current_hop_count) s
+902.53 5458.1 M
+(Response to the HELP command.) s
+638.53 5205.1 M
+(511 Information to the user.) s
+902.53 4952.1 M
+(Server specific informational response.  These responses may) s
+902.53 4825.6 M
+(occur anytime during the conversation.  The client can ignore) s
+902.53 4699.1 M
+(them.) s
+638.53 4446.1 M
+(512 Debug information to the user.) s
+902.53 4193.1 M
+(Server specific informational response.  Reserved for server) s
+902.53 4066.6 M
+(debugging.  These messages may occur anytime during the) s
+902.53 3940.1 M
+(conversation.  The client can ignore them.) s
+638.53 3687.1 M
+(666 FATAL ERROR!) s
+902.53 3434.1 M
+(The RWP server got into the fatal error situation and is about) s
+902.53 3307.6 M
+(to exit immediately.  Client programs are strongly encouraged) s
+902.53 3181.1 M
+(to close the connection.) s
+638.53 2928.1 M
+(668 Syntax error.) s
+902.53 2675.1 M
+(The RWP server has received an invalid command.) s
+638.53 2422.1 M
+(669 Permission denied.) s
+902.53 2169.1 M
+(The RWP server is unable to deliver the message because the) s
+902.53 2042.6 M
+(target user has denied the send permission.) s
+638.53 1789.6 M
+(670 User not logged in.) s
+902.53 1536.6 M
+(The RWP server is unable to deliver the message because the) s
+902.53 1410.1 M
+(target user is not logged in.) s
+374.53 904.1 M
+(Rinne) s
+4598.53 904.1 M
+([Page 8]) s
+Endpage end
+%%Page: ? 9
+hut-enscript-dict begin Startpage
+(rfc1756.txt)(Mon Feb 13 18:10:50 1995) 9 0 31453 810310 822960 Header
+0 Setcolumn
+false Border
+48 F
+374.53 7735.1 M
+(RFC 1756                 Remote Write Protocol) s
+4334.53 7735.1 M
+(January 1995) s
+638.53 7355.6 M
+(671 No such user.) s
+902.53 7102.6 M
+(The RWP server is unable to deliver the message because the) s
+902.53 6976.1 M
+(target user does not exist.  Error code 670 can be used to) s
+902.53 6849.6 M
+(replace this message.) s
+638.53 6596.6 M
+(672 No message.) s
+902.53 6343.6 M
+(The DATA command is terminated with empty message body.  No) s
+902.53 6217.1 M
+(SEND command can be executed before a new DATA command is) s
+902.53 6090.6 M
+(given.) s
+638.53 5837.6 M
+(673 FROM command required.) s
+902.53 5584.6 M
+(Tried to give the SEND command before FROM.) s
+638.53 5331.6 M
+(674 TO command required.) s
+902.53 5078.6 M
+(Tried to give the SEND command before TO.) s
+638.53 4825.6 M
+(675 DATA command required.) s
+902.53 4572.6 M
+(Tried to give the SEND command before DATA.) s
+638.53 4319.6 M
+(676 Forward limit exceeded.) s
+902.53 4066.6 M
+(Response to the FWDS command that had an argument that) s
+902.53 3940.1 M
+(exceeded the server specific limit of message forwarding) s
+902.53 3813.6 M
+(steps.) s
+638.53 3560.6 M
+(677 Unable to forward message.) s
+902.53 3307.6 M
+(or) s
+638.53 3054.6 M
+(677 Unable to forward message to <user@host.domain>.) s
+902.53 2801.6 M
+(Response to the SEND or VRFY command if message forwarding is) s
+902.53 2675.1 M
+(attempted and the server specific limit of message forwarding) s
+902.53 2548.6 M
+(steps has been exceeded or if message forwarding has otherwise) s
+902.53 2422.1 M
+(failed.  If message forwarding fails with message 669, 670 or) s
+902.53 2295.6 M
+(671, server will not use response 667 but gives response but) s
+902.53 2169.1 M
+(instead it gives the response analogous with the error) s
+902.53 2042.6 M
+(occured.  If message 677 includes address the message was to) s
+902.53 1916.1 M
+(be forwarded, the client may try to deliver it itself.) s
+638.53 1663.1 M
+(698 Unknown error.) s
+902.53 1410.1 M
+(RWP server has faced an internal error that is not fatal.) s
+374.53 904.1 M
+(Rinne) s
+4598.53 904.1 M
+([Page 9]) s
+Endpage end
+%%Page: ? 10
+hut-enscript-dict begin Startpage
+(rfc1756.txt)(Mon Feb 13 18:10:50 1995) 10 0 31453 810310 822960 Header
+0 Setcolumn
+false Border
+48 F
+374.53 7735.1 M
+(RFC 1756                 Remote Write Protocol) s
+4334.53 7735.1 M
+(January 1995) s
+638.53 7355.6 M
+(699 Unknown error.) s
+902.53 7102.6 M
+(RWP server has faced an unknown error that is not fatal.) s
+374.53 6849.6 M
+(5. RWP Compliant Software) s
+572.53 6596.6 M
+(Simple RWP 1.0 compliant server and client software RWrite-1.1 will) s
+572.53 6470.1 M
+(be available during the fall 1994.) s
+374.53 6217.1 M
+(6. Security of RWP) s
+572.53 5964.1 M
+(RWP version 1.0 does not offer any mean to verify the identity of the) s
+572.53 5837.6 M
+(user connecting the RWP server program.  It's possible to identify) s
+572.53 5711.1 M
+(the sender using ident-service, but not all hosts currently support) s
+572.53 5584.6 M
+(that.  This vulnerability is analogous with the weakness of the SMTP) s
+572.53 5458.1 M
+(protocol.  Cryptographic user verification and message hiding method) s
+572.53 5331.6 M
+(is under development and is to be defined in RWP version 2.0 during) s
+572.53 5205.1 M
+(the year 1995.) s
+572.53 4952.1 M
+(RWP server also may offer a way to the intruder to get to know user) s
+572.53 4825.6 M
+(ids within the target host by trying the TO and VRFY commands.  This) s
+572.53 4699.1 M
+(vulnerability is also present in SMTP.  It is however possible to) s
+572.53 4572.6 M
+(build servers so that they never give message 671 \(no such user\) but) s
+572.53 4446.1 M
+(use response 670 \(user not logged in\) instead.) s
+572.53 4193.1 M
+(Another way to increase security even within RWP-1.0 described in the) s
+572.53 4066.6 M
+(document is to design RWP servers so that they do not deliver) s
+572.53 3940.1 M
+(messages directly to user but instead connect to some kind of RWP) s
+572.53 3813.6 M
+(agent process that is executed by each user willing to receive RWP) s
+572.53 3687.1 M
+(messages.  This user configurable message agent could then decide) s
+572.53 3560.6 M
+(whether to deliver the message to the user and which way of delivery) s
+572.53 3434.1 M
+(to use.  Message agent is the best way to prevent hostile user from) s
+572.53 3307.6 M
+(sending uncontrolled message flood to the user's terminal.) s
+572.53 3054.6 M
+(Sample implementation \(RWrite-1.0\) of the RWP server includes the) s
+572.53 2928.1 M
+(support for user configuration files in which each user can either) s
+572.53 2801.6 M
+(allow or deny messages from some user\(s\), host\(s\) or network) s
+572.53 2675.1 M
+(domains\(s\).  Support for message agents is currently under) s
+572.53 2548.6 M
+(development.) s
+572.53 2295.6 M
+(The user that is receiving the message should be able to define) s
+572.53 2169.1 M
+(characters to be stripped from the incoming messages to prevent) s
+572.53 2042.6 M
+(terminal mess-up.) s
+374.53 904.1 M
+(Rinne) s
+4532.53 904.1 M
+([Page 10]) s
+Endpage end
+%%Page: ? 11
+hut-enscript-dict begin Startpage
+(rfc1756.txt)(Mon Feb 13 18:10:50 1995) 11 0 31453 810310 822960 Header
+0 Setcolumn
+false Border
+48 F
+374.53 7735.1 M
+(RFC 1756                 Remote Write Protocol) s
+4334.53 7735.1 M
+(January 1995) s
+374.53 7355.6 M
+(7. RWP Connection Type) s
+572.53 7102.6 M
+(It is suggested that tcp \(and udp\) port 18 should be allocated for) s
+572.53 6976.1 M
+(rwp in future versions of RFCs listing the reserved tcp/udp/rpc) s
+572.53 6849.6 M
+(ports.  Currently port 18 is assigned to the service called Message) s
+572.53 6723.1 M
+(Send Protocol \(msp\) that is not known to be implemented.  Actually) s
+572.53 6596.6 M
+(port 18 is not currently defined at all in the /etc/services -file of) s
+572.53 6470.1 M
+(the any common UNIX-like system.  Entry for /etc/services -file is as) s
+572.53 6343.6 M
+(follows) s
+836.53 6090.6 M
+(rwrite    18/udp       # RWP rwrite) s
+836.53 5964.1 M
+(rwrite    18/tcp       # RWP rwrite) s
+572.53 5711.1 M
+(Given that RWP compliant daemon program is /usr/sbin/rwrited the) s
+572.53 5584.6 M
+(entry for /etc/inetd.conf -file would be:) s
+836.53 5331.6 M
+(rwrite  stream  tcp  nowait  nobody  /usr/sbin/rwrited rwrited) s
+374.53 5078.6 M
+(8. Character quotation) s
+572.53 4825.6 M
+(To offer a safe method to transfer various character sets RWP defines) s
+572.53 4699.1 M
+(a method to quote characters in both message and autoreply.  RWP uses) s
+572.53 4572.6 M
+(quotation similar to MIME `quoted-printable' encoding.  Quoted) s
+572.53 4446.1 M
+(character is presented as a '=' -sign followed by a two character hex) s
+572.53 4319.6 M
+(code.  This means also that all '='-signs have to be quoted.) s
+572.53 4193.1 M
+(Quotation is also needed when message contains a line with only a) s
+572.53 4066.6 M
+(single dot '.' in it.) s
+638.53 3813.6 M
+(For example:) s
+1694.53 3687.1 M
+('.'  ->  =2E) s
+1694.53 3560.6 M
+('='  ->  =3D) s
+1694.53 3434.1 M
+('\\a' ->  =07) s
+1694.53 3307.6 M
+('\\t' ->  =09) s
+374.53 3054.6 M
+(9. Security Considerations) s
+572.53 2801.6 M
+(Security issues are not discussed in this memo.) s
+374.53 2548.6 M
+(10. Author's Address) s
+572.53 2295.6 M
+(Timo J. Rinne) s
+572.53 2169.1 M
+(Helsinki University of Technology.) s
+572.53 2042.6 M
+(Cirion oy) s
+572.53 1916.1 M
+(PO-BOX 250) s
+572.53 1789.6 M
+(FIN-00121) s
+572.53 1663.1 M
+(Helsinki, Finland) s
+572.53 1410.1 M
+(EMail: Timo.Rinne@hut.fi) s
+374.53 904.1 M
+(Rinne) s
+4532.53 904.1 M
+([Page 11]) s
+Endpage end
+%%Trailer
+%%Pages: 11

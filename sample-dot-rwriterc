@@ -1,0 +1,92 @@
+# Sample ~/.rwriterc by Timo J. Rinne
+
+# Delete all rc-definitions prior to this one.
+#cleardefs
+
+# Send messages as background or foreground (default) process if no
+# explicit -b or -B flag is present in the rwrite command.
+#sendbackground
+sendforeground
+
+# Deliver messages to all logged terminals with mesgs on?
+#multitty
+
+# Disable multitty (default)?
+#singletty
+
+# Deliver message only to the ttys or files mentioned in logfile- and
+# tty-clauses of this file?  If none of the files is available the
+# delivery similar to `singletty' is attempted.
+#notty
+
+# Log messages into the file ~/.rwriteINBOX.
+# File has to exist and be writable for rwrite server.
+# There can be several lines like this.
+#logfile ~/.rwriteINBOX
+
+# Log outbond messages into the file ~/.rwriteOUTBOX.
+# File has to exist and be writable for rwrite client.
+# There can be several lines like this.
+#outlog ~/.rwriteOUTBOX
+
+# Deliver message to the tty /dev/ttyp2
+# There can be several lines like this.
+#tty /dev/ttyp2
+
+# Prompt for readline (default is empty)
+prompt "> "
+
+# Do not use libreadline
+#noreadline
+
+# Use readline
+readline
+
+# Do you want to hear the bell on tty delivery... (default)
+bell
+
+# ...or not?
+#nobell
+
+# No one wants messages from netcom or indirect.
+#deny *@netcom.com
+#deny *@*.netcom.com
+#deny *@indirect.com
+#deny *@*.indirect.com
+
+# Allow messages from superusers of entire internet and all users
+# under the Helsinki University of Technology domain.
+#allow root@*
+#allow *@*.hut.fi
+
+# If there are only allow clauses present, everything else is defaulted
+# to `Permission Denied'.  If there are both allow and deny clauses then
+# the allow clause overrides the deny clause and if no matching deny or
+# allow clause is find then the default is allow.
+
+# Override all possible global quotations?
+dontquote 0-255
+
+# Quote incoming escape charecter?  Don't let anyone mess your terminal.
+# This is default if no ~/.rwriterc is available.
+quote 27
+quote 155
+
+# Quote all control characters below 32?
+#quote 0-31
+
+# Don't quote characters 16-18 and 21?
+#dontquote 16-18
+#dontquote 21
+
+# Show the quoted input?
+showquoted
+
+# Don't show the quoted input? (default)
+#hidequoted
+
+# Want to see only first 64 lines of the incoming messages.
+#maxlinesin 64
+
+# Want to see only first 4096 characters of the incoming messages.
+#maxcharsin 4096

@@ -1,0 +1,56 @@
+#! /bin/sh
+
+defpkg="1.3"
+pkg="$1"
+
+autoconf
+
+if [ "x$pkg" = "x" -o "x$pkg" = "x-d" ]
+then
+    if [ -r mkdist-current ]
+    then
+        current="`cat mkdist-current`"
+        current="`expr $current + 1 2>/dev/null`"
+        if [ $? = 2 ]
+        then
+            echo 'mkdist: mkdist-current corrupted.'
+            exit 1
+        fi
+        echo "$current" > mkdist-current
+    else
+        current=1
+        echo "$current" > mkdist-current
+    fi
+    pkg="$defpkg""$current"
+else
+    shift
+fi
+
+make -f mkdist-rule PACKET_VERSION="$pkg" pubtar || ( echo 'mkdist: failed.'; false)  || exit 1
+
+exit # XXXXXXXXX
+
+if [ -r 'rwrite-'"$pkg"'.tar.gz' ]
+then
+    if [ "x$1" = "x" ]
+    then
+        echo 'rwrite-'"$pkg"'.tar.gz ready.'
+    else
+        echo 'Distributing rwrite-'"$pkg"'.tar.gz.'
+        for m in druuna.tky.hut.fi alpha.hut.fi glenlivet.cs.hut.fi \
+                 leia.cs.hut.fi batman.cs.hut.fi vipunen.hut.fi     \
+                 otax.tky.hut.fi
+        do
+            rcp 'rwrite-'"$pkg"'.tar.gz' $m: < /dev/null &
+        done
+	wait
+        if [ -d "$HOME/tmp/rwrite-museum" ]
+        then
+	    mv 'rwrite-'"$pkg"'.tar.gz' $HOME/tmp/rwrite-museum
+        else
+            echo 'rwrite-'"$pkg"'.tar.gz'" left in ."
+        fi
+    fi
+else
+    echo 'mkdist: failed.'
+fi

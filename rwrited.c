@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Mon Dec 12 04:11:53 1994 cirion
+ * Last modified: Tue Dec 13 13:35:03 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.28 $
+ * $Revision: 1.29 $
  * $State: Exp $
- * $Date: 1994/12/12 15:58:41 $
+ * $Date: 1994/12/13 11:35:21 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.28  1994/12/12 15:58:41  tri
+ * Revision 1.29  1994/12/13 11:35:21  tri
+ * Changed `n' in macro RWRITE_MSG to `code' to help
+ * braindamaged c-preprosessors.
+ *
+ * Revision 1.28  1994/12/12  15:58:41  tri
  * Copyright fixed a bit.
  *
  * Revision 1.27  1994/12/12  11:03:42  tri
@@ -131,7 +135,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.28 1994/12/12 15:58:41 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.29 1994/12/13 11:35:21 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -205,8 +209,8 @@ static char *RCS_id = "$Id: rwrited.c,v 1.28 1994/12/12 15:58:41 tri Exp $";
 /*
  * Print standard format message.
  */
-#define RWRITE_MSG(n, msg) { fprintf(stdout, "%03d %s\n", n, msg); \
-			     fflush(stdout); }
+#define RWRITE_MSG(code, msg) { fprintf(stdout, "%03d %s\n", code, msg); \
+			        fflush(stdout); }
 /*
  * Globals.  Eh... Urp... Well... Who cares...
  */

@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Sun Dec 11 23:09:48 1994 tri
+ * Last modified: Mon Dec 12 00:03:32 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.25 $
+ * $Revision: 1.26 $
  * $State: Exp $
- * $Date: 1994/12/11 21:25:30 $
+ * $Date: 1994/12/11 22:04:16 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.25  1994/12/11 21:25:30  tri
+ * Revision 1.26  1994/12/11 22:04:16  tri
+ * Added support for ancient System V style
+ * utmp that holds all kind of bogus information.
+ *
+ * Revision 1.25  1994/12/11  21:25:30  tri
  * Cleaned up some warnings.  No functional changes.
  *
  * Revision 1.24  1994/12/11  18:16:28  tri
@@ -121,7 +125,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.25 1994/12/11 21:25:30 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.26 1994/12/11 22:04:16 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -607,6 +611,17 @@ int search_utmp(char *user,
 	}
 	if(deliver_all_ttys()) {
 	    while(read(ufd, (char *) &u, sizeof(u)) == sizeof(u)) {
+#ifndef NO_UT_TYPE_IN_STRUCT_UTMP
+#ifdef USER_PROCESS
+		/*
+		 * System V dumps all kind of shit into the utmp.
+		 * USER_PROCESS should not be defined in non SYSV-
+		 * systems, but...
+		 */
+ 		if(u.ut_type != USER_PROCESS)
+ 		    continue;
+#endif
+#endif
 		if(strncmp(user, u.ut_name, sizeof(u.ut_name)) == 0) {
 		    char *hlp;
 
@@ -638,6 +653,17 @@ int search_utmp(char *user,
 	    bestatime = 0;
 	    no_timecomp = 0;
 	    while(read(ufd, (char *) &u, sizeof(u)) == sizeof(u)) {
+#ifndef NO_UT_TYPE_IN_STRUCT_UTMP
+#ifdef USER_PROCESS
+		/*
+		 * System V dumps all kind of shit into the utmp.
+		 * USER_PROCESS should not be defined in non SYSV-
+		 * systems, but...
+		 */
+ 		if(u.ut_type != USER_PROCESS)
+ 		    continue;
+#endif
+#endif
 		if(strncmp(user, u.ut_name, sizeof(u.ut_name)) == 0) {
 		    nloggedttys++;
 		    strcpy(atty, "/dev/");

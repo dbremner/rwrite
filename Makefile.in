@@ -5,15 +5,19 @@
 # Make rules for rwrite.
 # ----------------------------------------------------------------------
 # Created      : Sun Dec 11 20:12:18 1994 tri
-# Last modified: Sun Dec 11 20:44:23 1994 tri
+# Last modified: Mon Dec 12 00:03:00 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $State: Exp $
-# $Date: 1994/12/11 21:25:30 $
+# $Date: 1994/12/11 22:04:16 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: Makefile.in,v $
-# Revision 1.5  1994/12/11 21:25:30  tri
+# Revision 1.6  1994/12/11 22:04:16  tri
+# Added support for ancient System V style
+# utmp that holds all kind of bogus information.
+#
+# Revision 1.5  1994/12/11  21:25:30  tri
 # Cleaned up some warnings.  No functional changes.
 #
 # Revision 1.4  1994/12/11  18:45:50  tri
@@ -74,6 +78,7 @@ TAR		= tar cvf
 COMPRESS	= gzip -9
 
 CFLAGS		= -DTTY_GROUP_NAME=\"$(RWRITED_GROUP)\"
+CFLAGS		+= -O
 #CFLAGS		+= -Wall
 #CFLAGS		+= -DDEBUG -g 
 
@@ -96,6 +101,12 @@ CFLAGS		= -DTTY_GROUP_NAME=\"$(RWRITED_GROUP)\"
 # Everyone should have following but...
 #CFLAGS		+= NO_GETEUID=1
 #CFLAGS		+= NO_GETEGID=1
+
+# Next define should never be needed, but in some braindamaged
+# system that have SystemV style definitions in headers but still
+# BSD like utmp format then you may get a compilation barf
+# "struct utmp has no member ut_type".  Next one should help.
+#CFLAGS		+= -DNO_UT_TYPE_IN_STRUCT_UTMP=1
 
 PROGS	= rwrited rwrite mkrwritebox
 MAN1	= rwrite.1 mkrwritebox.1

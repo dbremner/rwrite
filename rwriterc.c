@@ -5,15 +5,18 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Fri Dec  9 01:11:50 1994 tri
+ * Last modified: Fri Dec  9 01:35:03 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.5 $
+ * $Revision: 1.6 $
  * $State: Exp $
- * $Date: 1994/12/08 23:12:04 $
+ * $Date: 1994/12/08 23:38:11 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.5  1994/12/08 23:12:04  tri
+ * Revision 1.6  1994/12/08 23:38:11  tri
+ * Fixed a minor feature.
+ *
+ * Revision 1.5  1994/12/08  23:12:04  tri
  * Fixed a quite serious quotation bug that appeared
  * when only the global configuration was present.
  *
@@ -54,7 +57,7 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.5 1994/12/08 23:12:04 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.6 1994/12/08 23:38:11 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -523,7 +526,7 @@ char *quote_str(char *str)
     return((char *)r);
 }
 
-#define QUOTE_ME(c) ((((c) > 0) && ((c) < 256) && (!(quote_list[c]))) ? 0 : 1)
+#define QUOTE_ME(c) ((((c) >= 0) && ((c) < 256) && (!(quote_list[c]))) ? 0 : 1)
 
 char *dequote_str(char *str, int maxlen, int *len)
 {

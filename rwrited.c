@@ -19,12 +19,15 @@
  *
  * Please, send your patches to <tri@iki.fi>.
  * ----------------------------------------------------------------------
- * $Revision: 1.45 $
+ * $Revision: 1.46 $
  * $State: Exp $
- * $Date: 1998/04/18 21:13:02 $
+ * $Date: 1999/12/30 12:21:50 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
+ * Revision 1.46  1999/12/30 12:21:50  tri
+ * Moved one bad free statement into more correct location.
+ *
  * Revision 1.45  1998/04/18 21:13:02  tri
  * Promoted version number.
  *
@@ -186,7 +189,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.45 1998/04/18 21:13:02 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.46 1999/12/30 12:21:50 tri Exp $";
 #endif /* not lint */
 
 #define RWRITED_VERSION_NUMBER	"1.2"	/* Server version   */
@@ -868,8 +871,8 @@ int search_utmp(char *user,
 		for(i = 0; i < ttylistlen; i++) {
 		    if(all_ttys[i])
 			free(all_ttys[i]);
-		    /* free(all_ttys); XXX XXX XXX XXX */
 		}
+		free(all_ttys);
 	    }
 	    return DELIVER_OK;
 	}

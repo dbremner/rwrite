@@ -6,15 +6,18 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Thu Dec 15 00:05:55 1994 tri
+ * Last modified: Tue Oct 24 23:27:56 1995 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.35 $
+ * $Revision: 1.36 $
  * $State: Exp $
- * $Date: 1994/12/14 22:06:07 $
+ * $Date: 1995/10/24 21:54:56 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.35  1994/12/14 22:06:07  tri
+ * Revision 1.36  1995/10/24 21:54:56  tri
+ * Added support for gnu libreadline.
+ *
+ * Revision 1.35  1994/12/14  22:06:07  tri
  * Cleanup.
  *
  * Revision 1.34  1994/12/14  19:12:36  tri
@@ -201,7 +204,11 @@ int dequote_and_write(FILE *f, char **msg, int maxlines, int maxchars,
 #ifndef __RWRITERC_C__
 extern char **rc_tty_list;
 extern char **rc_outlog;
+extern char *rc_prompt;
 #endif
+
+#define RWRITE_PROMPT (rc_prompt ? rc_prompt : "")
+
 /*
  * #
  * # Entry to enable rwrite service in /etc/services.

@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Thu Dec 15 06:57:13 1994 tri
+ * Last modified: Tue Oct 24 23:53:56 1995 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.39 $
+ * $Revision: 1.40 $
  * $State: Exp $
- * $Date: 1995/02/10 07:32:50 $
+ * $Date: 1995/10/24 21:54:56 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.39  1995/02/10 07:32:50  tri
+ * Revision 1.40  1995/10/24 21:54:56  tri
+ * Added support for gnu libreadline.
+ *
+ * Revision 1.39  1995/02/10  07:32:50  tri
  * Wrap it up and call it 1.1.
  *
  * Revision 1.38  1994/12/15  04:57:33  tri
@@ -167,7 +170,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.39 1995/02/10 07:32:50 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.40 1995/10/24 21:54:56 tri Exp $";
 #endif /* not lint */
 
 #define RWRITE_VERSION_NUMBER	"1.1"	/* Client version   */
@@ -214,6 +217,11 @@ static char *RCS_id = "$Id: rwrite.c,v 1.39 1995/02/10 07:32:50 tri Exp $";
 #endif
 #endif
 
+#ifdef HAVE_LIBREADLINE
+#include <readline/readline.h>
+#include <readline/history.h>
+#endif
+
 #ifndef MAXPATHLEN
 #  define MAXPATHLEN PATH_MAX
 #endif
@@ -227,7 +235,6 @@ char **autoreply = NULL;
 int autoreply_lines = 0;
 int autoreply_sz = 0;
 char **last_msg = NULL;
-
 
 int unquote_and_raw_write_str(FILE *f, char *str)
 {
@@ -379,7 +386,7 @@ char *read_line_fd(int f)
     return(buf);
 }
 
-char *read_line(FILE *f)
+char *read_line(char *prompt, FILE *f)
 {
     char *buf;
     int buflen;
@@ -388,6 +395,8 @@ char *read_line(FILE *f)
     if(!(buf = ((char *)malloc(BUF_ALLOC_STEP))))
 	return NULL;
     buflen = BUF_ALLOC_STEP;
+    if(prompt)
+	fputs(prompt, stderr);
     for(i = 0; (EOF != (c = (fgetc(f)))); i++) {
 	if((c == '\000') ||
 	   (c == '\015')) {
@@ -435,7 +444,21 @@ char **read_user_message(FILE *f)
     for(i = 0; /*NOTHING*/; i++) {
 	char *hlp;
 
-	if(!(line = read_line(f))) {
+	if(f == stdin) {
+#ifdef HAVE_LIBREADLINE
+	    line = readline(RWRITE_PROMPT);
+	    if(line) {
+		add_history(line);
+	    } else {
+		putchar('\n');
+	    }
+#else
+	    line = read_line(RWRITE_PROMPT, f);
+#endif
+	} else {
+	    line = read_line(NULL, f);
+	}
+	if(!line) {
 	    if(!i) {
 		free(buf);
 		return NULL;

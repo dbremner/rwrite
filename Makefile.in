@@ -5,14 +5,32 @@
 # Make rules for rwrite.
 # ----------------------------------------------------------------------
 # Created      : Sun Dec 11 20:12:18 1994 tri
-# Last modified: Wed Dec 14 17:01:05 1994 tri
+# Last modified: Sat Apr 18 23:43:24 1998 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.21 $
+# Copyright 1994, Tero Kivinen <kivinen@hut.fi>.
+# Copyright 1994, Tomi Kause <toka@cirion.fi>.
+#
+# Copyright © 1994-1998
+# Timo J. Rinne <tri@iki.fi>
+# All rights reserved.  See file COPYRIGHT for details.
+#
+# Address: Cirion oy, PO-BOX 250, 00121 Helsinki, Finland
+# ----------------------------------------------------------------------
+# Any express or implied warranties are disclaimed.  In no event
+# shall the author be liable for any damages caused (directly or
+# otherwise) by the use of this software.
+#
+# Please, send your patches to <tri@iki.fi>.
+# ----------------------------------------------------------------------
+# $Revision: 1.22 $
 # $State: Exp $
-# $Date: 1994/12/14 15:02:09 $
+# $Date: 1998/04/18 20:52:28 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: Makefile.in,v $
+# Revision 1.22  1998/04/18 20:52:28  tri
+#  New copyright in COPYRIGHT.
+#
 # Revision 1.21  1994/12/14 15:02:09  tri
 # Source file of away is now away.sh.
 #
@@ -72,24 +90,6 @@
 # Initial revision
 #
 # ----------------------------------------------------------------------
-# Copyright 1994, Tomi Kause <toka@cirion.fi> and Cirion oy.
-# Copyright 1994, Timo J. Rinne <tri@cirion.fi> and Cirion oy.
-# 
-# Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
-# 
-# Even though this code is copyrighted property of the author, it can
-# still be used for any purpose under following conditions:
-# 
-#     1) This copyright notice is not removed.
-#     2) Source code follows any distribution of the software
-#        if possible.
-#     3) Copyright notice above is found in the documentation
-#        of the distributed software.
-# 
-# Any express or implied warranties are disclaimed.  In no event
-# shall the author be liable for any damages caused (directly or
-# otherwise) by the use of this software.
-# ----------------------------------------------------------------------
 #
 
 SHELL		= /bin/sh
@@ -127,11 +127,11 @@ MAN_GROUP	= @MAN_GROUP@
 MAN_MODE	= 444
 
 PROGS	= rwrited rwrite mkrwritebox
-MAN1	= $(srcdir)/rwrite.1 $(srcdir)/mkrwritebox.1 $(srcdir)/away.1
+MAN1	= $(srcdir)/rwrite.1 $(srcdir)/mkrwritebox.1 $(srcdir)/rwrite-away.1
 MAN8	= $(srcdir)/rwrited.8
 
 SRCS	= $(srcdir)/match.c $(srcdir)/mkrwritebox.c $(srcdir)/rwriterc.c \
-	  $(srcdir)/rwrite.c $(srcdir)/rwrited.c $(srcdir)/away.sh
+	  $(srcdir)/rwrite.c $(srcdir)/rwrited.c $(srcdir)/rwrite-away.sh
 
 .SUFFIXES:
 .SUFFIXES: .c .o
@@ -170,7 +170,7 @@ install: $(PROGS) $(MAN8) $(MAN1)
 	$(INSTALL) -o $(BIN_OWNER) -g $(BIN_GROUP) -m $(BIN_MODE) \
 	  rwrite $(BINDIR)
 	$(INSTALLSCRIPT) -o $(BIN_OWNER) -g $(BIN_GROUP) -m $(BIN_MODE) \
-	  $(srcdir)/away.sh $(BINDIR)/away
+	  $(srcdir)/rwrite-away.sh $(BINDIR)/rwrite-away
 	$(INSTALLMAN) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
 	  $(MAN8) $(MANDIR)/man8
 	( for i in $(MAN1); do \

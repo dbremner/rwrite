@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Thu Oct  6 20:26:15 1994 tri
+ * Last modified: Thu Oct  6 20:37:27 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.10 $
+ * $Revision: 1.11 $
  * $State: Exp $
- * $Date: 1994/10/06 18:32:37 $
+ * $Date: 1994/10/06 18:37:54 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.10  1994/10/06 18:32:37  tri
+ * Revision 1.11  1994/10/06 18:37:54  tri
+ * Possible coredump in deliver() fixed.
+ *
+ * Revision 1.10  1994/10/06  18:32:37  tri
  * Hacked multitty option.
  *
  * Revision 1.9  1994/10/04  20:50:22  tri
@@ -67,7 +70,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.10 1994/10/06 18:32:37 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.11 1994/10/06 18:37:54 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -429,6 +432,7 @@ int search_utmp(char *user,
 	    }
 	    all_ttys_size = BUF_ALLOC_STEP;
 	    ttylistlen = 0;
+	    *ttylist = all_ttys;
 	}
 	if(multittyp) {
 	    *multittyp = 0;
@@ -471,7 +475,6 @@ int search_utmp(char *user,
 				    RWRITE_FATAL("Out of memory.");
 				}
 				strcpy(all_ttys[0], atty);
-				*ttylist = all_ttys;
 			    }
 			    return DELIVER_OK;
 			}

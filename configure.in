@@ -1,0 +1,120 @@
+#
+# $RCSfile: configure.in,v $
+# ----------------------------------------------------------------------
+# Configuration rules for rwrite package
+# ----------------------------------------------------------------------
+# Created      : Wed Dec 14 02:39:53 1994 tri
+# Last modified: Wed Dec 14 02:42:47 1994 tri
+# ----------------------------------------------------------------------
+# $Revision: 1.1 $
+# $State: Exp $
+# $Date: 1994/12/14 00:46:16 $
+# $Author: tri $
+# ----------------------------------------------------------------------
+# $Log: configure.in,v $
+# Revision 1.1  1994/12/14 00:46:16  tri
+# Initial revision
+#
+# ----------------------------------------------------------------------
+# Copyright 1994, Tero Kivinen <kivinen@hut.fi>.
+# Copyright 1994, Timo J. Rinne <tri@cirion.fi> and Cirion oy.
+# 
+# Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
+# 
+# Even though this code is copyrighted property of the author, it can
+# still be used for any purpose under following conditions:
+# 
+#     1) This copyright notice is not removed.
+#     2) Source code follows any distribution of the software
+#        if possible.
+#     3) Copyright notice above is found in the documentation
+#        of the distributed software.
+# 
+# Any express or implied warranties are disclaimed.  In no event
+# shall the author be liable for any damages caused (directly or
+# otherwise) by the use of this software.
+# ----------------------------------------------------------------------
+#
+
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(rwrite.c)
+
+AC_SUBST(RWRITED_GROUP)
+AC_SUBST(RWRITED_MODE)
+AC_SUBST(BIN_OWNER)
+AC_SUBST(BIN_GROUP)
+AC_SUBST(MAN_OWNER)
+AC_SUBST(MAN_GROUP)
+
+BIN_OWNER=bin
+BIN_GROUP=bin
+MAN_OWNER=bin
+MAN_GROUP=bin
+RWRITED_MODE=2555
+
+AC_ARG_WITH(cc, [  --with-cc				compile with cc], CC=cc)
+AC_ARG_ENABLE(dont-tell-users, [  --enable-dont-tell-users	server gives user not in instead of no such user], AC_DEFINE(DO_NOT_TELL_USERS))
+AC_ARG_ENABLE(dont-flush, [  --enable-dont-flush		do not flush stdin after failed message], AC_DEFINE(DONT_FLUSH_INPUT_IN_FAILURE))
+AC_ARG_WITH(ttygroup, [  --with-ttygroup=group			set group of tty-devices], RWRITED_GROUP=$with_ttygroup)
+AC_ARG_WITH(binowner, [  --with-binowner=owner			set owner of binaries], BIN_OWNER=$with_binowner)
+AC_ARG_WITH(bingroup, [  --with-bingroup=group			set group of binaries], BIN_GROUP=$with_bingroup)
+AC_ARG_WITH(manowner, [  --with-manowner=owner			set owner of manuals], MAN_OWNER=$with_manowner)
+AC_ARG_WITH(mangroup, [  --with-mangroup=group			set group of manuals], MAN_GROUP=$with_mangroup)
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_INSTALL
+
+dnl Checks for libraries.
+AC_CHECK_LIB(nsl, main)
+AC_CHECK_LIB(bsd, main)
+AC_CHECK_LIB(inet, main)
+AC_CHECK_LIB(socket, main)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(fcntl.h limits.h sys/file.h sys/ioctl.h sys/time.h unistd.h sys/filio.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_TYPE_UID_T
+AC_MSG_CHECKING([for ut_type field in struct utmp])
+AC_TRY_COMPILE([#include <utmp.h>], [struct utmp u; u.ut_type++;], AC_MSG_RESULT(yes), AC_MSG_RESULT(no); AC_DEFINE(NO_UT_TYPE_IN_STRUCT_UTMP))
+
+dnl Checks for library functions.
+AC_PROG_GCC_TRADITIONAL
+AC_CHECK_FUNCS(geteuid getegid fchown fchmod)
+
+if test -n RWRITED_GROUP
+then
+  AC_MSG_CHECKING([for tty group])
+  if grep '^tty:' /etc/group > /dev/null
+  then
+    AC_MSG_RESULT(yes)
+    RWRITED_GROUP=tty
+  else
+    AC_MSG_RESULT(no)
+    AC_MSG_CHECKING([for terminal group])
+    if grep '^terminal:' /etc/group > /dev/null
+    then
+      AC_MSG_RESULT(yes)
+      RWRITED_GROUP=terminal
+    else 
+      AC_MSG_RESULT(no)
+      AC_MSG_CHECKING([for rwrite group])
+      if grep '^rwrite:' /etc/group > /dev/null
+      then
+        AC_MSG_RESULT(yes)
+        RWRITED_GROUP=rwrite
+      else
+        AC_MSG_RESULT(no)
+        AC_MSG_WARN([No tty, terminal or rwrite group, disabling sgid, see INSTALL.])
+	RWRITED_GROUP=$BIN_GROUP
+	RWRITED_MODE=555
+      fi
+    fi
+  fi
+fi
+
+AC_OUTPUT(Makefile)
+
+# EOF (configure.in)

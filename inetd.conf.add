@@ -1,0 +1,5 @@
+#
+# Entry to enable rwrite service in /etc/inetd.conf.
+#
+rwrite  stream  tcp     nowait  nobody  /usr/local/bin/rwrited  rwrited
+rwrite  dgram   udp     wait    nobody  /usr/local/bin/rwrited  rwrited udp

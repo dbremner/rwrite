@@ -1,0 +1,5 @@
+#
+# Entry to enable rwrite service in /etc/services.
+#
+rwrite		18/tcp		rwp		# rwrite
+rwrite		18/udp		rwp		# rwrite

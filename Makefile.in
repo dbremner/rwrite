@@ -5,15 +5,18 @@
 # Make rules for rwrite.
 # ----------------------------------------------------------------------
 # Created      : Sun Dec 11 20:12:18 1994 tri
-# Last modified: Tue Dec 13 19:38:33 1994 tri
+# Last modified: Wed Dec 14 03:05:33 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 # $State: Exp $
-# $Date: 1994/12/14 00:46:16 $
+# $Date: 1994/12/14 01:05:45 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: Makefile.in,v $
-# Revision 1.18  1994/12/14 00:46:16  tri
+# Revision 1.19  1994/12/14 01:05:45  tri
+# Fix.
+#
+# Revision 1.18  1994/12/14  00:46:16  tri
 # Makefile is now Makefile.in for configure.
 #
 # Revision 1.16  1994/12/13  16:25:06  tri
@@ -161,7 +164,7 @@ install: $(PROGS) $(MAN8) $(MAN1)
 	$(INSTALL) -o $(BIN_OWNER) -g $(BIN_GROUP) -m $(BIN_MODE) \
 	  rwrite $(BINDIR)
 	$(INSTALLSCRIPT) -o $(BIN_OWNER) -g $(BIN_GROUP) -m $(BIN_MODE) \
-	  away $(BINDIR)
+	  $(srcdir)/away $(BINDIR)
 	$(INSTALLMAN) -o $(MAN_OWNER) -g $(MAN_GROUP) -m $(MAN_MODE) \
 	  $(MAN8) $(MANDIR)/man8
 	( for i in $(MAN1); do \

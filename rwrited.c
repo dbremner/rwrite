@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Thu Dec 15 00:02:11 1994 tri
+ * Last modified: Thu Dec 15 00:18:55 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.36 $
+ * $Revision: 1.37 $
  * $State: Exp $
- * $Date: 1994/12/14 22:02:58 $
+ * $Date: 1994/12/14 22:22:38 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.36  1994/12/14 22:02:58  tri
+ * Revision 1.37  1994/12/14 22:22:38  tri
+ * Removed a few warnings with better casting.
+ *
+ * Revision 1.36  1994/12/14  22:02:58  tri
  * Fixed the autoreply logic a bit.  Now one can get
  * autoreply from the remote user even if the delivery
  * of the original message is not possible.
@@ -161,7 +164,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.36 1994/12/14 22:02:58 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.37 1994/12/14 22:22:38 tri Exp $";
 #endif /* not lint */
 
 #define RWRITED_VERSION_NUMBER	"1.1b28"	/* Server version   */
@@ -693,7 +696,7 @@ int search_utmp(char *user,
 		    continue;	/* bad term? skip */
 		if(!msgsok)
 		    continue;	/* skip ttys with msgs off */
-		if(!(hlp = malloc(strlen(tty) + 1))) {
+		if(!(hlp = (char *)malloc(strlen(tty) + 1))) {
 		    RWRITE_FATAL("Out of memory.");
 		}
 		strcpy(hlp, tty);
@@ -749,7 +752,7 @@ int search_utmp(char *user,
 		    if(!msgsok)
 			continue; /* skip ttys with msgs off */
 		    nttys++;
-		    if(!(hlp = malloc(strlen(atty) + 1))) {
+		    if(!(hlp = (char *)malloc(strlen(atty) + 1))) {
 			RWRITE_FATAL("Out of memory.");
 		    }
 		    strcpy(hlp, atty);
@@ -811,7 +814,7 @@ int search_utmp(char *user,
 	    if(best_tty[0]) {
 		char *hlp;
 
-		if(!(hlp = malloc(strlen(best_tty) + 1))) {
+		if(!(hlp = (char *)malloc(strlen(best_tty) + 1))) {
 		    RWRITE_FATAL("Out of memory.");
 		}
 		strcpy(hlp, best_tty);

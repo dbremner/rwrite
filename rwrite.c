@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Thu Dec 15 00:01:58 1994 tri
+ * Last modified: Thu Dec 15 00:22:03 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.36 $
+ * $Revision: 1.37 $
  * $State: Exp $
- * $Date: 1994/12/14 22:02:58 $
+ * $Date: 1994/12/14 22:22:38 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.36  1994/12/14 22:02:58  tri
+ * Revision 1.37  1994/12/14 22:22:38  tri
+ * Removed a few warnings with better casting.
+ *
+ * Revision 1.36  1994/12/14  22:02:58  tri
  * Fixed the autoreply logic a bit.  Now one can get
  * autoreply from the remote user even if the delivery
  * of the original message is not possible.
@@ -158,7 +161,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.36 1994/12/14 22:02:58 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.37 1994/12/14 22:22:38 tri Exp $";
 #endif /* not lint */
 
 #define RWRITE_VERSION_NUMBER	"1.1b28"	/* Client version   */
@@ -790,7 +793,7 @@ int rwp_dialog(int s,
 			    autoreply_sz += BUF_ALLOC_STEP;
 			}
 			if(!(autoreply[autoreply_lines] = 
-			     malloc(strlen(hlp) + 1))) {
+			     (char *)malloc(strlen(hlp) + 1))) {
 			    fprintf(stderr, "rwrite: Out of memory.\n");
 			    return 0;
 			}
@@ -1054,7 +1057,7 @@ int rwp_dialog(int s,
 			    autoreply_sz += BUF_ALLOC_STEP;
 			}
 			if(!(autoreply[autoreply_lines] = 
-			     malloc(strlen(hlp) + 1))) {
+			     (char *)malloc(strlen(hlp) + 1))) {
 			    fprintf(stderr, "rwrite: Out of memory.\n");
 			    return 0;
 			}

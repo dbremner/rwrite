@@ -7,13 +7,16 @@
  * Created      : Tue Sep 13 15:28:07 1994 tri
  * Last modified: Sat Dec 10 13:11:14 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.17 $
+ * $Revision: 1.18 $
  * $State: Exp $
- * $Date: 1994/12/10 11:28:38 $
+ * $Date: 1994/12/10 23:35:52 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.17  1994/12/10 11:28:38  tri
+ * Revision 1.18  1994/12/10 23:35:52  tri
+ * Variable resend was not properly initialized.
+ *
+ * Revision 1.17  1994/12/10  11:28:38  tri
  * Last known method to send terminal control codes
  * through correctly configured rwrite is now diabled.
  *
@@ -92,7 +95,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.17 1994/12/10 11:28:38 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.18 1994/12/10 23:35:52 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1083,7 +1086,7 @@ int main(int argc, char **argv)
     char **msg;
     extern char *optarg;
     extern int optind, optopt;
-    int resend;
+    int resend = 0;
     char *userhome;
     
     while ((ch = getopt(argc, argv, ":vrf:bq")) != -1) {

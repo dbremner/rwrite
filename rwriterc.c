@@ -5,15 +5,21 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Tue Nov 22 22:28:30 1994 tri
+ * Last modified: Fri Dec  9 00:46:54 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.3 $
+ * $Revision: 1.4 $
  * $State: Exp $
- * $Date: 1994/11/22 20:49:13 $
+ * $Date: 1994/12/08 22:56:45 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.3  1994/11/22 20:49:13  tri
+ * Revision 1.4  1994/12/08 22:56:45  tri
+ * Fixed the quotation system on message
+ * delivery.  Same message can now be quoted
+ * differently for the each receiver.
+ * Also the autoreplies are now quoted right.
+ *
+ * Revision 1.3  1994/11/22  20:49:13  tri
  * Added configurable parameter to limit the number
  * of lines in the incoming message.
  *
@@ -44,7 +50,7 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.3 1994/11/22 20:49:13 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.4 1994/12/08 22:56:45 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -68,7 +74,8 @@ int deny_user_sz    = 0;
 int allow_user_sz   = 0;
 int rc_tty_list_sz  = 0;
 int rc_outlog_sz    = 0;
-int rc_incoming_max = DEFAULT_MAX_LINES_IN;
+int rc_incoming_max    = DEFAULT_MAX_LINES_IN;
+int rc_ch_incoming_max = DEFAULT_MAX_CHARS_IN;
 
 #define KILL_C_TABLE(c) { char **_x = c; if(c) { while(*_x) {  \
                                                      free(*_x); *_x = NULL; }}}
@@ -81,6 +88,11 @@ static char quote_list[256] = { '\000' };
 int max_lines_in()
 {
     return(rc_read ? rc_incoming_max : DEFAULT_MAX_LINES_IN);
+}
+
+int max_chars_in()
+{
+    return(rc_read ? rc_ch_incoming_max : DEFAULT_MAX_CHARS_IN);
 }
 
 int deliver_all_ttys()
@@ -165,6 +177,7 @@ void reset_rc()
     all_ttys = 0;
     show_quoted = 0;
     rc_incoming_max = DEFAULT_MAX_LINES_IN;
+    rc_ch_incoming_max = DEFAULT_MAX_CHARS_IN;
     return;
 }
 
@@ -282,6 +295,15 @@ void read_rc(char *fn)
 			
 			if((x = atoi(value)) > 0)
 			    rc_incoming_max = x;
+#ifdef DEBUG
+			fprintf(stdout, "%03d ok > %s %d\n", 
+				RWRITE_DEBUG, tag, x);
+#endif
+		    } else if((!(strcmp(tag, "maxcharsin"))) && value) {
+			int x;
+			
+			if((x = atoi(value)) > 0)
+			    rc_ch_incoming_max = x;
 #ifdef DEBUG
 			fprintf(stdout, "%03d ok > %s %d\n", 
 				RWRITE_DEBUG, tag, x);
@@ -499,17 +521,24 @@ char *quote_str(char *str)
 
 #define QUOTE_ME(c) ((((c) > 0) && ((c) < 256) && (!(quote_list[c]))) ? 0 : 1)
 
-char *dequote_str(char *str)
+char *dequote_str(char *str, int maxlen, int *len)
 {
     unsigned char *r, *hlp, *s;
-    int c;
+    int c, dummy, l;
 
+    if(!len)
+	len = &dummy;
+    *len = 0;
     s = (unsigned char *)str;
     if(!s)
 	s = "";
+    if(maxlen < 1)
+	return NULL;
+    l = strlen(s) * 3;
+    l = ((l > maxlen) ? maxlen : l) + 1;
     if(!(r = malloc((strlen(s) * 3) + 1)))
 	return NULL;
-    for(hlp = r; *s; s++) {
+    for((*len = 0, hlp = r); ((*s) && (*len < maxlen)); s++) {
 	if(*s == '=') {
 	    s++;
 	    if(((*s >= '0') && (*s <= '9')) ||
@@ -539,14 +568,55 @@ char *dequote_str(char *str)
 		hlp++;
 		*hlp = hex_char[((int)(c)) & 15];
 		hlp++;
+		(*len) += 3;
 	    }
 	} else {
 	    *hlp = (unsigned char)c;
 	    hlp++;
+	    (*len)++;
 	}
     }
     *hlp = '\000';
     return((char *)r);
+}
+
+int dequote_and_write(FILE *f, 
+		      char **msg, 
+		      int maxlines, 
+		      int maxchars, 
+		      int is_f_tty)
+{
+    int i, linelen, x;
+    char *out;
+    
+#ifdef DEBUG
+    fprintf(stdout, "%03d d_&_w(f, msg, %d, %d)\n", RWRITE_DEBUG, maxlines, 
+	    maxchars);
+#endif
+
+    if((!f) || (!msg) || (!(*msg)) || (maxlines < 1) || (maxchars < 1))
+	return 0;
+    fputc('\n', f);
+    if(is_f_tty) {
+	/* It may be in the raw mode and... */
+	fputc('\r', f);
+    }
+    for(i = 0;  ((msg[i]) && (maxlines > 0) && (maxchars > 0)); i++) {
+	if(!(out = dequote_str(msg[i], maxchars, &linelen)))
+	    return 0;
+	if((fwrite(out, sizeof(char), linelen, f)) != linelen) {
+	    free(out);
+	    return 0;
+	}
+	fputc('\n', f);
+	if(is_f_tty) {
+	    /* It may be in the raw mode and... */
+	    fputc('\r', f);
+	}
+	free(out);
+	maxchars -= (linelen + 1);
+	maxlines--;
+    }
 }
 
 /* EOF (rwriterc.c) */

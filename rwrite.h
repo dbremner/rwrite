@@ -6,15 +6,21 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Wed Dec  7 14:27:55 1994 tri
+ * Last modified: Fri Dec  9 00:43:08 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.13 $
+ * $Revision: 1.14 $
  * $State: Exp $
- * $Date: 1994/12/07 12:34:32 $
+ * $Date: 1994/12/08 22:56:45 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.13  1994/12/07 12:34:32  tri
+ * Revision 1.14  1994/12/08 22:56:45  tri
+ * Fixed the quotation system on message
+ * delivery.  Same message can now be quoted
+ * differently for the each receiver.
+ * Also the autoreplies are now quoted right.
+ *
+ * Revision 1.13  1994/12/07  12:34:32  tri
  * Removed read_message() and dropped in Camillo's GetMsg()
  * instead.
  *
@@ -121,11 +127,14 @@
  * Maximum number of lines in the incoming message.  
  * This can be overridden in user configuration file.
  */
-#define DEFAULT_MAX_LINES_IN 1024
+#define DEFAULT_MAX_LINES_IN	1024
+#define DEFAULT_MAX_CHARS_IN	(DEFAULT_MAX_LINES_IN * 64)
 
-
-#define DATA_MAXCHARS (1024 * 8 * 64)
-#define DATA_MAXLINES (1024 * 8)
+/*
+ * Maximum number of lines that DATA command can get.
+ */
+#define DATA_MAXLINES	DEFAULT_MAX_LINES_IN
+#define DATA_MAXCHARS	(DATA_MAXLINES * 64)
 
 /*************************************************/
 /*************************************************/
@@ -147,7 +156,9 @@ int is_allowed(char *name, char *host);
 int deliver_all_ttys(void);
 int no_tty_delivery(void);
 char *quote_str(char *s);
-char *dequote_str(char *s);
+char *dequote_str(char *s, int maxlen, int *len);
+int dequote_and_write(FILE *f, char **msg, int maxlines, int maxchars, 
+		      int is_f_tty);
 #ifndef __RWRITERC_C__
 extern char **rc_tty_list;
 #endif

@@ -5,15 +5,21 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Sun Nov 20 13:40:54 1994 tri
+ * Last modified: Fri Dec  9 00:42:30 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.12 $
+ * $Revision: 1.13 $
  * $State: Exp $
- * $Date: 1994/11/20 11:51:17 $
+ * $Date: 1994/12/08 22:56:45 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.12  1994/11/20 11:51:17  tri
+ * Revision 1.13  1994/12/08 22:56:45  tri
+ * Fixed the quotation system on message
+ * delivery.  Same message can now be quoted
+ * differently for the each receiver.
+ * Also the autoreplies are now quoted right.
+ *
+ * Revision 1.12  1994/11/20  11:51:17  tri
  * sys/time.h is included.
  *
  * Revision 1.11  1994/11/20  11:45:01  tri
@@ -73,7 +79,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.12 1994/11/20 11:51:17 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.13 1994/12/08 22:56:45 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -921,15 +927,13 @@ int spit_autoreply(char *user)
     nowstr = ctime(&now);
 
     if(autoreply_lines) {
-	fprintf(stdout, "Automatic reply from %s at %s\n", 
+	fprintf(stdout, "Automatic reply from %s at %s", 
 		user, nowstr ? nowstr : "xxx");
-	for(j = 0; j < autoreply_lines; j++) {
-	    
-	    hlp = dequote_str(autoreply[j]);
-	    fprintf(stderr, "%s\n", hlp);
-	    free(hlp);
-	}
-	fputc('\n', stdout);
+	return(dequote_and_write(stdout,
+				 autoreply, 
+				 max_lines_in(), 
+				 max_chars_in(),
+				 0));
 	return 1;
     }
     return 0;

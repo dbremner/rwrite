@@ -5,15 +5,21 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Wed Dec  7 14:27:28 1994 tri
+ * Last modified: Fri Dec  9 00:50:20 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.16 $
+ * $Revision: 1.17 $
  * $State: Exp $
- * $Date: 1994/12/07 12:34:32 $
+ * $Date: 1994/12/08 22:56:45 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.16  1994/12/07 12:34:32  tri
+ * Revision 1.17  1994/12/08 22:56:45  tri
+ * Fixed the quotation system on message
+ * delivery.  Same message can now be quoted
+ * differently for the each receiver.
+ * Also the autoreplies are now quoted right.
+ *
+ * Revision 1.16  1994/12/07  12:34:32  tri
  * Removed read_message() and dropped in Camillo's GetMsg()
  * instead.
  *
@@ -88,7 +94,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.16 1994/12/07 12:34:32 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.17 1994/12/08 22:56:45 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -423,6 +429,8 @@ gm_getline (FILE* pf, int* p_limit, int* p_EOF)
     *p_limit -= pos;
     return p_buffer;
 }
+/*************** End of contribution from Mr. Camillo S{rs. ***************/
+
 /* 
  *  Skip first token in line.
  *  If there are white space in the tail of the command,
@@ -663,16 +671,20 @@ int writeto(char *tty,
 	    char *remotehost,
 	    char *nowstr)
 {
-    int i;
+    int ttyp;
     FILE *f;
 
     if(!(f = fopen(tty, "a")))
 	return 0;
-    fputc('\007', f);
+    if(ttyp = isatty(fileno(f)))
+	fputc('\a', f);
+    fputc('\n', f);
+    if(ttyp)
+	fputc('\r', f);
     if(strcmp(remotehost, fromhost))
 	if(via) {
 	    fprintf(f, 
-		    "\nMessage from %s@%s (via %s%c%s) at %s\n", 
+		    "Message from %s@%s (via %s%c%s) at %s", 
 		    from, 
 		    fromhost, 
 		    via,
@@ -680,16 +692,14 @@ int writeto(char *tty,
 		    remotehost, 
 		    (nowstr ? nowstr : "xxx"));
 	} else {
-	    fprintf(f, "\nMessage from %s@%s (via %s) at %s\n", from, fromhost, 
+	    fprintf(f, "Message from %s@%s (via %s) at %s", from, fromhost, 
 		    remotehost, (nowstr ? nowstr : "xxx"));
 	}
     else
-	fprintf(f, "\nMessage from %s@%s at %s\n", from, fromhost, 
+	fprintf(f, "Message from %s@%s at %s", from, fromhost, 
 		(nowstr ? nowstr : "xxx"));
-    for(i = 0; msg[i]; i++)
-	fprintf(f, "%s\n", msg[i]);
-    fputc('\n', f);
-    fclose(f);
+    return(dequote_and_write(f, msg, max_lines_in(), max_chars_in(), ttyp));
+
     return 1;
 }
 /*

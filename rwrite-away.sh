@@ -5,15 +5,18 @@
 # away(1)  -  handle automagically ~/.rwrite-autoreply files.
 # ----------------------------------------------------------------------
 # Created      : Mon Dec 12 16:18:23 1994 tri
-# Last modified: Mon Dec 12 17:14:51 1994 tri
+# Last modified: Mon Dec 12 18:44:25 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $State: Exp $
-# $Date: 1994/12/12 15:58:41 $
+# $Date: 1994/12/12 16:44:58 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: rwrite-away.sh,v $
-# Revision 1.3  1994/12/12 15:58:41  tri
+# Revision 1.4  1994/12/12 16:44:58  tri
+# Added -q option.
+#
+# Revision 1.3  1994/12/12  15:58:41  tri
 # Copyright fixed a bit.
 #
 # Revision 1.2  1994/12/12  15:15:06  tri
@@ -68,6 +71,16 @@ then
             echo "away: Cannot see $RWRITE_AUTOREPLY_FILE.  You are not marked as being away."
 	    exit 1
         fi
+    fi
+    if [ "$1" = "-q" ]
+    then
+        if [ -f "$HOME/.rwrite-autoreply" ]
+        then
+	    cat "$HOME/.rwrite-autoreply" | sed '1s/^I/You/'
+	else
+            echo "away: You are not marked as being away."
+        fi
+	exit 0
     fi
     if [ -f "$HOME/.rwrite-autoreply" ]
     then

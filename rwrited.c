@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Thu Dec 15 06:56:59 1994 tri
+ * Last modified: Thu Dec 15 17:34:36 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.38 $
+ * $Revision: 1.39 $
  * $State: Exp $
- * $Date: 1994/12/15 04:58:28 $
+ * $Date: 1994/12/15 15:34:56 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.38  1994/12/15 04:58:28  tri
+ * Revision 1.39  1994/12/15 15:34:56  tri
+ * Added one semicolon to make SQI compiler happy.
+ *
+ * Revision 1.38  1994/12/15  04:58:28  tri
  * Fixed udp-support.
  *
  * Revision 1.37  1994/12/14  22:22:38  tri
@@ -167,7 +170,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.38 1994/12/15 04:58:28 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.39 1994/12/15 15:34:56 tri Exp $";
 #endif /* not lint */
 
 #define RWRITED_VERSION_NUMBER	"1.1b30"	/* Server version   */
@@ -1075,7 +1078,7 @@ int main(int argc, char **argv)
 	if(!(udp = ((argc > 1) && (!(strcmp(argv[1], "udp"))))))
 	    set_hostnames(1, NULL);
     }
- read_another_udp:
+ read_another_udp:;
     if(udp) {
 	struct sockaddr_in sin;
 	int sin_len = sizeof(sin);
@@ -1537,7 +1540,7 @@ int main(int argc, char **argv)
    	}
 	if(!udp)
 	    free(cmd);
-    out_of_parse:
+    out_of_parse:;
     } while(!cmdeofp);
  leave_parse_loop:
     if(udp) {

@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Sun Dec 11 19:54:05 1994 tri
+ * Last modified: Sun Dec 11 23:09:48 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.24 $
+ * $Revision: 1.25 $
  * $State: Exp $
- * $Date: 1994/12/11 18:16:28 $
+ * $Date: 1994/12/11 21:25:30 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.24  1994/12/11 18:16:28  tri
+ * Revision 1.25  1994/12/11 21:25:30  tri
+ * Cleaned up some warnings.  No functional changes.
+ *
+ * Revision 1.24  1994/12/11  18:16:28  tri
  * Some portability fixes and configuration stuff
  * moved to Makefile.
  *
@@ -118,7 +121,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.24 1994/12/11 18:16:28 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.25 1994/12/11 21:25:30 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -367,61 +370,60 @@ GetMsg (FILE* pf, int line_limit, int char_limit)
     int pos = 0;
     int eof = 0;
     int c = 0;
-    char* p_tmp;
     char** p_buffer;
 
-    if (line_limit == INT_MAX) line_limit -= 1;
+    if(line_limit == INT_MAX)
+	line_limit -= 1;
 
-    p_buffer = (char **) malloc ((line_limit+1) * sizeof (char*));
+    p_buffer = (char **)malloc((line_limit+1) * sizeof (char*));
 
-    if (p_buffer == NULL) return NULL;
+    if(p_buffer == NULL)
+	return NULL;
 
     p_buffer[line_limit] = NULL;
 
     RWRITE_MSG(RWRITE_GETMSG, 
 	       "Enter message.  Single dot '.' on line terminates.");
 
-    while (!eof && char_limit)
-      {
-	  if (pos == line_limit) { break;}
-	  p_buffer[pos] = gm_getline (pf, &char_limit, &eof);
-	  if (p_buffer[pos] == NULL) { break; }
+    while (!eof && char_limit) {
+	if(pos == line_limit)
+	    break;
+	p_buffer[pos] = gm_getline (pf, &char_limit, &eof);
+	if(p_buffer[pos] == NULL)
+	    break;
 #ifdef DEBUG
-	  printf("%03d <<<%s\n", RWRITE_DEBUG, p_buffer[pos]);
+	printf("%03d <<<%s\n", RWRITE_DEBUG, p_buffer[pos]);
 #endif
-	  if (*p_buffer[pos] == '.' &&
-	      *(p_buffer[pos]+1) == '\0')
-	    {
-		eof = -1;
-		p_buffer[pos] = NULL;
-		break;
-	    }
-	  pos++;
-      }
+	if((*p_buffer[pos] == '.') &&
+	   (*(p_buffer[pos]+1) == '\0')) {
+	    eof = -1;
+	    p_buffer[pos] = NULL;
+	    break;
+	}
+	pos++;
+    }
 
-    if (! eof)
-      {
+    if(!eof) {
 #ifdef DEBUG
-	  printf ("%03d Skipping input up to '.'\n", RWRITE_DEBUG);
+	printf ("%03d Skipping input up to '.'\n", RWRITE_DEBUG);
 #endif
-	  while (1)
-	    {
+	while(1) {
+	    c = fgetc(pf);
+	    if(c == EOF)
+		break;
+	    if(c == '.') {
 		c = fgetc(pf);
-		if (c == EOF) break;
-		if (c == '.')
-		  {
-		      c = fgetc(pf);
-		      if (c == EOF || c == '\n') break;
-		  }
-		while ((c = fgetc(pf)) != EOF && c != '\n') ;
+		if (c == EOF || c == '\n') break;
 	    }
-      }
+	    while ((c = fgetc(pf)) != EOF && c != '\n')
+		/*NOTHING*/;
+	}
+    }
     if(p_buffer[0] && (p_buffer[0][0] || p_buffer[1])) {
 	return p_buffer;
-    } else {
-	free(p_buffer);
-	return NULL;
     }
+    free(p_buffer);
+    return NULL;
 }
 
 #define GL_BUFFER_SIZE 256
@@ -1083,7 +1085,7 @@ int main(int argc, char **argv)
 		      (!(strncmp(cmd, "FWDS ", 5)))) {
 		char *n_str = get_user_name(cmd);
 		char *hlp;
-		int n, i;
+		int n;
 
 		if((!n_str) ||
 		   (!(strlen(n_str)))) {

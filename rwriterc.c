@@ -5,15 +5,18 @@
  * Resource file routines for rwrite.
  * ----------------------------------------------------------------------
  * Created      : Fri Oct 07 00:27:30 1994 tri
- * Last modified: Sun Dec 11 19:54:14 1994 tri
+ * Last modified: Sun Dec 11 23:10:38 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.11 $
+ * $Revision: 1.12 $
  * $State: Exp $
- * $Date: 1994/12/11 18:16:28 $
+ * $Date: 1994/12/11 21:25:30 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.11  1994/12/11 18:16:28  tri
+ * Revision 1.12  1994/12/11 21:25:30  tri
+ * Cleaned up some warnings.  No functional changes.
+ *
+ * Revision 1.11  1994/12/11  18:16:28  tri
  * Some portability fixes and configuration stuff
  * moved to Makefile.
  *
@@ -77,7 +80,7 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.11 1994/12/11 18:16:28 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.12 1994/12/11 21:25:30 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -671,7 +674,7 @@ int dequote_and_write(FILE *f,
 		      int maxchars, 
 		      int is_f_tty)
 {
-    int i, linelen, x;
+    int i, linelen;
     char *out;
     
 #ifdef DEBUG

@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Sun Dec 11 19:53:44 1994 tri
+ * Last modified: Sun Dec 11 23:21:46 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.21 $
+ * $Revision: 1.22 $
  * $State: Exp $
- * $Date: 1994/12/11 18:16:28 $
+ * $Date: 1994/12/11 21:25:30 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.21  1994/12/11 18:16:28  tri
+ * Revision 1.22  1994/12/11 21:25:30  tri
+ * Cleaned up some warnings.  No functional changes.
+ *
+ * Revision 1.21  1994/12/11  18:16:28  tri
  * Some portability fixes and configuration stuff
  * moved to Makefile.
  *
@@ -107,16 +110,12 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.21 1994/12/11 18:16:28 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.22 1994/12/11 21:25:30 tri Exp $";
 #endif /* not lint */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/param.h>
-#include <sys/time.h>
-#include <netinet/in.h>
-#include <netdb.h>
 #include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 
 #ifndef NO_STDLIB_H
 #include <stdlib.h>
@@ -126,14 +125,27 @@ static char *RCS_id = "$Id: rwrite.c,v 1.21 1994/12/11 18:16:28 tri Exp $";
 #include <unistd.h>
 #endif
 
-#include <ctype.h>
 #include <pwd.h>
+#include <stdio.h>
+#include <limits.h>
 
-#include "rwrite.h"
+#include <netdb.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/file.h>
+#include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+
+#include <netinet/in_systm.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
 
 #ifndef DONT_FLUSH_INPUT_IN_FAILURE
 #include <sys/ioctl.h>
 #endif
+
+#include "rwrite.h"
 
 int verbose = 0;
 int quiet = 0;
@@ -159,7 +171,7 @@ FILE *open_history_write()
     sprintf(path, "%s/.lastrwrite#", home);
     f = fopen(path, "w");
     if(f)
-	chmod(path, 0600);
+	fchmod(fileno(f), 0600);
     return(f);
 } 
 
@@ -1022,7 +1034,7 @@ int blow_target_addr(char *str, char **to, char **tty)
 	hlp++;
     if(*hlp) {
 	*hlp = '\000';
-	*hlp++;
+	hlp++;
     }
     if(*hlp) {
 	*tty = hlp;
@@ -1050,8 +1062,6 @@ int fix_tty_quote(char *str)
 
 int spit_autoreply(char *user)
 {
-    int j;
-    char *hlp;
     time_t now;
     char *nowstr;
 

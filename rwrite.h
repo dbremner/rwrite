@@ -6,15 +6,18 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Sun Dec 11 20:44:40 1994 tri
+ * Last modified: Sun Dec 11 23:06:55 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.24 $
+ * $Revision: 1.25 $
  * $State: Exp $
- * $Date: 1994/12/11 18:45:50 $
+ * $Date: 1994/12/11 21:25:30 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.24  1994/12/11 18:45:50  tri
+ * Revision 1.25  1994/12/11 21:25:30  tri
+ * Cleaned up some warnings.  No functional changes.
+ *
+ * Revision 1.24  1994/12/11  18:45:50  tri
  * Minor fix.
  *
  * Revision 1.23  1994/12/11  18:16:28  tri
@@ -124,8 +127,8 @@
 #define __RWRITE_H__ 1
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.1b14"	/* Server version   */
-#define RWRITE_VERSION_NUMBER	"1.1b14"	/* Client version   */
+#define RWRITED_VERSION_NUMBER	"1.1b15"	/* Server version   */
+#define RWRITE_VERSION_NUMBER	"1.1b15"	/* Client version   */
 /*
  * User definitions are in the following files.
  */
@@ -173,6 +176,7 @@
 int rc_read_p(void);
 int ring_bell(void);
 int max_lines_in(void);
+int max_chars_in(void);
 int default_bg(void);
 int add_to_list(char ***list, int *list_sz, char *str);
 int add_list_to_list(char ***tgt, int *tgt_sz, char **list);

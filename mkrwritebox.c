@@ -5,15 +5,19 @@
  * Make rwrite inboxes writable by tty group .
  * ----------------------------------------------------------------------
  * Created      : Sat Dec 10 17:27:21 1994 toka
- * Last modified: Sat Dec 10 17:33:46 1994 tri
+ * Last modified: Sun Dec 11 20:34:37 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.2 $
+ * $Revision: 1.3 $
  * $State: Exp $
- * $Date: 1994/12/11 14:56:13 $
+ * $Date: 1994/12/11 18:40:28 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: mkrwritebox.c,v $
- * Revision 1.2  1994/12/11 14:56:13  tri
+ * Revision 1.3  1994/12/11 18:40:28  tri
+ * Now makerules work like the lavatory in the train
+ * and portability is as good as I can make it.
+ *
+ * Revision 1.2  1994/12/11  14:56:13  tri
  * Minor fix.
  *
  * Revision 1.1  1994/12/10  15:38:22  tri
@@ -41,12 +45,16 @@
  */
 #define __MKRWRITEBOX_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: mkrwritebox.c,v 1.2 1994/12/11 14:56:13 tri Exp $";
+static char *RCS_id = "$Id: mkrwritebox.c,v 1.3 1994/12/11 18:40:28 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <fcntl.h>
+
+#ifndef NO_UNISTD_H
 #include <unistd.h>
+#endif
+
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>

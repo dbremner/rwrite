@@ -5,7 +5,7 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Sat Apr 18 23:35:41 1998 tri
+ * Last modified: Sun Apr 19 00:12:53 1998 tri
  * ----------------------------------------------------------------------
  * Copyright © 1994-1998
  * Timo J. Rinne <tri@iki.fi>
@@ -19,12 +19,15 @@
  *
  * Please, send your patches to <tri@iki.fi>.
  * ----------------------------------------------------------------------
- * $Revision: 1.44 $
+ * $Revision: 1.45 $
  * $State: Exp $
- * $Date: 1998/04/18 20:52:28 $
+ * $Date: 1998/04/18 21:13:02 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
+ * Revision 1.45  1998/04/18 21:13:02  tri
+ * Promoted version number.
+ *
  * Revision 1.44  1998/04/18 20:52:28  tri
  * New copyright in COPYRIGHT.
  *
@@ -183,10 +186,10 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.44 1998/04/18 20:52:28 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.45 1998/04/18 21:13:02 tri Exp $";
 #endif /* not lint */
 
-#define RWRITED_VERSION_NUMBER	"1.1"	/* Server version   */
+#define RWRITED_VERSION_NUMBER	"1.2"	/* Server version   */
 
 #include <stdio.h>
 #include <string.h>

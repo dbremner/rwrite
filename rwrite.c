@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Wed Dec 14 21:11:55 1994 tri
+ * Last modified: Wed Dec 14 21:25:43 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.34 $
+ * $Revision: 1.35 $
  * $State: Exp $
- * $Date: 1994/12/14 19:12:36 $
+ * $Date: 1994/12/14 19:26:16 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.34  1994/12/14 19:12:36  tri
+ * Revision 1.35  1994/12/14 19:26:16  tri
+ * Minor fix.
+ *
+ * Revision 1.34  1994/12/14  19:12:36  tri
  * Hacked udp connection type a bit, but it
  * does not seem to work.
  *
@@ -150,10 +153,10 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.34 1994/12/14 19:12:36 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.35 1994/12/14 19:26:16 tri Exp $";
 #endif /* not lint */
 
-#define RWRITE_VERSION_NUMBER	"1.1b25"	/* Client version   */
+#define RWRITE_VERSION_NUMBER	"1.1b27"	/* Client version   */
 
 #include <stdio.h>
 #include <string.h>

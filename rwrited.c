@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Wed Dec 14 20:35:44 1994 tri
+ * Last modified: Wed Dec 14 21:25:54 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.34 $
+ * $Revision: 1.35 $
  * $State: Exp $
- * $Date: 1994/12/14 19:12:36 $
+ * $Date: 1994/12/14 19:26:16 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.34  1994/12/14 19:12:36  tri
+ * Revision 1.35  1994/12/14 19:26:16  tri
+ * Minor fix.
+ *
+ * Revision 1.34  1994/12/14  19:12:36  tri
  * Hacked udp connection type a bit, but it
  * does not seem to work.
  *
@@ -153,10 +156,10 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.34 1994/12/14 19:12:36 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.35 1994/12/14 19:26:16 tri Exp $";
 #endif /* not lint */
 
-#define RWRITED_VERSION_NUMBER	"1.1b25"	/* Server version   */
+#define RWRITED_VERSION_NUMBER	"1.1b27"	/* Server version   */
 
 #include <stdio.h>
 #include <string.h>
@@ -1010,7 +1013,7 @@ int main(int argc, char **argv)
 	    exit(1);
 	}
 	if(0 >= 
-	   (udpbuflen = recv(0, udpbuf, UDP_DIALOG_LEN_MAX, MSG_WAITALL))) {
+	   (udpbuflen = recv(0, udpbuf, UDP_DIALOG_LEN_MAX, 0))) {
 	    /* Failed */
 	    exit(1);
 	}

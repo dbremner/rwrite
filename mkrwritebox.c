@@ -3,13 +3,16 @@
  * Created      : Sat Dec 10 17:27:21 1994 toka
  * Last modified: Mon Dec 12 13:01:51 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.5 $
+ * $Revision: 1.6 $
  * $State: Exp $
- * $Date: 1994/12/12 11:03:42 $
+ * $Date: 1994/12/12 15:58:41 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: mkrwritebox.c,v $
- * Revision 1.5  1994/12/12 11:03:42  tri
+ * Revision 1.6  1994/12/12 15:58:41  tri
+ * Copyright fixed a bit.
+ *
+ * Revision 1.5  1994/12/12  11:03:42  tri
  * Added compatibility fixes from toka.
  *
  * Revision 1.4  1994/12/11  18:48:49  cirion
@@ -27,7 +30,7 @@
  *
  * ----------------------------------------------------------------------
  * Copyright 1994, Tomi Kause <toka@cirion.fi> and Cirion oy.
- * Copyright 1994, Timo Rinne <tri@cirion.fi> and Cirion oy.
+ * Copyright 1994, Timo J. Rinne <tri@cirion.fi> and Cirion oy.
  * 
  * Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
  * 
@@ -47,7 +50,7 @@
  */
 #define __MKRWRITEBOX_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: mkrwritebox.c,v 1.5 1994/12/12 11:03:42 tri Exp $";
+static char *RCS_id = "$Id: mkrwritebox.c,v 1.6 1994/12/12 15:58:41 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

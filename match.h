@@ -7,20 +7,23 @@
  * Created      : Tue Sep 20 10:34:43 1994 tri
  * Last modified: Tue Sep 20 11:26:16 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.2 $
+ * $Revision: 1.3 $
  * $State: Exp $
- * $Date: 1994/09/20 08:26:36 $
+ * $Date: 1994/12/12 15:58:41 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: match.h,v $
- * Revision 1.2  1994/09/20 08:26:36  tri
+ * Revision 1.3  1994/12/12 15:58:41  tri
+ * Copyright fixed a bit.
+ *
+ * Revision 1.2  1994/09/20  08:26:36  tri
  * Minor fix.
  *
  * Revision 1.1  1994/09/20  08:24:13  tri
  * Initial revision
  *
  * ----------------------------------------------------------------------
- * Copyright 1994, Timo Rinne <tri@cirion.fi> and Cirion oy.
+ * Copyright 1994, Timo J. Rinne <tri@cirion.fi> and Cirion oy.
  * 
  * Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
  * 

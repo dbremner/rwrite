@@ -7,13 +7,16 @@
  * Created      : Tue Sep 13 15:27:46 1994 tri
  * Last modified: Mon Dec 12 04:11:53 1994 cirion
  * ----------------------------------------------------------------------
- * $Revision: 1.27 $
+ * $Revision: 1.28 $
  * $State: Exp $
- * $Date: 1994/12/12 11:03:42 $
+ * $Date: 1994/12/12 15:58:41 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.27  1994/12/12 11:03:42  tri
+ * Revision 1.28  1994/12/12 15:58:41  tri
+ * Copyright fixed a bit.
+ *
+ * Revision 1.27  1994/12/12  11:03:42  tri
  * Added compatibility fixes from toka.
  *
  * Revision 1.26  1994/12/11  22:04:16  tri
@@ -108,7 +111,7 @@
  * Initial revision
  *
  * ----------------------------------------------------------------------
- * Copyright 1994, Timo Rinne <tri@cirion.fi> and Cirion oy.
+ * Copyright 1994, Timo J. Rinne <tri@cirion.fi> and Cirion oy.
  * 
  * Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
  * 
@@ -128,7 +131,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.27 1994/12/12 11:03:42 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.28 1994/12/12 15:58:41 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

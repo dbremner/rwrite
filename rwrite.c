@@ -7,13 +7,16 @@
  * Created      : Tue Sep 13 15:28:07 1994 tri
  * Last modified: Mon Dec 12 13:30:42 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.26 $
+ * $Revision: 1.27 $
  * $State: Exp $
- * $Date: 1994/12/12 11:30:54 $
+ * $Date: 1994/12/12 15:58:41 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.26  1994/12/12 11:30:54  tri
+ * Revision 1.27  1994/12/12 15:58:41  tri
+ * Copyright fixed a bit.
+ *
+ * Revision 1.26  1994/12/12  11:30:54  tri
  * Another one.
  *
  * Revision 1.25  1994/12/12  11:25:57  tri
@@ -103,7 +106,7 @@
  * Initial revision
  *
  * ----------------------------------------------------------------------
- * Copyright 1994, Timo Rinne <tri@cirion.fi> and Cirion oy.
+ * Copyright 1994, Timo J. Rinne <tri@cirion.fi> and Cirion oy.
  * 
  * Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
  * 
@@ -123,7 +126,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.26 1994/12/12 11:30:54 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.27 1994/12/12 15:58:41 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

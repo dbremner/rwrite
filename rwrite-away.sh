@@ -7,13 +7,16 @@
 # Created      : Mon Dec 12 16:18:23 1994 tri
 # Last modified: Mon Dec 12 17:14:51 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $State: Exp $
-# $Date: 1994/12/12 15:15:06 $
+# $Date: 1994/12/12 15:58:41 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: rwrite-away.sh,v $
-# Revision 1.2  1994/12/12 15:15:06  tri
+# Revision 1.3  1994/12/12 15:58:41  tri
+# Copyright fixed a bit.
+#
+# Revision 1.2  1994/12/12  15:15:06  tri
 # # is now comment in ~/.rwrite-away file but only
 # if it's the first character on the line.
 #
@@ -21,7 +24,7 @@
 # Initial revision
 #
 # ----------------------------------------------------------------------
-# Copyright 1994, Timo Rinne <tri@cirion.fi> and Cirion oy.
+# Copyright 1994, Timo J. Rinne <tri@cirion.fi> and Cirion oy.
 # 
 # Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
 # 

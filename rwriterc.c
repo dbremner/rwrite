@@ -7,13 +7,16 @@
  * Created      : Fri Oct 07 00:27:30 1994 tri
  * Last modified: Mon Dec 12 00:33:43 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.13 $
+ * $Revision: 1.14 $
  * $State: Exp $
- * $Date: 1994/12/11 22:34:22 $
+ * $Date: 1994/12/12 15:58:41 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwriterc.c,v $
- * Revision 1.13  1994/12/11 22:34:22  tri
+ * Revision 1.14  1994/12/12 15:58:41  tri
+ * Copyright fixed a bit.
+ *
+ * Revision 1.13  1994/12/11  22:34:22  tri
  * Fixed some portability problems that are problems
  * only with braindamaged compilers.
  *
@@ -64,7 +67,7 @@
  * Initial revision
  *
  * ----------------------------------------------------------------------
- * Copyright 1994, Timo Rinne <tri@cirion.fi> and Cirion oy.
+ * Copyright 1994, Timo J. Rinne <tri@cirion.fi> and Cirion oy.
  * 
  * Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
  * 
@@ -84,7 +87,7 @@
  */
 #define __RWRITERC_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwriterc.c,v 1.13 1994/12/11 22:34:22 tri Exp $";
+static char *RCS_id = "$Id: rwriterc.c,v 1.14 1994/12/12 15:58:41 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

@@ -7,13 +7,16 @@
 # Created      : Sun Dec 11 20:12:18 1994 tri
 # Last modified: Mon Dec 12 16:53:31 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $State: Exp $
-# $Date: 1994/12/12 15:52:16 $
+# $Date: 1994/12/12 15:58:41 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: Makefile.in,v $
-# Revision 1.11  1994/12/12 15:52:16  tri
+# Revision 1.12  1994/12/12 15:58:41  tri
+# Copyright fixed a bit.
+#
+# Revision 1.11  1994/12/12  15:52:16  tri
 # Added away to sysvinstall
 #
 # Revision 1.10  1994/12/12  14:53:51  tri
@@ -51,7 +54,7 @@
 #
 # ----------------------------------------------------------------------
 # Copyright 1994, Tomi Kause <toka@cirion.fi> and Cirion oy.
-# Copyright 1994, Timo Rinne <tri@cirion.fi> and Cirion oy.
+# Copyright 1994, Timo J. Rinne <tri@cirion.fi> and Cirion oy.
 # 
 # Address: Cirion oy, PO-BOX 250, 00121 HELSINKI, Finland
 # 

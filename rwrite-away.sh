@@ -5,15 +5,19 @@
 # away(1)  -  handle automagically ~/.rwrite-autoreply files.
 # ----------------------------------------------------------------------
 # Created      : Mon Dec 12 16:18:23 1994 tri
-# Last modified: Mon Dec 12 16:20:12 1994 tri
+# Last modified: Mon Dec 12 17:14:51 1994 tri
 # ----------------------------------------------------------------------
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $State: Exp $
-# $Date: 1994/12/12 14:43:46 $
+# $Date: 1994/12/12 15:15:06 $
 # $Author: tri $
 # ----------------------------------------------------------------------
 # $Log: rwrite-away.sh,v $
-# Revision 1.1  1994/12/12 14:43:46  tri
+# Revision 1.2  1994/12/12 15:15:06  tri
+# # is now comment in ~/.rwrite-away file but only
+# if it's the first character on the line.
+#
+# Revision 1.1  1994/12/12  14:43:46  tri
 # Initial revision
 #
 # ----------------------------------------------------------------------
@@ -36,7 +40,7 @@
 # ----------------------------------------------------------------------
 #
 
-# Needs awk(1), sed(1) and working /bin/sh.
+# Needs grep(1), awk(1), sed(1) and working /bin/sh.
 
 if [ "x$RWRITE_AWAY_FILE" = "x" ]
 then
@@ -72,7 +76,7 @@ then
         echo "Type in the away message.  EOF terminates the input."
 	away_body="`cat`"
     else
-        away_body="`awk 'BEGIN { mode = 1 } { if (mode == 1 && match($0, "::'$1'::")) { mode = 2 } else if (mode == 2 && match($0, "^::.*::$")) { mode = 3 } else if (mode == 2) { print $0 } }' < $RWRITE_AWAY_FILE`"
+        away_body="`grep -v '^#' < $RWRITE_AWAY_FILE | awk 'BEGIN { mode = 1 } { if (mode == 1 && match($0, "::'$1'::")) { mode = 2 } else if (mode == 2 && match($0, "^::.*::$")) { mode = 3 } else if (mode == 2) { print $0 } }'`"
     fi
     if [ "x$away_body" = "x" ]
     then

@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Tue Sep 20 01:43:12 1994 tri
+ * Last modified: Tue Sep 20 21:52:34 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.5 $
+ * $Revision: 1.6 $
  * $State: Exp $
- * $Date: 1994/09/19 22:43:38 $
+ * $Date: 1994/09/20 18:52:51 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.5  1994/09/19 22:43:38  tri
+ * Revision 1.6  1994/09/20 18:52:51  tri
+ * Fixed few minor warnings.
+ *
+ * Revision 1.5  1994/09/19  22:43:38  tri
  * Warning about defaulted tcp-port now comes only
  * in verbose mode.
  *
@@ -51,7 +54,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.5 1994/09/19 22:43:38 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.6 1994/09/20 18:52:51 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -485,7 +488,7 @@ int rwp_dialog(int s, char *to, char *from, char **msg, int writehist)
 			fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
 			return 0;
 		    }
-		    fprintf(stderr, "rwrite: Forward limit exceeded.\n", code);
+		    fprintf(stderr, "rwrite: Forward limit exceeded.\n");
 		    return 0;
 		default:
 		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
@@ -761,7 +764,7 @@ int main(int argc, char **argv)
 	case 'f':
 	    fwds = atoi(optarg);
 	    if(fwds < 1) {
-		fprintf(stderr, "rwrite: -f needs an argument > 0.\n", optopt);
+		fprintf(stderr, "rwrite: -f needs an argument > 0.\n");
 		exit(1);
 	    }
 	    break;

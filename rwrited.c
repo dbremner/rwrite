@@ -5,15 +5,19 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Thu Sep 15 23:11:46 1994 tri
+ * Last modified: Tue Sep 20 01:37:53 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.4 $
+ * $Revision: 1.5 $
  * $State: Exp $
- * $Date: 1994/09/15 20:14:42 $
+ * $Date: 1994/09/19 22:40:37 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.4  1994/09/15 20:14:42  tri
+ * Revision 1.5  1994/09/19 22:40:37  tri
+ * TOOK replaced by VRFY and made some considerable
+ * cleanup.
+ *
+ * Revision 1.4  1994/09/15  20:14:42  tri
  * Completed the support of RWP version 1.0.
  *
  * Revision 1.3  1994/09/14  15:10:18  tri
@@ -46,7 +50,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.4 1994/09/15 20:14:42 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.5 1994/09/19 22:40:37 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -54,6 +58,7 @@ static char *RCS_id = "$Id: rwrited.c,v 1.4 1994/09/15 20:14:42 tri Exp $";
 #include <stdlib.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <pwd.h>
 
 #include <netdb.h>
 #include <sys/types.h>
@@ -62,11 +67,28 @@ static char *RCS_id = "$Id: rwrited.c,v 1.4 1994/09/15 20:14:42 tri Exp $";
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <utmp.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+
+#include <utmp.h>
+
+#ifndef UT_LINESIZE
+#  define UT_LINESIZE 32
+#endif
+
+#ifndef _PATH_UTMP
+#  ifdef PATH_UTMP
+#    define _PATH_UTMP PATH_UTMP
+#  else
+#    ifdef UTMP_FILE
+#      define _PATH_UTMP UTMP_FILE
+#    else
+#      define _PATH_UTMP "/etc/utmp"
+#    endif
+#  endif
+#endif
 
 #include "rwrite.h"
 
@@ -213,7 +235,7 @@ void rwrite_help()
     RWRITE_MSG(RWRITE_HELP, "Valid commands are:");
     RWRITE_MSG(RWRITE_HELP, "    BYE,    DATA,   HELP,   HELO,");
     RWRITE_MSG(RWRITE_HELP, "    RSET,   SEND,   PROT,   QUIT,");
-    RWRITE_MSG(RWRITE_HELP, "    TOOK,   VER");
+    RWRITE_MSG(RWRITE_HELP, "    VRFY,   VER");
     RWRITE_MSG(RWRITE_HELP, "    FROM senderlogin");
     RWRITE_MSG(RWRITE_HELP, "    FHST senderhost");
     RWRITE_MSG(RWRITE_HELP, "    TO   recipentlogin");
@@ -339,8 +361,7 @@ int search_utmp(char *user, char *tty)
 	char atty[UT_LINESIZE + 1];
 
 	if((ufd = open(_PATH_UTMP, O_RDONLY)) < 0) {
-	    perror("utmp");
-	    exit(1);
+	    return DELIVER_USER_NOT_IN;
 	}
 	nloggedttys = nttys = 0;
 	bestatime = 0;
@@ -388,12 +409,21 @@ int deliver(char *user,
     FILE *f;
     int i;
     char tty[MAXPATHLEN];
+    char userhome[MAXPATHLEN];
     int d_status;
     time_t now;
     char *nowstr;
 
     now = time(NULL);
     nowstr = ctime(&now);
+    {
+	struct passwd *pwd;
+
+	if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
+	    return DELIVER_NO_SUCH_USER;
+	}
+	strcpy(userhome, pwd->pw_dir);
+    }
     
     if((d_status = search_utmp(user, tty)) != DELIVER_OK)
 	return(d_status);
@@ -417,6 +447,13 @@ int can_deliver(char *user)
 {
     char tty[MAXPATHLEN];
 
+    {
+	struct passwd *pwd;
+
+	if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {
+	    return DELIVER_NO_SUCH_USER;
+	}
+    }
     return(search_utmp(user, tty));
 }
 
@@ -552,25 +589,27 @@ int main(int argc, char **argv)
 		    RWRITE_MSG(RWRITE_ERR_FWD_LIMIT_EXCEEDED,
 			       "Forward limit exceeded.");
 		}
-	    } else if((!(strcmp(cmd, "took"))) || (!(strcmp(cmd, "TOOK")))) {
+	    } else if((!(strcmp(cmd, "vrfy"))) || (!(strcmp(cmd, "VRFY")))) {
 		int d_status;
 
 		if(!(to_user[0])) {
 		    RWRITE_MSG(RWRITE_ERR_NO_ADDRESS, 
-			       "Use TO before TOOK.");
+			       "Use TO before VRFY.");
 		    goto out_of_parse;
 		}
 		if((d_status = can_deliver(to_user)) != DELIVER_OK) {
 		    switch(d_status) {
+		    case DELIVER_NO_SUCH_USER:
+#ifndef DO_NOT_TELL_USERS
+			RWRITE_MSG(RWRITE_ERR_NO_SUCH_USER, "No such user.");
+			break;
+#endif
 		    case DELIVER_USER_NOT_IN:
 			RWRITE_MSG(RWRITE_ERR_USER_NOT_IN, "User not in.");
 			break;
 		    case DELIVER_PERMISSION_DENIED:
 			RWRITE_MSG(RWRITE_ERR_PERMISSION_DENIED, 
 				   "Permission denied.");
-			break;
-		    case DELIVER_NO_SUCH_USER:
-			RWRITE_MSG(RWRITE_ERR_NO_SUCH_USER, "No such user.");
 			break;
 		    default:
 			RWRITE_MSG(RWRITE_ERR_UNKNOWN, "Unknown error.");
@@ -615,15 +654,15 @@ int main(int argc, char **argv)
 				       remote_host,
 				       message)) != DELIVER_OK) {
 		    switch(d_status) {
+		    case DELIVER_NO_SUCH_USER:
+			RWRITE_MSG(RWRITE_ERR_NO_SUCH_USER, "No such user.");
+			break;
 		    case DELIVER_USER_NOT_IN:
 			RWRITE_MSG(RWRITE_ERR_USER_NOT_IN, "User not in.");
 			break;
 		    case DELIVER_PERMISSION_DENIED:
 			RWRITE_MSG(RWRITE_ERR_PERMISSION_DENIED, 
 				   "Permission denied.");
-			break;
-		    case DELIVER_NO_SUCH_USER:
-			RWRITE_MSG(RWRITE_ERR_NO_SUCH_USER, "No such user.");
 			break;
 		    default:
 			RWRITE_MSG(RWRITE_ERR_UNKNOWN,"Unknown error.");
@@ -636,7 +675,8 @@ int main(int argc, char **argv)
 		      (!(strcmp(cmd, "QUOTE"))) ||
 		      (!(strncmp(cmd, "quote ", 6))) || 
 		      (!(strncmp(cmd, "QUOTE ", 6)))) {
-                RWRITE_MSG(RWRITE_ERR_SYNTAX, "Unknown QUOTE command.");
+                RWRITE_MSG(RWRITE_ERR_QUOTE_CMD_UNKNOWN, 
+			   "Unknown QUOTE command.");
 	    } else {
                 RWRITE_MSG(RWRITE_ERR_SYNTAX, "Does not compute.");
             }

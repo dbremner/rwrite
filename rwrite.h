@@ -6,15 +6,19 @@
  * the RWP protocol.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:58 1994 tri
- * Last modified: Thu Sep 15 22:58:36 1994 tri
+ * Last modified: Tue Sep 20 01:08:55 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.4 $
+ * $Revision: 1.5 $
  * $State: Exp $
- * $Date: 1994/09/15 20:14:42 $
+ * $Date: 1994/09/19 22:40:37 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.4  1994/09/15 20:14:42  tri
+ * Revision 1.5  1994/09/19 22:40:37  tri
+ * TOOK replaced by VRFY and made some considerable
+ * cleanup.
+ *
+ * Revision 1.4  1994/09/15  20:14:42  tri
  * Completed the support of RWP version 1.0.
  *
  * Revision 1.3  1994/09/14  16:04:50  tri
@@ -52,8 +56,24 @@
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
 #define RWRITED_VERSION_NUMBER	"1.0b"		/* Server version   */
 #define RWRITE_VERSION_NUMBER	"1.0b"		/* Client version   */
+/*
+ * If DO_NOT_TELL_USERS is defined, server gives "user not in" notification
+ * instead of "no such user".
+ */
+/* #define DO_NOT_TELL_USERS 1 */
+/*
+ * #
+ * # Entry to enable rwrite service in /etc/services.
+ * # The port number is about to change in near future.
+ * #
+ * rwrite		2801/tcp			# rwrite
+ */
+#define RWRITE_DEFAULT_PORT	2801
 
 #define RWRITE_FWD_LIMIT	32
+/*
+ * These response codes follow the RWP version 1.0 RFC.
+ */
 /*
  * Success codes.
  */
@@ -68,6 +88,7 @@
 #define RWRITE_RSET_OK		109
 #define RWRITE_RCPT_OK_TO_FWD	110
 #define RWRITE_FHST_OK		111
+#define RWRITE_QUOTE_OK		112
 /*
  * Server readu to receive message body.
  */
@@ -94,6 +115,8 @@
 #define RWRITE_ERR_NO_DATA	675
 #define RWRITE_ERR_FWD_LIMIT_EXCEEDED	676
 #define RWRITE_ERR_FWD_FAILED	677
+#define RWRITE_ERR_QUOTE_CMD_FAILED	678
+#define RWRITE_ERR_QUOTE_CMD_UNKNOWN	679
 #define RWRITE_ERR_INTERNAL	698
 #define RWRITE_ERR_UNKNOWN	699
 

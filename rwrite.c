@@ -2,18 +2,22 @@
  *
  * $RCSfile: rwrite.c,v $
  * ----------------------------------------------------------------------
- * Simple client to RWP-protocol
+ * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Thu Sep 15 23:01:37 1994 tri
+ * Last modified: Tue Sep 20 01:18:45 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.3 $
+ * $Revision: 1.4 $
  * $State: Exp $
- * $Date: 1994/09/15 20:14:42 $
+ * $Date: 1994/09/19 22:40:37 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.3  1994/09/15 20:14:42  tri
+ * Revision 1.4  1994/09/19 22:40:37  tri
+ * TOOK replaced by VRFY and made some considerable
+ * cleanup.
+ *
+ * Revision 1.3  1994/09/15  20:14:42  tri
  * Completed the support of RWP version 1.0.
  *
  * Revision 1.2  1994/09/14  16:04:50  tri
@@ -43,7 +47,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.3 1994/09/15 20:14:42 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.4 1994/09/19 22:40:37 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,7 +70,10 @@ static char *RCS_id = "$Id: rwrite.c,v 1.3 1994/09/15 20:14:42 tri Exp $";
 #define BUF_ALLOC_STEP	128
 
 int verbose = 0;
+int quiet = 0;
 int resend = 0;
+int fwds = 0;
+int backround = 0;
 
 /*
  * There is a possible race condition here if many messages are written
@@ -119,7 +126,7 @@ FILE *open_history_read()
 
 int read_char(int fd)
 {
-    unsigned char buf[8];
+    unsigned char buf[4];
     int ret;
 
     ret = read(fd, buf, 1);
@@ -209,6 +216,43 @@ char *read_line(FILE *f)
     return(buf);
 }
 
+/*
+ * Read message data until EOF from console.
+ */
+char **read_user_message()
+{
+    int buflen, i;
+    char **buf;
+    char *line;
+
+    if(!(buf = ((char **)malloc(BUF_ALLOC_STEP * sizeof(char *)))))
+	return NULL;
+    buflen = BUF_ALLOC_STEP;
+    for(i = 0; /*NOTHING*/; i++) {
+	if(!(line = read_line(stdin))) {
+	    if(!i) {
+		free(buf);
+		return NULL;
+	    }
+	    buf[i] = NULL;
+	    return buf;
+	}
+	if((i + 1) >= buflen) {
+	    char **newbuf;
+	    buflen += BUF_ALLOC_STEP;
+	    if(!(newbuf = (char **)malloc(buflen * sizeof(char *)))) {
+		free(buf);
+		return NULL;
+	    }
+	    memcpy(newbuf, buf, i * sizeof(char *));
+	    free(buf);
+	    buf = newbuf;
+	}
+	buf[i] = line;
+    }
+    /*NOTREACHED*/
+}
+
 char *read_rwp_resp(int s, int *code)
 {
     char *ret;
@@ -245,16 +289,18 @@ int write_string(int fd, char *s)
 #define WRITE_STRING(f, str) {                                            \
        if(!(write_string(s, str))) {                                      \
 	   fprintf(stderr, "rwrite: Remote server closed connection.\n"); \
-	   return 0; } }
+	   return 0;                                                      \
+       } }
 
 #define DIALOG_BEGIN 1
 #define DIALOG_TO    2
 #define DIALOG_FROM  3
-#define DIALOG_TOOK  4
-#define DIALOG_DATA  5
-#define DIALOG_SEND  6
+#define DIALOG_VRFY  4
+#define DIALOG_FWDS  5
+#define DIALOG_DATA  6
+#define DIALOG_SEND  7
 
-int rwp_dialog(int s, char *to, char *from)
+int rwp_dialog(int s, char *to, char *from, char **msg, int writehist)
 {
     int code;
     char *resp, *line;
@@ -269,9 +315,8 @@ int rwp_dialog(int s, char *to, char *from)
 	    fprintf(stderr, "rwrite: Remote server closed connection.\n");
 	    return 0;
 	}
-#ifdef DEBUG	
-	fprintf(stderr, "Got >%03d< %s\n", code, resp); 
-#endif
+	if(verbose > 1)
+	    fprintf(stderr, "<<<<%s\n", resp); 
 	if(!(LEGAL_CODE(code))) {
 	    fprintf(stderr, "rwrite: Illegal RWP response code (%03d).\n", code);
 	    return 0;
@@ -288,6 +333,8 @@ int rwp_dialog(int s, char *to, char *from)
 		    return 0;
 		}
 		modeattr = 1;
+		if(verbose > 1)
+		    fprintf(stderr, ">>>>TO %s\n", to);
 		WRITE_STRING(s, "TO ");
 		WRITE_STRING(s, to);
 		WRITE_STRING(s, "\012");
@@ -307,19 +354,21 @@ int rwp_dialog(int s, char *to, char *from)
 		}
 		fprintf(stderr, "rwrite: Permission denied.\n");
 		return 0;
+	    case RWRITE_ERR_NO_SUCH_USER:
+#ifndef DO_NOT_TELL_USERS
+		if(modeattr != 1) {
+		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    return 0;
+		}
+		fprintf(stderr, "rwrite: No such user.\n");
+		return 0;
+#endif
 	    case RWRITE_ERR_USER_NOT_IN:
 		if(modeattr != 1) {
 		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
 		    return 0;
 		}
 		fprintf(stderr, "rwrite: User not in.\n");
-		return 0;
-	    case RWRITE_ERR_NO_SUCH_USER:
-		if(modeattr != 1) {
-		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
-		    return 0;
-		}
-		fprintf(stderr, "rwrite: No such user.\n");
 		return 0;
 	    default:
 		fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
@@ -333,6 +382,8 @@ int rwp_dialog(int s, char *to, char *from)
 		    return 0;
 		}
 		modeattr = 1;
+		if(verbose > 1)
+		    fprintf(stderr, ">>>>FROM %s\n", from);
 		WRITE_STRING(s, "FROM ");
 		WRITE_STRING(s, from);
 		WRITE_STRING(s, "\012");
@@ -358,14 +409,16 @@ int rwp_dialog(int s, char *to, char *from)
 		    return 0;
 		}
 		modeattr = 1;
-		WRITE_STRING(s, "TOOK\012");
+		if(verbose > 1)
+		    fprintf(stderr, ">>>>VRFY\n");
+		WRITE_STRING(s, "VRFY\012");
 		goto redo_dialog_loop;
 	    case RWRITE_RCPT_OK_TO_SEND:
 		if(modeattr != 1) {
 		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
 		    return 0;
 		}
-		mode = DIALOG_TOOK;
+		mode = DIALOG_VRFY;
 		modeattr = 0;
 		goto redo_dialog_loop;
 	    case RWRITE_ERR_PERMISSION_DENIED:
@@ -393,7 +446,49 @@ int rwp_dialog(int s, char *to, char *from)
 		fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
 		return 0;
 	    }
-	case DIALOG_TOOK:
+	case DIALOG_VRFY:
+	    if(!fwds) {
+		mode = DIALOG_FWDS;
+		modeattr = 0;
+		/* Fallthrough to case DIALOG_FWDS */
+	    } else {
+		switch(code) {
+		case RWRITE_READY:
+		    if(modeattr != 0) {
+			fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+			return 0;
+		    }
+		    modeattr = 1;
+		    {
+			char tmp[32];
+			sprintf(tmp, "FWDS %d", fwds);
+			if(verbose > 1)
+			    fprintf(stderr, ">>>>%s\n", tmp);
+			WRITE_STRING(s, tmp);
+			WRITE_STRING(s, "\012");
+		    }
+		    goto redo_dialog_loop;
+		case RWRITE_RCPT_OK_TO_FWD:
+		    if(modeattr != 1) {
+			fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+			return 0;
+		    }
+		    mode = DIALOG_FWDS;
+		    modeattr = 0;
+		    goto redo_dialog_loop;
+		case RWRITE_ERR_FWD_LIMIT_EXCEEDED:
+		    if(modeattr != 1) {
+			fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+			return 0;
+		    }
+		    fprintf(stderr, "rwrite: Forward limit exceeded.\n", code);
+		    return 0;
+		default:
+		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
+		    return 0;
+		}
+	    }
+	case DIALOG_FWDS:
 	    switch(code) {
 	    case RWRITE_READY:
 		if(modeattr != 0) {
@@ -401,6 +496,8 @@ int rwp_dialog(int s, char *to, char *from)
 		    return 0;
 		}
 		modeattr = 1;
+		if(verbose > 1)
+		    fprintf(stderr, ">>>>DATA\n");
 		WRITE_STRING(s, "DATA\012");
 		goto redo_dialog_loop;
 	    case RWRITE_GETMSG:
@@ -408,36 +505,74 @@ int rwp_dialog(int s, char *to, char *from)
 		    fprintf(stderr, "rwrite: Unexpected RWP response code (%03d).\n", code);
 		    return 0;
 		}
-		if(!resend) {
-		    /*
-		     * Read message from user input.
-		     */
-		    if(!(hist_file = open_history_write()))
-			fprintf(stderr, 
-				"rwrite: Warning, can't open history file.\n");
-		    while(line = read_line(stdin)) {
-			if(hist_file)
-			    fprintf(hist_file, "%s\n", line);
-			WRITE_STRING(s, line);
-			if((line[0] == '.') && (line[1] == '\000'))
-			    WRITE_STRING(s, " ");
-			WRITE_STRING(s, "\012");
-		    }
-		    if(hist_file) {
-			if(!(close_history_write(hist_file)))
-			    fprintf(stderr, 
-				    "rwrite: Warning, can't close history file.\n");
-		    }
-		} else {
+		if(resend) {
 		    if(!(hist_file = open_history_read())) {
 			fprintf(stderr, "rwrite: Can't open history file.\n");
 			return 0;
 		    }
 		    while(line = read_line(hist_file)) {
+			if(verbose > 1)
+			    fprintf(stderr, ">>>>%s\n", line);
 			WRITE_STRING(s, line);
 			WRITE_STRING(s, "\012");
 		    }
+		} else {
+		    if(msg) {
+			int i;
+			/*
+			 * Message is in msg array.
+			 */
+			if(writehist) {
+			    if(!(hist_file = open_history_write()))
+				if(!quiet)
+				    fprintf(stderr, "rwrite: Warning, can't open history file.\n");
+			} else {
+			    hist_file = NULL;
+			}
+			for((i = 0, line = msg[i]); line; line = msg[++i]) {
+			    if(hist_file)
+				fprintf(hist_file, "%s\n", line);
+			    if(verbose > 1)
+				fprintf(stderr, ">>>>%s\n", line);
+			    WRITE_STRING(s, line);
+			    WRITE_STRING(s, "\012");
+			}
+			if(hist_file) {
+			    if(!(close_history_write(hist_file)))
+				if(!quiet)
+				    fprintf(stderr, "rwrite: Warning, can't close history file.\n");
+			}
+		    } else {
+			/*
+			 * Read message from user input.
+			 */
+			if(writehist) {
+			    if(!(hist_file = open_history_write()))
+				if(!quiet)
+				    fprintf(stderr, "rwrite: Warning, can't open history file.\n");
+			} else {
+			    hist_file = NULL;
+			}
+			    
+			while(line = read_line(stdin)) {
+			    if(hist_file)
+				fprintf(hist_file, "%s\n", line);
+			    if(verbose > 1)
+				fprintf(stderr, ">>>>%s\n", line);
+			    WRITE_STRING(s, line);
+			    if((line[0] == '.') && (line[1] == '\000'))
+				WRITE_STRING(s, " ");
+			    WRITE_STRING(s, "\012");
+			}
+			if(hist_file) {
+			    if(!(close_history_write(hist_file)))
+				if(!quiet)
+				    fprintf(stderr, "rwrite: Warning, can't close history file.\n");
+			}
+		    }
 		}
+		if(verbose > 1)
+		    fprintf(stderr, ">>>>.\n");
 		WRITE_STRING(s, ".\012");
 		modeattr = 2;
 		goto redo_dialog_loop;
@@ -468,6 +603,8 @@ int rwp_dialog(int s, char *to, char *from)
 		    return 0;
 		}
 		modeattr = 1;
+		if(verbose > 1)
+		    fprintf(stderr, ">>>>SEND\n");
 		WRITE_STRING(s, "SEND\012");
 		goto redo_dialog_loop;
 	    case RWRITE_DELIVERY_OK:
@@ -516,6 +653,8 @@ int rwp_dialog(int s, char *to, char *from)
 		    return 1;
 		}
 		modeattr = 1;
+		if(verbose > 1)
+		    fprintf(stderr, ">>>>BYE\n");
 		WRITE_STRING(s, "BYE\012");
 		goto redo_dialog_loop;
 	    case RWRITE_BYE:
@@ -539,7 +678,7 @@ int open_to(char *name)
 {
     extern int lflag;
     FILE *fp;
-    int c, lastc;
+    int c, lastc, defport;
     struct in_addr defaddr;
     struct hostent *hp, def;
     struct servent *sp;
@@ -556,8 +695,7 @@ int open_to(char *name)
     if(!(hp = gethostbyname(host))) {
 	defaddr.s_addr = inet_addr(host);
 	if(defaddr.s_addr == -1) {
-	    (void)fprintf(stderr,
-			  "rwrite: unknown host: %s\n", host);
+	    fprintf(stderr, "rwrite: Unknown host: %s\n", host);
 	    return -1;
 	}
 	def.h_name = host;
@@ -569,12 +707,20 @@ int open_to(char *name)
 	hp = &def;
     }
     if(!(sp = getservbyname("rwrite", "tcp"))) {
-	(void)fprintf(stderr, "rwrite: tcp/rwrite: unknown service\n");
-	return -1;
+	if(RWRITE_DEFAULT_PORT > 0) {
+	    if(!quiet)
+		fprintf(stderr, "rwrite: Warning, tcp port defaulted to %d.  Update /etc/services.\n", RWRITE_DEFAULT_PORT);
+	    defport = RWRITE_DEFAULT_PORT;
+	} else {
+	    fprintf(stderr, "rwrite: rwrite/tcp unknown service.  Update /etc/services.\n");
+	    return 0;
+	}
+    } else {
+	defport = 0;
     }
     sin.sin_family = hp->h_addrtype;
     bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
-    sin.sin_port = sp->s_port;
+    sin.sin_port = (sp ? (sp->s_port) : htons(defport));
     if((s = socket(hp->h_addrtype, SOCK_STREAM, 0)) < 0) {
 	perror("rwrite: socket");
 	return -1;
@@ -584,7 +730,7 @@ int open_to(char *name)
 	printf("[%s]\n", hp->h_name);
     if(connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 	perror("rwrite: connect");
-	(void)close(s);
+	close(s);
 	return -1;
     }
     return s;
@@ -596,19 +742,37 @@ int main(int argc, char **argv)
 {
     int ch, s, ret;
     char *to, *from;
+    char **msg;
     extern char *optarg;
     extern int optind, optopt;
     
-    while ((ch = getopt(argc, argv, "vr")) != -1) {
+    while ((ch = getopt(argc, argv, ":vrf:bq")) != -1) {
 	switch(ch) {
 	case 'v':	
-	    verbose = 1;
+	    verbose++;
 	    break;
 	case 'r':
 	    resend = 1;
 	    break;
+	case 'f':
+	    fwds = atoi(optarg);
+	    if(fwds < 1) {
+		fprintf(stderr, "rwrite: -f needs an argument > 0.\n", optopt);
+		exit(1);
+	    }
+	    break;
+	case 'b':
+	    backround = 1;
+	    break;
+	case 'q':
+	    quiet = 1;
+	    break;
+	case ':':
+	    fprintf(stderr, 
+		    "rwrite: Option -%c needs an option-argument\n.", optopt);
+	    exit(1);
 	case '?':
-	    fprintf (stderr, "rwrite: Unrecognized option: -%c\n", optopt);
+	    fprintf (stderr, "rwrite: Unrecognized option: -%c\n.", optopt);
 	    exit(1);
 	default:
 	    fprintf(stderr, "rwrite: Internal error.\n");
@@ -616,33 +780,98 @@ int main(int argc, char **argv)
 	}
     }
 
-    if((argc - optind) == 1) {
-	{
-	    struct passwd *pwd;
-	    char *tmp;
+    /*
+     * Dig the sender information.
+     */
+    {
+	struct passwd *pwd;
+	char *tmp;
 
-	    if(!(tmp = getlogin())) {
-		pwd = getpwuid(getuid());
-		tmp = pwd ? (pwd->pw_name) : "UNKNOWN";
+	if(!(tmp = getlogin())) {
+	    pwd = getpwuid(getuid());
+	    tmp = pwd ? (pwd->pw_name) : "UNKNOWN";
+	}
+	if(!(from = (char *)malloc(strlen(tmp) + 1))) {
+	    exit(2);
+	}
+	strcpy(from, tmp);
+    }	
+    if((argc - optind) == 1) {
+	if(backround && (!resend)) {
+	    msg = read_user_message();
+	    if(!msg) {
+		fprintf(stderr, "rwrite: Empty message.\n");
+		exit(4);
 	    }
-	    if(!(from = (char *)malloc(strlen(tmp) + 1))) {
-		exit(1);
+	} else {
+	    msg = NULL;
+	}
+	if(backround) {
+	    switch(fork()) {
+	    case 0:
+		break; /* Child continues */
+	    case -1:
+		fprintf(stderr, "rwrite: Unable to fork.\n");
+		exit(5);
+	    default:
+		exit(0);
 	    }
-	    strcpy(from, tmp);
-	}	
+	}
 	if(!(to = (char *)malloc(strlen(argv[optind]) + 1))) {
-	    exit(1);
+	    exit(2);
 	}
 	strcpy(to, argv[optind]);
 	if(0 > (s = open_to(to))) {
-	    exit(2);
+	    exit(3);
 	}
-	ret = rwp_dialog(s, to, from);
+	ret = rwp_dialog(s, to, from, msg, 1);
 	close(s);
-	exit(ret ? 0 : (-1));
+	exit(ret ? 0 : (4));
+    } else if((argc - optind) > 1) {
+	int i;
+	if(resend) {
+	    msg = NULL;
+	} else {
+	    msg = read_user_message();
+	    if(!msg) {
+		fprintf(stderr, "rwrite: Empty message.\n");
+		exit(4);
+	    }
+	}
+	if(backround) {
+	    switch(fork()) {
+	    case 0:
+		break; /* Child continues */
+	    case -1:
+		fprintf(stderr, "rwrite: Unable to fork.\n");
+		exit(5);
+	    default:
+		exit(0);
+	    }
+	}
+	for(i = optind; i < argc; i++) {
+	    if(!(to = (char *)malloc(strlen(argv[i]) + 1))) {
+		exit(2);
+	    }
+	    strcpy(to, argv[i]);
+	    if(0 > (s = open_to(to))) {
+		if(!quiet)
+		    fprintf(stderr, "rwrite: Skipped %s.\n", argv[i]);
+	    } else {
+		/* Writes history file every time. XXX */
+		ret = rwp_dialog(s, to, from, msg, 1);
+		close(s);
+		if(!ret) {
+		    if(!quiet)
+			fprintf(stderr, "rwrite: Skipped %s.\n", argv[i]);
+		}
+	    }
+	    free(to);
+	}
+	/* Message array msg could be freed here but... XXX */
     } else {
-	fprintf(stderr, "USAGE: rwrite [-r] [-v] user[@host]\n");
-	exit(3);
+	fprintf(stderr, "USAGE: rwrite [-f #] [-r] [-v] [-b] user[@host]...\n");
+	exit(1);
     }
     /*NOTREACHED*/
     return 0;

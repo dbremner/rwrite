@@ -5,15 +5,18 @@
  * Main file of rwrited remote message server.
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:27:46 1994 tri
- * Last modified: Sat Dec 10 13:24:53 1994 tri
+ * Last modified: Sun Dec 11 16:55:06 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.21 $
+ * $Revision: 1.22 $
  * $State: Exp $
- * $Date: 1994/12/10 11:28:38 $
+ * $Date: 1994/12/11 14:56:13 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrited.c,v $
- * Revision 1.21  1994/12/10 11:28:38  tri
+ * Revision 1.22  1994/12/11 14:56:13  tri
+ * Minor fix.
+ *
+ * Revision 1.21  1994/12/10  11:28:38  tri
  * Last known method to send terminal control codes
  * through correctly configured rwrite is now diabled.
  *
@@ -107,7 +110,7 @@
  */
 #define __RWRITED_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrited.c,v 1.21 1994/12/10 11:28:38 tri Exp $";
+static char *RCS_id = "$Id: rwrited.c,v 1.22 1994/12/11 14:56:13 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -182,8 +185,10 @@ char from_user[128];	    /* Sender's login uid */
 char identd_from_user[128]; /* Sender's login uid from identd */
 char to_user[128];          /* Recipient's login id */
 char my_host[128];          /* My hostname */
-char tty_hint[MAXPATHLEN];  /* Remote end has given tty as a hint */
-char tty_force[MAXPATHLEN]; /* Remote end has given tty to deliver a message */
+char tty_hint[MAXPATHLEN + 1];
+			    /* Remote end has given tty as a hint */
+char tty_force[MAXPATHLEN + 1];
+			    /* Remote end has given tty to deliver a message */
 int fwd_count = 0;          /* Hop count. -1 if all forwarding is forbidden */
 int fake_user = 0;	    /* 0=ok, 1=nonconfirmed, 2=fake */
 
@@ -524,7 +529,7 @@ int search_utmp(char *user,
 	struct utmp u;
 	time_t bestatime, atime;
 	int ufd, nloggedttys, nttys, msgsok, no_timecomp;
-	char atty[MAXPATHLEN];
+	char atty[MAXPATHLEN + 1];
 	char **all_ttys;
 	int all_ttys_size;
 	int ttylistlen;
@@ -538,7 +543,7 @@ int search_utmp(char *user,
 	    char *hlp;
 
 	    for(i = 0; rc_tty_list[i]; i++) {
-		char tty[MAXPATHLEN];
+		char tty[MAXPATHLEN + 1];
 
 		if(((rc_tty_list[i][0]) == '~') && 
 		   ((rc_tty_list[i][1]) == '/') &&
@@ -610,7 +615,7 @@ int search_utmp(char *user,
 		}
 	    }
         } else {
-	    char best_tty[MAXPATHLEN];
+	    char best_tty[MAXPATHLEN + 1];
 
 	    best_tty[0] = 0;
 	    bestatime = 0;
@@ -749,7 +754,7 @@ int deliver(char *user,
 	    char *via, 
 	    char **msg)
 {
-    char rcfilename[MAXPATHLEN];
+    char rcfilename[MAXPATHLEN + 1];
     int d_status;
     time_t now;
     char *nowstr;
@@ -832,7 +837,7 @@ int deliver(char *user,
 
 int can_deliver(char *user, char *from, char *fromhost)
 {
-    char tty[MAXPATHLEN];
+    char tty[MAXPATHLEN + 1];
     struct passwd *pwd;
     
     if((!(pwd = getpwnam(user))) || (!(pwd->pw_dir))) {

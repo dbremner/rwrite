@@ -7,13 +7,16 @@
  * Created      : Sat Dec 10 17:27:21 1994 toka
  * Last modified: Sat Dec 10 17:33:46 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.1 $
+ * $Revision: 1.2 $
  * $State: Exp $
- * $Date: 1994/12/10 15:38:22 $
+ * $Date: 1994/12/11 14:56:13 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: mkrwritebox.c,v $
- * Revision 1.1  1994/12/10 15:38:22  tri
+ * Revision 1.2  1994/12/11 14:56:13  tri
+ * Minor fix.
+ *
+ * Revision 1.1  1994/12/10  15:38:22  tri
  * Initial revision
  *
  * ----------------------------------------------------------------------
@@ -38,7 +41,7 @@
  */
 #define __MKRWRITEBOX_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: mkrwritebox.c,v 1.1 1994/12/10 15:38:22 tri Exp $";
+static char *RCS_id = "$Id: mkrwritebox.c,v 1.2 1994/12/11 14:56:13 tri Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,12 +53,13 @@ static char *RCS_id = "$Id: mkrwritebox.c,v 1.1 1994/12/10 15:38:22 tri Exp $";
 #include <limits.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 
 int main(int argc, char **argv) {
     struct passwd *pwd = NULL;
     struct group *grp = NULL;
-    char path[PATH_MAX + 1];
-    char file[PATH_MAX + 1];
+    char path[MAXPATHLEN + 1];
+    char file[MAXPATHLEN + 1];
     char *t1 = NULL, *t2 = NULL;
     int f = -1;
     uid_t uid = -1;

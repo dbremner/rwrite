@@ -5,15 +5,18 @@
  * Client to RWP-protocol
  * ----------------------------------------------------------------------
  * Created      : Tue Sep 13 15:28:07 1994 tri
- * Last modified: Sun Dec 11 15:27:54 1994 tri
+ * Last modified: Sun Dec 11 16:54:12 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.19 $
+ * $Revision: 1.20 $
  * $State: Exp $
- * $Date: 1994/12/11 13:29:29 $
+ * $Date: 1994/12/11 14:56:13 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.c,v $
- * Revision 1.19  1994/12/11 13:29:29  tri
+ * Revision 1.20  1994/12/11 14:56:13  tri
+ * Minor fix.
+ *
+ * Revision 1.19  1994/12/11  13:29:29  tri
  * Background message sending can be defaulted in
  * rwriterc.  Explicit -b or -B flag overrides the
  * default.
@@ -100,7 +103,7 @@
  */
 #define __RWRITE_C__ 1
 #ifndef lint
-static char *RCS_id = "$Id: rwrite.c,v 1.19 1994/12/11 13:29:29 tri Exp $";
+static char *RCS_id = "$Id: rwrite.c,v 1.20 1994/12/11 14:56:13 tri Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -135,7 +138,7 @@ char **last_msg = NULL;
  */
 FILE *open_history_write()
 {
-    char path[MAXPATHLEN];
+    char path[MAXPATHLEN + 1];
     char *home;
     FILE *f;
 
@@ -151,8 +154,8 @@ FILE *open_history_write()
 
 int close_history_write(FILE *f)
 {
-    char path1[MAXPATHLEN];
-    char path2[MAXPATHLEN];
+    char path1[MAXPATHLEN + 1];
+    char path2[MAXPATHLEN + 1];
     char *home;
     int r;
 
@@ -168,7 +171,7 @@ int close_history_write(FILE *f)
 
 FILE *open_history_read()
 {
-    char path[MAXPATHLEN];
+    char path[MAXPATHLEN + 1];
     char *home;
 
     if(!(home = getenv("HOME"))) {
@@ -334,7 +337,7 @@ int dump_msg_to_outlogs(char **msg, char *addr, int failed, char *userhome)
     if((!addr) || (!(*addr)))
 	addr = "xxx";
     for((i = 0, n = 0); rc_outlog[i]; i++) {
-	char logfile[MAXPATHLEN];
+	char logfile[MAXPATHLEN + 1];
 
 	if(((rc_outlog[i][0]) == '~') && 
 	   ((rc_outlog[i][1]) == '/') &&
@@ -1146,7 +1149,7 @@ int main(int argc, char **argv)
 	}
 	read_rc(RWRITE_GLOBAL_CONFIG);
 	if(pwd && (pwd->pw_dir)) {
-	    char rcfilename[MAXPATHLEN];
+	    char rcfilename[MAXPATHLEN + 1];
 	    
 	    sprintf(rcfilename, "%s/%s", pwd->pw_dir, RWRITE_CONFIG_FILE);
 	    read_rc(rcfilename);

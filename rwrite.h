@@ -8,13 +8,16 @@
  * Created      : Tue Sep 13 15:27:58 1994 tri
  * Last modified: Sun Dec 11 15:16:32 1994 tri
  * ----------------------------------------------------------------------
- * $Revision: 1.21 $
+ * $Revision: 1.22 $
  * $State: Exp $
- * $Date: 1994/12/11 13:29:29 $
+ * $Date: 1994/12/11 14:56:13 $
  * $Author: tri $
  * ----------------------------------------------------------------------
  * $Log: rwrite.h,v $
- * Revision 1.21  1994/12/11 13:29:29  tri
+ * Revision 1.22  1994/12/11 14:56:13  tri
+ * Minor fix.
+ *
+ * Revision 1.21  1994/12/11  13:29:29  tri
  * Background message sending can be defaulted in
  * rwriterc.  Explicit -b or -B flag overrides the
  * default.
@@ -133,8 +136,8 @@
 /* #define NO_GETEGID 1 */
 
 #define RWP_VERSION_NUMBER	"1.0"		/* Protocol version */
-#define RWRITED_VERSION_NUMBER	"1.1b10"	/* Server version   */
-#define RWRITE_VERSION_NUMBER	"1.1b10"	/* Client version   */
+#define RWRITED_VERSION_NUMBER	"1.1b11"	/* Server version   */
+#define RWRITE_VERSION_NUMBER	"1.1b11"	/* Client version   */
 /*
  * User definitions are in the following files.
  */

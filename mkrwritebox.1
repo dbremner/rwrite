@@ -2,18 +2,22 @@
 .\"
 .\" $RCSfile: mkrwritebox.1,v $
 .\" ----------------------------------------------------------------------
-.\" <Description of this file and its contents>
+.\" mkrwritebox(1) manual page
 .\" ----------------------------------------------------------------------
 .\" Created      : Sun Dec 11 19:45:56 1994 tri
-.\" Last modified: Sun Dec 11 19:45:56 1994 tri
+.\" Last modified: Mon Dec 12 16:39:04 1994 tri
 .\" ----------------------------------------------------------------------
-.\" $Revision: 1.2 $
+.\" $Revision: 1.3 $
 .\" $State: Exp $
-.\" $Date: 1994/12/11 18:41:49 $
+.\" $Date: 1994/12/12 14:42:03 $
 .\" $Author: tri $
 .\" ----------------------------------------------------------------------
 .\" $Log: mkrwritebox.1,v $
-.\" Revision 1.2  1994/12/11 18:41:49  tri
+.\" Revision 1.3  1994/12/12 14:42:03  tri
+.\" Made some kind of the manual page describing
+.\" the current situation.
+.\"
+.\" Revision 1.2  1994/12/11  18:41:49  tri
 .\" Nothing
 .\"
 .\" Revision 1.1  1994/12/11  17:46:21  tri
@@ -41,3 +45,26 @@
 .\" otherwise) by the use of this software.
 .\" ----------------------------------------------------------------------
 .\"
+.TH MKRWRITEBOX 1 "Dec 12, 1994"
+
+.SH NAME
+.B mkrwritebox
+\- make incoming log files for rwrite
+
+.SH SYNOPSIS
+.B mkrwritebox
+\fIfilename\fP
+.br
+
+.SH DESCRIPTION
+.B Mkrwritebox
+creates an ampty file into the home directory of the user.  This file
+is writable by rwrite daemon program.
+
+.SH AUTHOR
+Timo J. Rinne <tri@cirion.fi>
+.SH FILES
+$HOME/.rwriterc
+
+.SH SEE ALSO
+rwrite(1), away(1), write(1), rwrited(8)

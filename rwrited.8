@@ -5,15 +5,19 @@
 .\" Rwrited(8) manual page.
 .\" ----------------------------------------------------------------------
 .\" Created      : Tue Sep 20 13:14:55 1994 tri
-.\" Last modified: Thu Oct  6 20:36:22 1994 tri
+.\" Last modified: Mon Dec 12 16:38:03 1994 tri
 .\" ----------------------------------------------------------------------
-.\" $Revision: 1.4 $
+.\" $Revision: 1.5 $
 .\" $State: Exp $
-.\" $Date: 1994/12/11 18:41:49 $
+.\" $Date: 1994/12/12 14:42:03 $
 .\" $Author: tri $
 .\" ----------------------------------------------------------------------
 .\" $Log: rwrited.8,v $
-.\" Revision 1.4  1994/12/11 18:41:49  tri
+.\" Revision 1.5  1994/12/12 14:42:03  tri
+.\" Made some kind of the manual page describing
+.\" the current situation.
+.\"
+.\" Revision 1.4  1994/12/11  18:41:49  tri
 .\" Nothing
 .\"
 .\" Revision 1.3  1994/12/11  18:16:28  tri
@@ -49,7 +53,7 @@
 .\" otherwise) by the use of this software.
 .\" ----------------------------------------------------------------------
 .\"
-.TH RWRITED 8 "Sep 20, 1994"
+.TH RWRITED 8 "Dec 12, 1994"
 
 .SH NAME
 .B rwrited
@@ -63,21 +67,7 @@
 .SH DESCRIPTION
 .B Rwrited
 is a daemon program for rwrite and is usually executed by inetd.
-Implements the RWP protocol.
-.P
-If target user has file .rwrite-allow in his home directory and
-sender can't be found in this file, message is not delivered.
-If target user has file .rwrite-deny in his home directory and
-sender can be found in this file, message is not delivered.
-Files .rwrite-allow and .rwrite-deny consist of lines of usernames
-like user@remote.host.  In these lines wildcards \fI*\fP and \fI?\fP
-can be used.  \fI*\fP can replace any string and \fI?\fP can replace
-any character in the sender address.
-.P
-If the target user has file .rwrite-tty in his home directory the
-message is delivered on the tty mentoined on the first line of the
-file.  If file has a word 'all' in its first line the message is
-delivered to all ttys user is logged in.
+Implements the RWP protocol version 1.0.
 .SH OPTIONS
 .B \-
    allows rwrited to be executed from command line.
@@ -85,13 +75,13 @@ delivered to all ttys user is logged in.
 .SH AUTHOR
 Timo J. Rinne <tri@cirion.fi>
 .SH FILES
-$HOME/.rwrite-allow
+/etc/rwrite.conf
 .P
-$HOME/.rwrite-deny
+$HOME/.rwriterc
 .P
-$HOME/.rwrite-tty
+$HOME/.rwrite-autoreply
 .SH BUGS
 Does not support message forwarding or message agent.
 
 .SH SEE ALSO
-rwrite(1)
+rwrite(1), away(1), mkrwritebox(1), write(1), rwrited(8)
